@@ -56,8 +56,12 @@ client.on('ready', () => {
 client.on('message', async message => {
     const allowedNumbers = [
         '76403240386784@lid',
-        '249344376729705@lid'
+        '249344376729705@lid',
+        '77855006433494@lid'
     ];
+
+    console.log(message.from);
+    console.log(message.body);
 
     // Menyimpan Informasi Pengirim
     const userId = message.from;
