@@ -4,6 +4,7 @@ import qrcode from "qrcode-terminal";
 import axios from "axios";
 import fs from 'fs/promises';
 import puppeteer from 'puppeteer';
+import { exportExcel } from './exportExcel';
 
 // Membuat Settingan Whatsapp Web
 const client = new Client({
@@ -90,6 +91,16 @@ client.on('message', async message => {
         );
 
         return;
+    }
+
+    if(text === "export") {
+        const success = await exportExcel();
+
+        if(success) {
+            await message.reply('Excel Berhasil Dibuat!');
+        } else {
+            await message.reply('Export Gagagl');
+        }
     }
 
     // Handling Berpindah Menu
