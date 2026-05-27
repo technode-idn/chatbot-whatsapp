@@ -1,0 +1,17 @@
+[
+    {
+        "id": "tenant-1",
+        "store": "Munim",
+        "phone": "6288298723645"
+    },
+    {
+        "id": "tenant-2",
+        "store": "Starbucks",
+        "phone": "6288298723645"
+    },
+    {
+        "id": "tenant-3",
+        "store": "Kopken",
+        "phone": "6288298723645"
+    }
+]

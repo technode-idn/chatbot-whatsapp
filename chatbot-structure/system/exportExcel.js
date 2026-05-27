@@ -3,7 +3,7 @@ import XLSX from 'xlsx';
 
 export async function exportExcel() {
     try {
-        const rawData = await fs.readFile('./chatbot-layer/data/data_form_users.json', 'utf8');
+        const rawData = await fs.readFile('./chatbot-structure/data/data_form_users.json', 'utf8');
 
         const users = JSON.parse(rawData);
 

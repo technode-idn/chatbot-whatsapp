@@ -1,0 +1,124 @@
+{
+    "intents": [
+        {
+            "tag" : "info_bisnis",
+            "pattern" : [
+                "ini usaha apa ya",
+                "ini bisnis apa sih",
+                "website ini tentang apa",
+                "kalian bergerak di bidang apa",
+                "ini toko apa",
+                "usaha ini jualan apa",
+                "ini perusahaan apa",
+                "kalian itu usaha apa",
+                "bisnis ini fokusnya apa",
+                "ini tempat jual apa"
+            ],
+            "response" : [
+                "kami adalah bisnis yang bergerak di bidang fashion retail",
+                "kami menjalankan usaha di bidang penjualan sepatu, tas, dan aksesoris",
+                "bisnis kami berfokus pada produk fashion untuk kebutuhan sehari-hari"
+            ]
+        },
+        {
+            "tag" : "info_produk",
+            "pattern" : [
+                "produk apa saja yang tersedia",
+                "kalian jual apa aja",
+                "ada barang apa aja",
+                "produknya apa aja",
+                "kalian menyediakan apa aja",
+                "barang yang dijual apa aja",
+                "ada produk apa di sini",
+                "pilihan produknya apa aja",
+                "di sini ada jual apa",
+                "katalog produknya apa aja"
+            ],
+            "response" : [
+                "kami menyediakan sepatu, tas, dan aksesoris",
+                "produk kami meliputi berbagai kebutuhan fashion seperti sepatu dan tas",
+                "anda bisa menemukan berbagai pilihan produk fashion di sini"
+            ]
+        },
+        {
+            "tag" : "info_harga",
+            "pattern" : [
+                "harganya berapa",
+                "harga produknya berapa",
+                "kisaran harga di sini berapa",
+                "mulai dari harga berapa", 
+                "produk di sini mahal tidak",
+                "harga termurah berapa", 
+                "daftar harganya ada", 
+                "berapa harga barangnya",
+                "harga jualnya berapa ya",
+                "kisaran biaya produk di sini berapa"
+            ],
+            "response" : [
+                "harga produk kami mulai dari Rp50.000",
+                "kisaran harga tergantung jenis produk yang dipilih",
+                "untuk detail harga, anda bisa melihat langsung di halaman produk"
+            ]
+        },
+        {
+            "tag" : "info_lokasi",
+            "pattern" : [
+                "lokasinya dimana",
+                "toko ini ada di mana",
+                "alamatnya dimana ya",
+                "kalian berada di kota apa", 
+                "lokasi usaha dimana",
+                "tempatnya dimana",
+                "ada di daerah mana",
+                "alamat lengkapnya apa",
+                "saya bisa datang ke mana",
+                "tokonya dimana"
+            ],
+            "response" : [
+                "kami berlokasi di Bandung",
+                "alamat lengkap kami bisa dilihat di halaman kontak",
+                "anda bisa mengunjungi toko kami di lokasi yang tertera di website"
+            ]
+        },
+        {
+            "tag" : "info_kontak",
+            "pattern" : [
+                "bagaimana cara menghubungi kalian",
+                "nomor kontaknya apa", 
+                "ada whatsapp", 
+                "bisa hubungi lewat mana",
+                "kontak yang bisa dihubungi apa",
+                "nomor teleponnya berapa", 
+                "cara menghubungi admin gimana",
+                "ada email atau wa",
+                "saya bisa kontak kemana",
+                "customer servicenya dimana"
+            ],
+            "response" : [
+                "anda bisa menghubungi kami melalui whatsapp yang tertera di website",
+                "kontak kami tersedia di halaman kontak, termasuk nomor telepon dan email",
+                "silakan hubungi customer service kami untuk informasi lebih lanjut"
+            ]
+        },
+        {
+            "tag" : "info_jam",
+            "pattern" : [
+                "buka jam berapa",
+                "jam operasionalnya kapan",
+                "toko ini buka sampai jam berapa",
+                "kalian buka dari jam berapa",
+                "jam buka dan tutupnya kapan",
+                "hari apa aja buka", 
+                "jam kerja kalian bagaimana",
+                "kapan mulai buka",
+                "operasionalnya setiap hari",
+                "jadwal bukanya bagaimana"
+            ],
+            "response" : [
+                "kami buka setiap hari dari pukul 09.00 sampai 21.00",
+                "jam operasional kami adalah pukul 09.00 - 21.00",
+                "toko kami buka setiap hari dengan jam yang sama"
+            ]
+        }
+    ]
+}

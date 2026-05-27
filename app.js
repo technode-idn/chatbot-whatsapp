@@ -1,10 +1,12 @@
 import pkg from 'whatsapp-web.js';
 const { Client, LocalAuth } = pkg;
 import qrcode from "qrcode-terminal";
-import axios from "axios";
 import fs from 'fs/promises';
 import puppeteer from 'puppeteer';
-import { exportExcel } from './exportExcel';
+import { exportExcel } from './chatbot-structure/system/exportExcel.js';
+import { aiStatus, aiMode } from './chatbot-structure/system/aiMode.js';
+import { sessions, ordering, form } from './chatbot-structure/system/ordering.js';
+import { handleOwnerResponse } from './chatbot-structure/settings/tenantBroadcasting.js';
 
 // Membuat Settingan Whatsapp Web
 const client = new Client({
@@ -23,37 +25,29 @@ const client = new Client({
     }
 });
 
-const form = JSON.parse(
-    await fs.readFile('./chatbot-layer/data/intent_form.json', 'utf8')
-);
-
 const welcomedUsers = new Set();
-
-const steps = Object.keys(form);
-
-const sessions = {};
-
-// Inisialisasi AI Mode
-const aiMode = {};
 
 // Membuat QR Code
 client.on('qr', (qr) => {
     qrcode.generate(qr, {small: true});
 });
 
+// Melacak Autentikasi
 client.on('authenticated',() => {
     console.log("AUTHENTICATED");
 });
 
+// Melacak Proses Sinkronisasi
 client.on('loading_screen', (percent, message) => {
     console.log(percent, message);
 });
 
+// Follow-Up Bot Siap
 client.on('ready', () => {
     console.log('Bot Siap!');
 });
 
-// Berjalan Setiap Ada Pesan Yang Masuk
+// Membaca Pesan Masuk
 client.on('message', async message => {
     const allowedNumbers = [
         '76403240386784@lid',
@@ -85,13 +79,7 @@ client.on('message', async message => {
 
         // Kirim Pesan Berikut Untuk Pengirim Yang Baru Terdaftar
         await message.reply(
-            `Halo Customer, Selamat datang di Teachnode 👋.\n
-            Kami adalah agensi pembuatan smart system berbasis web untuk memenuhi kebutuhan operasional bisnis Anda\n
-            Jika ada yang bisa kami bantu, silahkan pilih pada salah satu menu berikut:\n
-            [1] Mengobrol
-            [2] Memesan Smart System
-            [3] Lihat Portfolio
-            [4] Arahkan Ke CS Manusia`
+            "Halo kak👋\nTerima kasih sudah menghubungi Klikbi Go🍽️🚚\nSaya admin KlikBiGo, ada yang bisa kami bantu? 😊\n[1] Pesan Produk\n[2] Tanya Produk\n[3] FAQ\n[4] Hubungi Admin"
         );
 
         return;
@@ -111,85 +99,38 @@ client.on('message', async message => {
     if(text === "menu" || text === "keluar") {
         delete sessions[userId];
 
-        delete aiMode[userId];
+        delete aiStatus[userId];
 
         await message.reply(
-            `Halo Customer, Selamat datang di Teachnode 👋.\n
-            Kami adalah agensi pembuatan smart system berbasis web untuk memenuhi kebutuhan operasional bisnis Anda\n
-            Jika ada yang bisa kami bantu, silahkan pilih pada salah satu menu berikut:\n
-            [1] Mengobrol
-            [2] Memesan Smart System
-            [3] Lihat Portfolio
-            [4] Arahkan Ke CS Manusia`
+            "Halo kak👋\nTerima kasih sudah menghubungi Klikbi Go🍽️🚚\nSaya admin KlikBiGo, ada yang bisa kami bantu? 😊\n[1] Pesan Produk\n[2] Tanya Produk\n[3] FAQ\n[4] Hubungi Admin"
         );
         
         return;
     }
 
     // Jalankan AI Mode, Jika Pengirim Memilih Menu 1
-    if(aiMode[userId]) {
-        try {
-            console.log("Mau kirim ke FastApi")
+    if(aiStatus[userId]) {
+        const responseAi =  await aiMode(text);
 
-            const response = await axios.post(
-                'http://127.0.0.1:8000/predict',
-                {
-                    message: text
-                }
-            );
-            const intent = response.data.intent;
+        await message.reply(responseAi);
 
-            await message.reply(intent);
-            return;
 
-        } catch(error) {
-            console.log(error);
-            message.reply('Server Chatbot Error');
-            return;
-        }
+        return;
     }
 
     // Jalankan Sistem Pendataan Formulir, Jika Pengirim Memilih Menu 2
     if(sessions[userId]) {
-        const session = sessions[userId];
+        const responseOrder = await ordering(text, userId, client);        
 
-        const currentField = steps[session.currentStep];
+        await message.reply(responseOrder);
 
-        session.answer[currentField] = text;
+        return;
+    }
 
-        session.currentStep++;
+    if(text.startsWith("tersedia") || text.startsWith("tidak")) {
+        const response = await handleOwnerResponse(client, text);
 
-        if(session.currentStep >= steps.length) {
-            // Menyimpan Data Ke File JSON
-            try {
-                const fileData = await fs.readFile('./chatbot-layer/data/data_form_users.json', 'utf8');
-
-                const users = JSON.parse(fileData);
-
-                users.push({
-                    user_id: userId,
-                    created_at: new Date(),
-                    ...session.answer
-                });
-
-                await fs.writeFile(
-                    './chatbot-layer/data/data_form_users.json',
-                    JSON.stringify(users, null, 4)
-                );
-
-                await message.reply('Form Telah Selesai, Terima Kasih!');
-
-                delete sessions[userId];
-            } catch(error) {
-                console.log(error);
-
-                await message.reply("Gagal Menyimpan Data!");
-            }
-
-            return;
-        }
-
-        await message.reply(form[steps[session.currentStep]]);
+        await message.reply(response);
 
         return;
     }
@@ -197,34 +138,26 @@ client.on('message', async message => {
     // Pengelolaan Pilihan Pengirim
     switch(text) {
         case "1":
-            aiMode[userId] = true;
+            sessions[userId] = true;
+
+            await message.reply(form.form_template);
+            
+            return;
+        case "2":
+            aiStatus[userId] = true;
+
             await message.reply(
                 `Silahkan Tanyakan Sesuatu
                 Ketik "Menu" Untuk Kembali
                 `
             );
-            return;
-        case "2":
-            sessions[userId] = {
-                currentStep: 0,
-                answer: {}
-            };
 
-            await message.reply('Ketik "Menu" Untuk Kembali');
-
-            await message.reply(form[steps[0]]);
-            
             return;
         case "3":
-            await message.reply("Portfolio Kami.....");
             return;
         case "4":
-            await message.reply("Menghubungkan ke CS Manusia.....");
             return;
-        default:
-            await message.reply("Pilihan Tidak Tersedia!");
-            return;
-    } 
+    }
 });
 
 // Inisialisasi Chatbot
