@@ -8,7 +8,7 @@ model = joblib.load('../models/model.pkl')
 vectorizer = joblib.load('../models/vectorizer.pkl')
 encoder = joblib.load('../models/encoder.pkl')
 
-with open("../data/data.json", "r") as file:
+with open("../data/intent.json", "r") as file:
     data = json.load(file)
 
 new_data = data['intents']

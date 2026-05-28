@@ -1,4 +1,5 @@
 import fs from 'fs/promises';
+import { paymentStatus } from '../system/payment.js';
 
 export const pendingOrders = {};
 
@@ -32,7 +33,7 @@ export async function sendOrderToOwner(client, orderData, userId) {
             Balas:
             tersedia ${orderId}
             atau
-            tidak ${orderId}
+            tidak tersedia ${orderId}
             `
         );
 
@@ -40,7 +41,7 @@ export async function sendOrderToOwner(client, orderData, userId) {
 
 }
 
-export async function handleOwnerResponse(client, text) {
+export async function handleOwnerResponse(client, text, userId) {
     const[status, orderId] = text.split(' ');
 
     const order = pendingOrders[orderId];
@@ -50,13 +51,22 @@ export async function handleOwnerResponse(client, text) {
     }
 
     if (status === "tersedia") {
-        const fileData = await fs.readFile('./chatbot-structure/data/data_form_users.json', 'utf8');
+        const fileDataUsers = await fs.readFile('./chatbot-structure/data/data_form_users.json', 'utf8');
+        const fileDataTenant = await fs.readFile('./chatbot-structure/data/tenant_owners.json', 'utf8');
 
-        const users = fileData.trim() ? JSON.parse(fileData) : [];
+        const users = fileDataUsers.trim() ? JSON.parse(fileDataUsers) : [];
+        const tenants = fileDataTenant.trim() ? JSON.parse(fileDataTenant) : [];
+
+        for(const tenant of tenants) {
+            if(tenant["phone"] == userId) {
+                data_tenant = tenant
+            }
+        }
 
         users.push({
             user_id: order.customer,
             created_at: new Date().toISOString(),
+            tenant_name: data_tenant,
             ...order.data
         });
 
@@ -70,12 +80,18 @@ export async function handleOwnerResponse(client, text) {
             'Produk tersedia ✅'
         );
 
-    }
+        paymentStatus = true;
 
-    if (status === "tidak") {
         await client.sendMessage(
             order.customer,
-            'Produk tidak tersedia ❌'
+            'Untuk informasi pembayarannya, kakak bisa pilih:\n\n[1] Cash (bayar di tempat)\n[2] QRIS\n\nSilahkan diinformasikan mau pakai metode yang mana ya kak?'
+        );
+    }
+
+    if (status === "tidak tersedia") {
+        await client.sendMessage(
+            order.customer,
+            'Mohon Maaf, produk sedang tidak tersedia ❌'
         );
     }
 
