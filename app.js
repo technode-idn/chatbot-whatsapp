@@ -1,7 +1,6 @@
 import pkg from 'whatsapp-web.js';
-const { Client, LocalAuth } = pkg;
+const { Client, LocalAuth, MessageMedia } = pkg;
 import qrcode from "qrcode-terminal";
-import fs from 'fs/promises';
 import puppeteer from 'puppeteer';
 import { exportExcel } from './chatbot-structure/system/exportExcel.js';
 import { aiStatus, aiMode } from './chatbot-structure/system/aiMode.js';
@@ -87,7 +86,7 @@ client.on('message', async message => {
     // Memeriksa Apakah Pesan Yang Dikirim Berupa Media (Sticker, Gambar, Dokumen, Video)
     // ==================================================================================
     if(message.hasMedia) {
-        if(text == "11") {
+        if(paymentStatus) {
             await message.reply("Terima kasih, pesanan akan segera kami proses!")
             paymentStatus = false;
             return;
@@ -110,13 +109,16 @@ client.on('message', async message => {
 
     // Handling Untuk Export File (Excel)
     // ==================================
-    if(text === "export") {
-        const success = await exportExcel();
+    if(userId == "76403240386784@lid") {
+        if(text === "export") {
+            const success = await exportExcel();
 
-        if(success) {
-            await message.reply('Excel Berhasil Dibuat!');
-        } else {
-            await message.reply('Export Gagagl');
+            if(success) {
+                const file = MessageMedia.fromFilePath('./chatbot-structure/export/hasil_form.xlsx');
+                await message.reply(media);
+            } else {
+                await message.reply('Export Gagagl');
+            }
         }
     }
 
@@ -168,16 +170,27 @@ client.on('message', async message => {
     // Handling Pemilihan Metode Payment
     // =================================
     if(paymentStatus) {
+        const responseOngkir = await ongkir(userId);
+
         if(text == "1") {
             await message.reply(
                 "Siap kak\nPembayaran dilakukan secara cash saat pesanan diterima ya.\nPesanan akan segera kami proses"
             );
+            await message.reply(responseOngkir);
         } else if(text == "2") {
             const responsePayment = await payment(userId);
-            const responseOngkir = await ongkir(userId);
-            await message.reply(responsePayment);
-            await message.reply(responseOngkir)
+            const qris_photo = MessageMedia.fromFilePath(responsePayment);
+
+            await message.reply(
+                qris_photo,
+                undefined,
+                {
+                    caption: responseOngkir
+                }
+            );
         }
+
+        return;
     }
 
     // Pengelolaan Pilihan Menu

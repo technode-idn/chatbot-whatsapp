@@ -19,7 +19,7 @@ export async function exportExcel() {
 
         XLSX.writeFile(
             workbook,
-            'hasil_form.xlsx'
+            './chatbot-structure/export/hasil_form.xlsx'
         );
 
         return true;

@@ -4,6 +4,8 @@ import { sendOrderToOwner } from '../settings/tenantBroadcasting.js';
 export const sessions = {};
 
 export async function ordering(text, userId, client) {
+    // Ekstraksi Form Pesanan Customer
+    // ===============================
     try {
         const data = {};
 
@@ -19,6 +21,8 @@ export async function ordering(text, userId, client) {
 
         }
 
+        // Mengirim Informasi Pesanan Ke Owner Tenant
+        // ==========================================
         await sendOrderToOwner(client, data, userId);
 
         delete sessions[userId];

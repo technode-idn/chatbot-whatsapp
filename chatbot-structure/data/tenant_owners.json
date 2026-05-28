@@ -3,12 +3,6 @@
         "id": "tenant-1",
         "store": "Munim",
         "phone": "77855006433494@lid",
-        "qris": "11"
-    },
-    {
-        "id": "tenant-2",
-        "store": "Starbucks",
-        "phone": "76403240386784@lid",
-        "qris": "22"
+        "qris": "../img/botol.jpeg"
     }
 ]

@@ -4,6 +4,8 @@ import { paymentStatus } from '../system/payment.js';
 export const pendingOrders = {};
 
 export async function sendOrderToOwner(client, orderData, userId) {
+    // Membuat Data Pesanan
+    // ====================
     const orderId = Date.now();
 
     pendingOrders[orderId] = {
@@ -11,6 +13,8 @@ export async function sendOrderToOwner(client, orderData, userId) {
         data: orderData
     };
 
+    // Mengirim Data Pesanan Ke Owner Tenant
+    // =====================================
     const rawData = await fs.readFile('./chatbot-structure/data/tenant_owners.json', 'utf8');
 
     const owners = JSON.parse(rawData);
@@ -39,6 +43,7 @@ export async function sendOrderToOwner(client, orderData, userId) {
 
     }
 
+    return;
 }
 
 export async function handleOwnerResponse(client, text, userId) {
@@ -46,10 +51,14 @@ export async function handleOwnerResponse(client, text, userId) {
 
     const order = pendingOrders[orderId];
 
+    // Memeriksa Status Pesanan
+    // ========================
     if (!order) {
         return ('Pesanan tidak ditemukan');
     }
 
+    // Jika Stok Barang Tersedia
+    // =========================
     if (status === "tersedia") {
         const fileDataUsers = await fs.readFile('./chatbot-structure/data/data_form_users.json', 'utf8');
         const fileDataTenant = await fs.readFile('./chatbot-structure/data/tenant_owners.json', 'utf8');
@@ -88,6 +97,8 @@ export async function handleOwnerResponse(client, text, userId) {
         );
     }
 
+    // Jika Stok Barang Tidak Tersedia
+    // ===============================
     if (status === "tidak tersedia") {
         await client.sendMessage(
             order.customer,
@@ -97,6 +108,5 @@ export async function handleOwnerResponse(client, text, userId) {
 
     delete pendingOrders[orderId];
 
-    return ('Status pesanan berhasil diproses');
-
+    return;
 }
