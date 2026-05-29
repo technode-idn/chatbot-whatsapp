@@ -1,6 +1,6 @@
 import fs from 'fs/promises';
 
-export const paymentStatus = "";
+export const paymentStatus = {};
 
 export async function payment(userId) {
     const rawData = await fs.readFile('./chatbot-structure/data/data_form_users.json', 'utf8');

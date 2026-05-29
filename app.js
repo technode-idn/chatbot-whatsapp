@@ -5,7 +5,7 @@ import puppeteer from 'puppeteer';
 import { exportExcel } from './chatbot-structure/system/exportExcel.js';
 import { aiStatus, aiMode } from './chatbot-structure/system/aiMode.js';
 import { sessions, ordering } from './chatbot-structure/system/ordering.js';
-import { handleOwnerResponse } from './chatbot-structure/settings/tenantBroadcasting.js';
+import { handleOwnerResponse, sendProofToOwner, pendingProof } from './chatbot-structure/settings/tenantBroadcasting.js';
 import { paymentStatus, payment } from './chatbot-structure/system/payment.js';
 import { ongkir } from './chatbot-structure/system/ongkir.js';
 
@@ -61,7 +61,8 @@ client.on('message', async message => {
     const allowedNumbers = [
         '76403240386784@lid',
         '249344376729705@lid',
-        '77855006433494@lid'
+        '77855006433494@lid',
+        '58493310615674@lid'
     ];
 
     // Melacak Siapa Pengirim & Isi Pesannya
@@ -86,9 +87,8 @@ client.on('message', async message => {
     // Memeriksa Apakah Pesan Yang Dikirim Berupa Media (Sticker, Gambar, Dokumen, Video)
     // ==================================================================================
     if(message.hasMedia) {
-        if(paymentStatus) {
-            await message.reply("Terima kasih, pesanan akan segera kami proses!")
-            paymentStatus = false;
+        if(paymentStatus[userId]) {
+            await sendProofToOwner(text, userId, client);
             return;
         } else {
             return;
@@ -109,7 +109,7 @@ client.on('message', async message => {
 
     // Handling Untuk Export File (Excel)
     // ==================================
-    if(userId == "76403240386784@lid") {
+    if(userId == "58493310615674@lid") {
         if(text === "export") {
             const success = await exportExcel();
 
@@ -159,7 +159,7 @@ client.on('message', async message => {
 
     // Follow-Up Customer Mengenai Ketersediaan Produk
     // ===============================================
-    if(text == "tersedia" || text == "tidak tersedia") {
+    if(text.startsWith("tersedia") || text.startsWith("tidak tersedia")) {
         const response = await handleOwnerResponse(client, text, userId);
 
         await message.reply(response);
@@ -169,7 +169,7 @@ client.on('message', async message => {
 
     // Handling Pemilihan Metode Payment
     // =================================
-    if(paymentStatus) {
+    if(paymentStatus[userId]) {
         const responseOngkir = await ongkir(userId);
 
         if(text == "1") {
@@ -191,6 +191,27 @@ client.on('message', async message => {
         }
 
         return;
+    }
+
+    // Verifikasi Bukti Pembayaran
+    // ===========================
+    if(pendingProof[userId]) {
+        const id = Object.keys(paymentStatus);
+
+        if(text == "✅") {
+            await client.sendMessage(
+                id,
+                "Terima kasih, pesanan akan segera kami proses 🙏🏻"
+            );
+            delete paymentStatus[id];
+            delete pendingProof[id];
+            return;
+        } else if(text == "❌") {
+            await client.sendMessage(
+                id,
+                "Mohon kirimkan bukti pembayaran yang valid 🙏🏻"
+            );
+        }
     }
 
     // Pengelolaan Pilihan Menu

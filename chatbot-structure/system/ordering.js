@@ -9,14 +9,14 @@ export async function ordering(text, userId, client) {
     try {
         const data = {};
 
-        const lines = text.split('\n').map(item => item.trim());
+        const lines = text.split('\n').map(item => item.toLowerCase().trim());
 
         for (const line of lines) {
 
-            if (line.includes(':')) {
+            if (line.includes('📌')) {
                 const[key, value] = line.split(':');
 
-                data[key.replace('📌','').trim()] = value.trim();
+                data[key.replace('📌','').replace(' ', '_').trim()] = value.trim();
             }
 
         }

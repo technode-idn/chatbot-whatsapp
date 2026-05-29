@@ -2,6 +2,13 @@ import fs from 'fs/promises';
 import { paymentStatus } from '../system/payment.js';
 
 export const pendingOrders = {};
+export const pendingProof = {};
+
+const rawDataTenant = await fs.readFile('./chatbot-structure/data/tenant_owners.json', 'utf8');
+const tenants = rawDataTenant.trim() ? JSON.parse(rawDataTenant) : [];
+
+const rawDataUsers = await fs.readFile('./chatbot-structure/data/data_form_users.json', 'utf8');
+const users = rawDataUsers.trim() ? JSON.parse(rawDataUsers) : [];
 
 export async function sendOrderToOwner(client, orderData, userId) {
     // Membuat Data Pesanan
@@ -15,9 +22,7 @@ export async function sendOrderToOwner(client, orderData, userId) {
 
     // Mengirim Data Pesanan Ke Owner Tenant
     // =====================================
-    const rawData = await fs.readFile('./chatbot-structure/data/tenant_owners.json', 'utf8');
-
-    const owners = JSON.parse(rawData);
+    const owners = tenants;
 
     for (const owner of owners) {
         await client.sendMessage(
@@ -27,13 +32,13 @@ export async function sendOrderToOwner(client, orderData, userId) {
             ID:
             ${orderId}
             Nama:
-            ${orderData["Nama pemesan"]}
+            ${orderData["nama_pemesan"]}
             Menu:
-            ${orderData["Menu & jumlah pesanan"]}
+            ${orderData["menu_&_jumlah_pesanan"]}
             Alamat:
-            ${orderData["Alamat lengkap pengantaran"]}
+            ${orderData["alamat_lengkap_pengantaran"]}
             Nomor:
-            ${orderData["Nomor Telepon aktif"]}
+            ${orderData["nomor_telepon_aktif"]}
             Balas:
             tersedia ${orderId}
             atau
@@ -60,11 +65,6 @@ export async function handleOwnerResponse(client, text, userId) {
     // Jika Stok Barang Tersedia
     // =========================
     if (status === "tersedia") {
-        const fileDataUsers = await fs.readFile('./chatbot-structure/data/data_form_users.json', 'utf8');
-        const fileDataTenant = await fs.readFile('./chatbot-structure/data/tenant_owners.json', 'utf8');
-
-        const users = fileDataUsers.trim() ? JSON.parse(fileDataUsers) : [];
-        const tenants = fileDataTenant.trim() ? JSON.parse(fileDataTenant) : [];
 
         for(const tenant of tenants) {
             if(tenant["phone"] == userId) {
@@ -89,7 +89,7 @@ export async function handleOwnerResponse(client, text, userId) {
             'Produk tersedia ✅'
         );
 
-        paymentStatus = true;
+        paymentStatus[order.customer] = true;
 
         await client.sendMessage(
             order.customer,
@@ -107,6 +107,23 @@ export async function handleOwnerResponse(client, text, userId) {
     }
 
     delete pendingOrders[orderId];
+
+    return;
+}
+
+export async function sendProofToOwner(proof, userId, client) {
+    for(const user of users) {
+        if(user[user_id] == userId) {
+            tenant = user[tenant_name];
+        }
+    }
+
+    await client.sendMessage(
+        tenant.phone,
+        proof
+    );
+
+    pendingProof[userId] = true;
 
     return;
 }
