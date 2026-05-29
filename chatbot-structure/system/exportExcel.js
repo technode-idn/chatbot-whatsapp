@@ -1,11 +1,9 @@
-import fs from 'fs/promises';
 import XLSX from 'xlsx';
+import { rawDataUsers } from '../settings/loadFiles';
 
 export async function exportExcel() {
     try {
-        const rawData = await fs.readFile('./chatbot-structure/data/data_form_users.json', 'utf8');
-
-        const users = JSON.parse(rawData);
+        const users = JSON.parse(rawDataUsers);
 
         const worksheet = XLSX.utils.json_to_sheet(users);
 

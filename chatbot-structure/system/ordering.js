@@ -1,7 +1,6 @@
 import fs from 'fs/promises';
-import { sendOrderToOwner } from '../settings/tenantBroadcasting.js';
-
-export const sessions = {};
+import { sendOrderToOwner } from './tenantBroadcasting.js';
+import { sessions } from '../settings/globalVariables.js';
 
 export async function ordering(text, userId, client) {
     // Ekstraksi Form Pesanan Customer
@@ -16,7 +15,7 @@ export async function ordering(text, userId, client) {
             if (line.includes('📌')) {
                 const[key, value] = line.split(':');
 
-                data[key.replace('📌','').replace(' ', '_').trim()] = value.trim();
+                data[key.replace('📌','').trim().replace(' ', '_')] = value.trim();
             }
 
         }

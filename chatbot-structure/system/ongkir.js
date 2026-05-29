@@ -1,9 +1,9 @@
-import { campusZone } from "../settings/shippingRules.js";
-import { calculateShipping } from "../settings/shippingCalculator.js";
+import { campusZone } from "../settings/globalVariables.js";
+import { calculateShipping } from "./shippingCalculator.js";
+import { rawDataUsers } from "../settings/loadFiles.js";
 
 export async function ongkir(userId) {
-    const rawData = await fs.readFile('./chatbot-structure/data/data_form_users.json', 'utf8');
-    const dataUsers = JSON.parse(rawData);
+    const dataUsers = JSON.parse(rawDataUsers);
 
     for(const dataUser of dataUsers) {
         if(dataUser["user_id"] == userId) {

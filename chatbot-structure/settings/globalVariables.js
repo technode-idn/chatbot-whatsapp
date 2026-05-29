@@ -1,3 +1,9 @@
+export const pendingOrders = {};
+export const pendingProof = {};
+export const aiStatus = {};
+export const sessions = {};
+export const paymentStatus = {};
+export const tenantSession = {};
 export const campusZone = {
     3000: [
         'ca',

@@ -1,8 +1,6 @@
 
 import axios from "axios";
 
-export const aiStatus = {};
-
 export async function aiMode(text) {
     try {
         console.log("Mau kirim ke FastApi")

@@ -1,10 +1,9 @@
 import fs from 'fs/promises';
-
-export const paymentStatus = {};
+import { rawDataUsers } from '../settings/loadFiles';
 
 export async function payment(userId) {
-    const rawData = await fs.readFile('./chatbot-structure/data/data_form_users.json', 'utf8');
-    const dataUsers = JSON.parse(rawData);
+    // data_form_user
+    const dataUsers = JSON.parse(rawDataUsers);
 
     for(const dataUser of dataUsers) {
         if(dataUser["user_id"] == userId) {

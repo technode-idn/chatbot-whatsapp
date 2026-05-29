@@ -1,13 +1,9 @@
 import fs from 'fs/promises';
-import { paymentStatus } from '../system/payment.js';
+import { pendingOrders, paymentStatus, tenantSession } from '../settings/globalVariables.js';
+import { rawDataUsers, rawDataTenant } from '../settings/loadFiles.js';
 
-export const pendingOrders = {};
-export const pendingProof = {};
-
-const rawDataTenant = await fs.readFile('./chatbot-structure/data/tenant_owners.json', 'utf8');
 const tenants = rawDataTenant.trim() ? JSON.parse(rawDataTenant) : [];
 
-const rawDataUsers = await fs.readFile('./chatbot-structure/data/data_form_users.json', 'utf8');
 const users = rawDataUsers.trim() ? JSON.parse(rawDataUsers) : [];
 
 export async function sendOrderToOwner(client, orderData, userId) {
@@ -27,32 +23,23 @@ export async function sendOrderToOwner(client, orderData, userId) {
     for (const owner of owners) {
         await client.sendMessage(
             owner.phone,
-            `
-            📦 Pesanan Baru
-            ID:
-            ${orderId}
-            Nama:
-            ${orderData["nama_pemesan"]}
-            Menu:
-            ${orderData["menu_&_jumlah_pesanan"]}
-            Alamat:
-            ${orderData["alamat_lengkap_pengantaran"]}
-            Nomor:
-            ${orderData["nomor_telepon_aktif"]}
-            Balas:
-            tersedia ${orderId}
-            atau
-            tidak tersedia ${orderId}
-            `
+            `📦 Pesanan Baru\n\nID:\n${orderId}\nNama:\n${orderData["nama_pemesan"]}\nProduk:\n${orderData["produk_pesanan"]}\nJumlah Pesanan:\n${orderData["jumlah_pesanan"]}\nAlamat Pengantaran:\n${orderData["alamat_lengkap_pengantaran"]}\nNomor:\n${orderData["nomor_telepon_aktif"]}`
         );
 
+        await client.sendMessage(
+            owner.phone,
+            `MOHON KONFIRMASI PESANAN\n========================\nOrder ID: ${orderId}\n\nStatus Produk: \nTotal Harga: \n\nProduk tersedia,berikan ✅\n| Total Harga = (isi)\nProduk tidak tersedia, berikan ❌\n| Total Harga = -`
+        );
     }
+
+    tenantSession[owner.phone] = true;
 
     return;
 }
 
-export async function handleOwnerResponse(client, text, userId) {
-    const[status, orderId] = text.split(' ');
+export async function handleOwnerResponse(client, data, userId) {
+    const status = data.status_produk;
+    const orderId = data.order_id;
 
     const order = pendingOrders[orderId];
 
@@ -64,7 +51,7 @@ export async function handleOwnerResponse(client, text, userId) {
 
     // Jika Stok Barang Tersedia
     // =========================
-    if (status === "tersedia") {
+    if (status === "✅") {
 
         for(const tenant of tenants) {
             if(tenant["phone"] == userId) {
@@ -99,7 +86,7 @@ export async function handleOwnerResponse(client, text, userId) {
 
     // Jika Stok Barang Tidak Tersedia
     // ===============================
-    if (status === "tidak tersedia") {
+    if (status === "❌") {
         await client.sendMessage(
             order.customer,
             'Mohon Maaf, produk sedang tidak tersedia ❌'
@@ -123,7 +110,12 @@ export async function sendProofToOwner(proof, userId, client) {
         proof
     );
 
-    pendingProof[userId] = true;
+    await client.sendMessage(
+        tenant.phone,
+        "MOHON KONFIRMASI BUKTI PEMBAYARAN\n=================================\nStatus : \n\nJika valid, berikan ✅\nJika tidak valid, berikan ❌"
+    );
+
+    tenantSession[tenant.phone] = true;
 
     return;
 }

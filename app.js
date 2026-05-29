@@ -3,11 +3,13 @@ const { Client, LocalAuth, MessageMedia } = pkg;
 import qrcode from "qrcode-terminal";
 import puppeteer from 'puppeteer';
 import { exportExcel } from './chatbot-structure/system/exportExcel.js';
-import { aiStatus, aiMode } from './chatbot-structure/system/aiMode.js';
-import { sessions, ordering } from './chatbot-structure/system/ordering.js';
-import { handleOwnerResponse, sendProofToOwner, pendingProof } from './chatbot-structure/settings/tenantBroadcasting.js';
+import { aiMode } from './chatbot-structure/system/aiMode.js';
+import { ordering } from './chatbot-structure/system/ordering.js';
+import { sendProofToOwner } from './chatbot-structure/system/tenantBroadcasting.js';
 import { paymentStatus, payment } from './chatbot-structure/system/payment.js';
 import { ongkir } from './chatbot-structure/system/ongkir.js';
+import { pendingProof, aiStatus, sessions, paymentStatus, tenantSession } from './chatbot-structure/settings/globalVariables.js';
+import { verificationOrder } from './chatbot-structure/system/verification.js';
 
 // Membuat Settingan Whatsapp Web
 // ==============================
@@ -87,8 +89,9 @@ client.on('message', async message => {
     // Memeriksa Apakah Pesan Yang Dikirim Berupa Media (Sticker, Gambar, Dokumen, Video)
     // ==================================================================================
     if(message.hasMedia) {
-        if(paymentStatus[userId]) {
+        if(pendingProof[userId]) {
             await sendProofToOwner(text, userId, client);
+            delete pendingProof[userId];
             return;
         } else {
             return;
@@ -136,8 +139,8 @@ client.on('message', async message => {
         return;
     }
 
-    // Menjalankan AI Mode, Jika Pengirim Memilih Menu 1
-    // =================================================
+    // Menjalankan AI Mode, Jika Pengirim Memilih Menu 1 (AI Session)
+    // ==============================================================
     if(aiStatus[userId]) {
         const responseAi =  await aiMode(text);
 
@@ -147,8 +150,8 @@ client.on('message', async message => {
         return;
     }
 
-    // Menjalankan Sistem Pendataan Formulir, Jika Pengirim Memilih Menu 2
-    // ================================================================
+    // Menjalankan Sistem Pendataan Formulir, Jika Pengirim Memilih Menu 2 (Ordering Session)
+    // ======================================================================================
     if(sessions[userId]) {
         const responseOrder = await ordering(text, userId, client);        
 
@@ -157,18 +160,22 @@ client.on('message', async message => {
         return;
     }
 
-    // Follow-Up Customer Mengenai Ketersediaan Produk
-    // ===============================================
-    if(text.startsWith("tersedia") || text.startsWith("tidak tersedia")) {
-        const response = await handleOwnerResponse(client, text, userId);
-
-        await message.reply(response);
+    // Follow-Up Customer Mengenai Ketersediaan Produk (Tenant Session)
+    // ================================================================
+    if(tenantSession[userId]) {
+        if(text.includes('PESANAN')) {
+            await verificationOrder(text, userId, client);
+        } else if(text.includes('PEMBAYARAN')) {
+            await verificationPayment(text, userId, client);
+        }
+        
+        delete tenantSession[userId];
 
         return;
     }
 
-    // Handling Pemilihan Metode Payment
-    // =================================
+    // Handling Pemilihan Metode Payment (Payment Session)
+    // ===================================================
     if(paymentStatus[userId]) {
         const responseOngkir = await ongkir(userId);
 
@@ -190,29 +197,32 @@ client.on('message', async message => {
             );
         }
 
+        delete paymentStatus[userId];
+
+        pendingProof[userId] = true;
+
         return;
     }
 
-    // Verifikasi Bukti Pembayaran
-    // ===========================
-    if(pendingProof[userId]) {
-        const id = Object.keys(paymentStatus);
+    // Verifikasi Bukti Pembayaran (Proof Session)
+    // ===========================================
+    // if(pendingProof[userId]) {
+    //     const id = Object.keys(paymentStatus);
 
-        if(text == "✅") {
-            await client.sendMessage(
-                id,
-                "Terima kasih, pesanan akan segera kami proses 🙏🏻"
-            );
-            delete paymentStatus[id];
-            delete pendingProof[id];
-            return;
-        } else if(text == "❌") {
-            await client.sendMessage(
-                id,
-                "Mohon kirimkan bukti pembayaran yang valid 🙏🏻"
-            );
-        }
-    }
+    //     if(text == "✅") {
+    //         await client.sendMessage(
+    //             id,
+    //             "Terima kasih, pesanan akan segera kami proses 🙏🏻"
+    //         );
+    //         delete pendingProof[id];
+    //         return;
+    //     } else if(text == "❌") {
+    //         await client.sendMessage(
+    //             id,
+    //             "Mohon kirimkan bukti pembayaran yang valid 🙏🏻"
+    //         );
+    //     }
+    // }
 
     // Pengelolaan Pilihan Menu
     // ========================
@@ -221,7 +231,7 @@ client.on('message', async message => {
             sessions[userId] = true;
 
             await message.reply(
-                "Baik kak, supaya kami bisa proses pesanannya, mohon info ya :\n📌Nama pemesan : \n📌Menu & jumlah pesanan : \n📌Alamat lengkap pengantaran : \n📌Nomor Telpon aktif : \n\nTerima kasih🙏😊"
+                "Baik kak, supaya kami bisa proses pesanannya, mohon info ya :\n\n📌Nama Pemesan : \n📌Produk Pesanan : \n📌Jumlah Pesanan : \n📌Alamat Lengkap Pengantaran : \n📌Nomor Telpon Aktif : \n\nTerima Kasih🙏😊"
             );
             
             return;
