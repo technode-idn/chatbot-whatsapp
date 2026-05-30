@@ -1,5 +1,5 @@
 import XLSX from 'xlsx';
-import { rawDataUsers } from '../settings/loadFiles';
+import { rawDataUsers } from '../settings/loadFiles.js';
 
 export async function exportExcel() {
     try {

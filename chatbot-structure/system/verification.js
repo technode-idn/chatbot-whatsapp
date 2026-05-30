@@ -1,4 +1,5 @@
-import { handleOwnerResponse } from "./tenantBroadcasting";
+import { handleOwnerResponse, sendToGroup } from "./broadcasting.js";
+import { rawDataUsers } from "../settings/loadFiles.js";
 
 export async function verificationOrder(text, userId, client) {
     const data = {};
@@ -15,11 +16,15 @@ export async function verificationOrder(text, userId, client) {
 
     }
 
-    await handleOwnerResponse(client, data, userId)
+    await handleOwnerResponse(client, data, userId);
+
+    return;
 }
 
-export async function verificationPayment(text, userId, client) {
+export async function verificationPayment(text, client) {
     const data = {};
+
+    const users = rawDataUsers.trim() ? JSON.parse(rawDataUsers) : [];
 
     const lines = text.split('\n').map(item => item.toLowerCase().trim());
 
@@ -33,7 +38,25 @@ export async function verificationPayment(text, userId, client) {
 
     }
 
-    if(data.status == "✅") {
-        
+    for (const user of users) {
+        if(user.order_id == data.order_id) {
+            const idOrder = user.order_id;
+        }
     }
+
+    if(data.status == "✅") {
+        await client.sendMessage(
+            idOrder,
+            "Terima kasih, pesanan akan segera kami proses 🙏🏻"
+        );
+    } else if(data.status == "❌") {
+        await client.sendMessage(
+            idOrder,
+            "Bukti pembayaran Anda tidak valid, tolong kirim ulang 🙏🏻"
+        );
+    }
+
+    await sendToGroup(users, client);
+
+    return;
 }

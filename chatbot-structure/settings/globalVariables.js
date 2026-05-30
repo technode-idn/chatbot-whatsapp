@@ -4,6 +4,8 @@ export const aiStatus = {};
 export const sessions = {};
 export const paymentStatus = {};
 export const tenantSession = {};
+export const deliverySession = {};
+export const orderId = "";
 export const campusZone = {
     3000: [
         'ca',

@@ -5,10 +5,10 @@ import puppeteer from 'puppeteer';
 import { exportExcel } from './chatbot-structure/system/exportExcel.js';
 import { aiMode } from './chatbot-structure/system/aiMode.js';
 import { ordering } from './chatbot-structure/system/ordering.js';
-import { sendProofToOwner } from './chatbot-structure/system/tenantBroadcasting.js';
-import { paymentStatus, payment } from './chatbot-structure/system/payment.js';
+import { handleGroupResponse, sendProofToOwner } from './chatbot-structure/system/broadcasting.js';
+import { payment } from './chatbot-structure/system/payment.js';
 import { ongkir } from './chatbot-structure/system/ongkir.js';
-import { pendingProof, aiStatus, sessions, paymentStatus, tenantSession } from './chatbot-structure/settings/globalVariables.js';
+import { pendingProof, aiStatus, sessions, paymentStatus, tenantSession, deliverySession } from './chatbot-structure/settings/globalVariables.js';
 import { verificationOrder } from './chatbot-structure/system/verification.js';
 
 // Membuat Settingan Whatsapp Web
@@ -61,10 +61,12 @@ client.on('ready', () => {
 // ===================
 client.on('message', async message => {
     const allowedNumbers = [
-        '76403240386784@lid',
-        '249344376729705@lid',
-        '77855006433494@lid',
-        '58493310615674@lid'
+        '76403240386784@lid', // Fikri
+        '249344376729705@lid', // Kakak
+        '129454609268764@lid', // Ayah
+        '77855006433494@lid', // Diaz
+        '58493310615674@lid', // Azmi
+        '120363407187484870@g.us' // Group
     ];
 
     // Melacak Siapa Pengirim & Isi Pesannya
@@ -166,7 +168,7 @@ client.on('message', async message => {
         if(text.includes('PESANAN')) {
             await verificationOrder(text, userId, client);
         } else if(text.includes('PEMBAYARAN')) {
-            await verificationPayment(text, userId, client);
+            await verificationPayment(text, client);
         }
         
         delete tenantSession[userId];
@@ -186,13 +188,13 @@ client.on('message', async message => {
             await message.reply(responseOngkir);
         } else if(text == "2") {
             const responsePayment = await payment(userId);
-            const qris_photo = MessageMedia.fromFilePath(responsePayment);
+            const data = MessageMedia.fromFilePath(responsePayment);
 
             await message.reply(
-                qris_photo,
+                data.qris_photo,
                 undefined,
                 {
-                    caption: responseOngkir
+                    caption: `Total harga yang harus dibayar sejumlah Rp ${data.total + responseOngkir}\nSudah ditambah dengan ongkir ${responseOngkir} ya kak 😊🙏🏻`
                 }
             );
         }
@@ -204,25 +206,11 @@ client.on('message', async message => {
         return;
     }
 
-    // Verifikasi Bukti Pembayaran (Proof Session)
-    // ===========================================
-    // if(pendingProof[userId]) {
-    //     const id = Object.keys(paymentStatus);
-
-    //     if(text == "✅") {
-    //         await client.sendMessage(
-    //             id,
-    //             "Terima kasih, pesanan akan segera kami proses 🙏🏻"
-    //         );
-    //         delete pendingProof[id];
-    //         return;
-    //     } else if(text == "❌") {
-    //         await client.sendMessage(
-    //             id,
-    //             "Mohon kirimkan bukti pembayaran yang valid 🙏🏻"
-    //         );
-    //     }
-    // }
+    // Mengirimkan Data Pengiriman Kepada Customer (Delivery Session)
+    // ==============================================================
+    if(deliverySession['120363407187484870@g.us']) {
+        await handleGroupResponse(text)
+    }
 
     // Pengelolaan Pilihan Menu
     // ========================

@@ -1,5 +1,5 @@
 import fs from 'fs/promises';
-import { sendOrderToOwner } from './tenantBroadcasting.js';
+import { sendOrderToOwner } from './broadcasting.js';
 import { sessions } from '../settings/globalVariables.js';
 
 export async function ordering(text, userId, client) {
