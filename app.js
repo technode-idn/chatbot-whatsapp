@@ -5,10 +5,10 @@ import puppeteer from 'puppeteer';
 import { exportExcel } from './chatbot-structure/system/exportExcel.js';
 import { aiMode } from './chatbot-structure/system/aiMode.js';
 import { ordering } from './chatbot-structure/system/ordering.js';
-import { handleGroupResponse, sendProofToOwner } from './chatbot-structure/system/broadcasting.js';
+import { handleGroupResponse, sendProofToGroup } from './chatbot-structure/system/broadcasting.js';
 import { payment } from './chatbot-structure/system/payment.js';
 import { ongkir } from './chatbot-structure/system/ongkir.js';
-import { pendingProof, aiStatus, sessions, paymentStatus, tenantSession, deliverySession } from './chatbot-structure/settings/globalVariables.js';
+import { pendingProof, aiStatus, sessions, paymentStatus, groupSession, deliverySession } from './chatbot-structure/settings/globalVariables.js';
 import { verificationOrder } from './chatbot-structure/system/verification.js';
 
 // Membuat Settingan Whatsapp Web
@@ -92,7 +92,7 @@ client.on('message', async message => {
     // ==================================================================================
     if(message.hasMedia) {
         if(pendingProof[userId]) {
-            await sendProofToOwner(text, userId, client);
+            await sendProofToGroup(text, client);
             delete pendingProof[userId];
             return;
         } else {
@@ -155,7 +155,7 @@ client.on('message', async message => {
     // Menjalankan Sistem Pendataan Formulir, Jika Pengirim Memilih Menu 2 (Ordering Session)
     // ======================================================================================
     if(sessions[userId]) {
-        const responseOrder = await ordering(text, userId, client);        
+        const responseOrder = await ordering(client, text, userId);        
 
         await message.reply(responseOrder);
 
@@ -164,14 +164,14 @@ client.on('message', async message => {
 
     // Follow-Up Customer Mengenai Ketersediaan Produk (Tenant Session)
     // ================================================================
-    if(tenantSession[userId]) {
+    if(groupSession[userId]) {
         if(text.includes('PESANAN')) {
             await verificationOrder(text, userId, client);
         } else if(text.includes('PEMBAYARAN')) {
             await verificationPayment(text, client);
         }
         
-        delete tenantSession[userId];
+        delete groupSession[userId];
 
         return;
     }
@@ -188,13 +188,13 @@ client.on('message', async message => {
             await message.reply(responseOngkir);
         } else if(text == "2") {
             const responsePayment = await payment(userId);
-            const data = MessageMedia.fromFilePath(responsePayment);
+            const qris_photo = MessageMedia.fromFilePath(responsePayment["qris_photo"]);
 
             await message.reply(
-                data.qris_photo,
+                qris_photo,
                 undefined,
                 {
-                    caption: `Total harga yang harus dibayar sejumlah Rp ${data.total + responseOngkir}\nSudah ditambah dengan ongkir ${responseOngkir} ya kak 😊🙏🏻`
+                    caption: `Total harga yang harus dibayar sejumlah Rp ${responsePayment["total"] + responseOngkir}\nSudah ditambah dengan ongkir ${responseOngkir} ya kak 😊🙏🏻`
                 }
             );
         }

@@ -1,8 +1,8 @@
 import fs from 'fs/promises';
-import { sendOrderToOwner } from './broadcasting.js';
+import { sendOrderToGroup } from './broadcasting.js';
 import { sessions } from '../settings/globalVariables.js';
 
-export async function ordering(text, userId, client) {
+export async function ordering(client, text, userId) {
     // Ekstraksi Form Pesanan Customer
     // ===============================
     try {
@@ -20,9 +20,9 @@ export async function ordering(text, userId, client) {
 
         }
 
-        // Mengirim Informasi Pesanan Ke Owner Tenant
+        // Mengirim Informasi Pesanan Ke Group Tenant
         // ==========================================
-        await sendOrderToOwner(client, data, userId);
+        await sendOrderToGroup(client, data, userId);
 
         delete sessions[userId];
 

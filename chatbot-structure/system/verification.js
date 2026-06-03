@@ -1,4 +1,4 @@
-import { handleOwnerResponse, sendToGroup } from "./broadcasting.js";
+import { handleGroupResponse, sendToGroup } from "./broadcasting.js";
 import { rawDataUsers } from "../settings/loadFiles.js";
 
 export async function verificationOrder(text, userId, client) {
@@ -11,12 +11,12 @@ export async function verificationOrder(text, userId, client) {
         if (line.includes(':')) {
             const[key, value] = line.split(':');
 
-            data[key.trim().replace(' ', '_')] = value.trim();
+            data[key.trim().replace(' ', '_')] = value.trim().replace(' ', '_');
         }
 
     }
 
-    await handleOwnerResponse(client, data, userId);
+    await handleGroupResponse(client, data, userId);
 
     return;
 }
@@ -39,24 +39,24 @@ export async function verificationPayment(text, client) {
     }
 
     for (const user of users) {
-        if(user.order_id == data.order_id) {
-            const idOrder = user.order_id;
+        if(user["order_id"] == data["order_id"]) {
+            const idOrder = user["order_id"];
         }
     }
 
-    if(data.status == "✅") {
+    if(data["status"] == "✅") {
         await client.sendMessage(
             idOrder,
             "Terima kasih, pesanan akan segera kami proses 🙏🏻"
         );
-    } else if(data.status == "❌") {
+
+        await sendToGroup(users, client);
+    } else if(data["status"] == "❌") {
         await client.sendMessage(
             idOrder,
             "Bukti pembayaran Anda tidak valid, tolong kirim ulang 🙏🏻"
         );
     }
-
-    await sendToGroup(users, client);
 
     return;
 }

@@ -1,8 +1,33 @@
 [
     {
-        "id": "tenant-1",
-        "store": "Munim",
-        "phone": "76403240386784@lid",
-        "qris": "../img/botol.jpeg"
+        "store": "popkit",
+        "qris": "./chatbot-structure/img/qris_tenant_2.jpg"
+    },
+    {
+        "store": "soeka_dimsum",
+        "qris": "./chatbot-structure/img/qris_tenant_3.jpg"
+    },
+    {
+        "store": "miwiti",
+        "qris": "./chatbot-structure/img/qris_tenant_4.jpg"
+    },
+    {
+        "store": "kusaji",
+        "qris": "./chatbot-structure/img/qris_tenant_4.jpg"
+    },
+    {
+        "store": "servis_coffee",
+        "qris": "./chatbot-structure/img/qris_tenant_5.jpg"
+    },
+    {
+        "store": "hagarasa",
+        "qris": "./chatbot-structure/img/qris_tenant_6.jpg"
+    },
+    {
+        "store": "acio",
+        "qris": "./chatbot-structure/img/qris_tenant_7.jpg"
+    },
+    {
+        "qris": "./chatbot-structure/img/qris_tenant_8.jpg"
     }
 ]

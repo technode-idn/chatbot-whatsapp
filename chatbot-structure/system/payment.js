@@ -1,18 +1,27 @@
 import fs from 'fs/promises';
-import { rawDataUsers } from '../settings/loadFiles.js';
+import { rawDataUsers, rawDataTenant } from '../settings/loadFiles.js';
+
+const tenants = rawDataTenant.trim() ? JSON.parse(rawDataTenant) : [];
+const dataUsers = JSON.parse(rawDataUsers);
 
 export async function payment(userId) {
-    // data_form_user
-    const dataUsers = JSON.parse(rawDataUsers);
 
     for(const dataUser of dataUsers) {
-        if(dataUser.user_id == userId) {
-            qris = dataUser.tenant_qris;
-            total = dataUser.total_price
+        if(dataUser["user_id"] == userId) {
+            const tenant_name = dataUser["tenant_name"];
+            const total = dataUser["total_price"];
+            for(const tenant of tenants) {
+                if(tenant["store"] == tenant_name) {
+                    return {
+                        qris_photo: tenant["qris"],
+                        total_price: total
+                    };
+                }
+            }
             return {
-                qris_photo: qris,
+                qris_photo: tenants[7]["qris"],
                 total_price: total
-            };
+            }
         }
     }
 }
