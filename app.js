@@ -209,7 +209,7 @@ client.on('message', async message => {
     // Mengirimkan Data Pengiriman Kepada Customer (Delivery Session)
     // ==============================================================
     if(deliverySession['120363407187484870@g.us']) {
-        await handleGroupResponse(text)
+        await handleGroupResponse2(text)
     }
 
     // Pengelolaan Pilihan Menu

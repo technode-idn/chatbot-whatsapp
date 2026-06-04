@@ -121,7 +121,7 @@ export async function sendToGroup(data, client) {
     return;
 }
 
-export async function handleGroupResponse(text, client) {
+export async function handleGroupResponse2(text, client) {
     const data = {};
 
     const lines = text.split('\n').map(item => item.toLowerCase().trim());
