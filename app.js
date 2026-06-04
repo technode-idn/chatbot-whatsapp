@@ -5,7 +5,7 @@ import puppeteer from 'puppeteer';
 import { exportExcel } from './chatbot-structure/system/exportExcel.js';
 import { aiMode } from './chatbot-structure/system/aiMode.js';
 import { ordering } from './chatbot-structure/system/ordering.js';
-import { handleGroupResponse, sendProofToGroup } from './chatbot-structure/system/broadcasting.js';
+import { handleGroupResponse, sendProofToGroup, handleGroupResponse2 } from './chatbot-structure/system/broadcasting.js';
 import { payment } from './chatbot-structure/system/payment.js';
 import { ongkir } from './chatbot-structure/system/ongkir.js';
 import { pendingProof, aiStatus, sessions, paymentStatus, groupSession, deliverySession } from './chatbot-structure/settings/globalVariables.js';
