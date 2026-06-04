@@ -1,62 +1,86 @@
-import { handleGroupResponse, sendToGroup } from "./broadcasting.js";
 import { rawDataUsers } from "../settings/loadFiles.js";
+import {
+    handleGroupResponse,
+    sendToGroup
+} from "./broadcasting.js";
 
 export async function verificationOrder(text, userId, client) {
+
     const data = {};
 
-    const lines = text.split('\n').map(item => item.toLowerCase().trim());
+    const lines = text.split('\n');
 
-    for (const line of lines) {
+    for(const line of lines) {
 
-        if (line.includes(':')) {
-            const[key, value] = line.split(':');
+        if(line.includes(':')) {
 
-            data[key.trim().replace(' ', '_')] = value.trim().replace(' ', '_');
+            const [key, value] = line.split(':');
+
+            data[
+                key.trim()
+                .toLowerCase()
+                .replaceAll(' ', '_')
+            ] = value.trim();
         }
-
     }
 
-    await handleGroupResponse(client, data, userId);
+    console.log(data);
 
-    return;
+    await handleGroupResponse(client, data, userId);
 }
 
 export async function verificationPayment(text, client) {
+
     const data = {};
 
-    const users = rawDataUsers.trim() ? JSON.parse(rawDataUsers) : [];
+    const users = rawDataUsers.trim()
+        ? JSON.parse(rawDataUsers)
+        : [];
 
-    const lines = text.split('\n').map(item => item.toLowerCase().trim());
+    const lines = text.split('\n');
 
-    for (const line of lines) {
+    for(const line of lines) {
 
-        if (line.includes(':')) {
-            const[key, value] = line.split(':');
+        if(line.includes(':')) {
 
-            data[key.trim()] = value.trim();
-        }
+            const [key, value] = line.split(':');
 
-    }
-
-    for (const user of users) {
-        if(user["order_id"] == data["order_id"]) {
-            const idOrder = user["order_id"];
+            data[key.trim().toLowerCase()] =
+                value.trim();
         }
     }
 
-    if(data["status"] == "✅") {
+    let customerId = null;
+    let selectedUser = null;
+
+    for(const user of users) {
+
+        if(String(user.order_id) === String(data.order_id)) {
+
+            customerId = user.user_id;
+            selectedUser = user;
+            break;
+        }
+    }
+
+    if(!customerId) {
+        return;
+    }
+
+    if(data.status === "✅") {
+
         await client.sendMessage(
-            idOrder,
+            customerId,
             "Terima kasih, pesanan akan segera kami proses 🙏🏻"
         );
 
-        await sendToGroup(users, client);
-    } else if(data["status"] == "❌") {
+        await sendToGroup(selectedUser, client);
+
+    } else {
+
         await client.sendMessage(
-            idOrder,
-            "Bukti pembayaran Anda tidak valid, tolong kirim ulang 🙏🏻"
+            customerId,
+            "Bukti pembayaran tidak valid, silakan kirim ulang 🙏🏻"
         );
     }
-
-    return;
 }

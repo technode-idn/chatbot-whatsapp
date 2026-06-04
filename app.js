@@ -9,7 +9,10 @@ import { handleGroupResponse, sendProofToGroup, handleGroupResponse2 } from './c
 import { payment } from './chatbot-structure/system/payment.js';
 import { ongkir } from './chatbot-structure/system/ongkir.js';
 import { pendingProof, aiStatus, sessions, paymentStatus, groupSession, deliverySession } from './chatbot-structure/settings/globalVariables.js';
-import { verificationOrder } from './chatbot-structure/system/verification.js';
+import {
+    verificationOrder,
+    verificationPayment
+} from './chatbot-structure/system/verification.js';
 
 // Membuat Settingan Whatsapp Web
 // ==============================
@@ -80,7 +83,7 @@ client.on('message', async message => {
 
     // Ekstraksi Pesan
     // ===============
-    const text = message.body.toLocaleLowerCase().trim();
+    const text = message.body;
 
     // Memeriksa Apakah Nomor Pengirim Terdapat Di Dalam Daftar
     // ========================================================
@@ -165,15 +168,34 @@ client.on('message', async message => {
     // Follow-Up Customer Mengenai Ketersediaan Produk (Tenant Session)
     // ================================================================
     if(groupSession[userId]) {
-        if(text.includes('PESANAN')) {
-            await verificationOrder(text, userId, client);
-        } else if(text.includes('PEMBAYARAN')) {
-            await verificationPayment(text, client);
-        }
-        
-        delete groupSession[userId];
 
-        return;
+        console.log("GROUP SESSION ACTIVE");
+        console.log(text);
+
+        if(text.includes('pesanan')) {
+
+            await verificationOrder(
+                message.body,
+                userId,
+                client
+            );
+
+            delete groupSession[userId];
+
+            return;
+        }
+
+        if(text.includes('pembayaran')) {
+
+            await verificationPayment(
+                message.body,
+                client
+            );
+
+            delete groupSession[userId];
+
+            return;
+        }
     }
 
     // Handling Pemilihan Metode Payment (Payment Session)

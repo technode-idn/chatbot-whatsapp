@@ -1,16 +1,20 @@
 import fs from 'fs/promises';
-import { pendingOrders, paymentStatus, groupSession, deliverySession } from '../settings/globalVariables.js';
 import { rawDataUsers, rawDataTenant } from '../settings/loadFiles.js';
-import { orderId } from '../settings/globalVariables.js';
+import {
+    pendingOrders,
+    paymentStatus,
+    groupSession,
+    deliverySession,
+    lastOrderId
+} from '../settings/globalVariables.js';
 
 const tenants = rawDataTenant.trim() ? JSON.parse(rawDataTenant) : [];
 
 const users = rawDataUsers.trim() ? JSON.parse(rawDataUsers) : [];
 
 export async function sendOrderToGroup(client, orderData, userId) {
-    // Membuat Data Pesanan
-    // ====================
-    orderId = Date.now();
+
+    const orderId = Date.now().toString();
 
     pendingOrders[orderId] = {
         customer: userId,
@@ -19,17 +23,27 @@ export async function sendOrderToGroup(client, orderData, userId) {
 
     await client.sendMessage(
         '120363407187484870@g.us',
-        `📦 Pesanan Baru\n\nNama: ${orderData["nama_pemesan"]}\nProduk: ${orderData["produk_pesanan"]}\nJumlah Pesanan: ${orderData["jumlah_pesanan"]}\nAlamat Pengantaran: ${orderData["alamat_lengkap_pengantaran"]}\nNomor: ${orderData["nomor_telepon_aktif"]}`
+        `📦 PESANAN BARU
+        Nama: ${orderData["nama_pemesan"]}
+        Produk: ${orderData["produk_pesanan"]}
+        Jumlah Pesanan: ${orderData["jumlah_pesanan"]}
+        Alamat Pengantaran: ${orderData["alamat_lengkap_pengantaran"]}
+        Nomor: ${orderData["nomor_telepon_aktif"]}`
     );
 
     await client.sendMessage(
         '120363407187484870@g.us',
-        `MOHON KONFIRMASI PESANAN\n========================\nOrder ID: ${orderId}\n\nStatus Produk: \nToko Penerima: \nTotal Harga: \n\nProduk tersedia, berikan ✅\n| Total Harga = (isi)\nProduk tidak tersedia, berikan ❌\n| Total Harga = -`
+        `MOHON KONFIRMASI PESANAN
+        Order ID: ${orderId}
+
+        Status Produk:
+        Toko Penerima:
+        Total Harga:`
     );
 
     groupSession['120363407187484870@g.us'] = true;
 
-    return;
+    return orderId;
 }
 
 export async function handleGroupResponse(client, data, userId) {
@@ -93,7 +107,8 @@ export async function handleGroupResponse(client, data, userId) {
     return;
 }
 
-export async function sendProofToGroup(proof, client) {
+export async function sendProofToGroup(proof, orderId, client) {
+
     await client.sendMessage(
         '120363407187484870@g.us',
         proof
@@ -101,12 +116,14 @@ export async function sendProofToGroup(proof, client) {
 
     await client.sendMessage(
         '120363407187484870@g.us',
-        `MOHON KONFIRMASI BUKTI PEMBAYARAN\n=================================\nOrder ID: ${orderId}\n\nStatus : \n\nJika valid, berikan ✅\nJika tidak valid, berikan ❌`
+        `MOHON KONFIRMASI PEMBAYARAN
+
+        Order ID: ${orderId}
+
+        Status:`
     );
 
     groupSession['120363407187484870@g.us'] = true;
-
-    return;
 }
 
 export async function sendToGroup(data, client) {
@@ -122,30 +139,42 @@ export async function sendToGroup(data, client) {
 }
 
 export async function handleGroupResponse2(text, client) {
+
     const data = {};
 
-    const lines = text.split('\n').map(item => item.toLowerCase().trim());
+    const lines = text.split('\n');
 
-    for (const line of lines) {
+    for(const line of lines) {
 
-        if (line.includes(':')) {
-            const[key, value] = line.split(':');
+        if(line.includes(':')) {
 
-            data[key.trim().replace(' ', '_')] = value.trim();
+            const [key, value] = line.split(':');
+
+            data[key.trim().toLowerCase().replaceAll(' ', '_')] =
+                value.trim();
         }
-
     }
 
-    for (const user of users) {
-        if(user["order_id"] == data["order_id"]) {
-            const idOrder = user["order_id"];
+    let customerId = null;
+
+    for(const user of users) {
+
+        if(String(user.order_id) === String(data.order_id)) {
+
+            customerId = user.user_id;
+            break;
         }
+    }
+
+    if(!customerId) {
+        return;
     }
 
     await client.sendMessage(
-        idOrder,
-        `Berikut informasi dari pengirimnya ya kak 😊🙏\nNama Pengirim: ${data["nama_pengirim"]}\nNomor Pengirim: ${data["nomor_pengirim"]}`
-    );
+        customerId,
+        `Berikut informasi pengirim:
 
-    return;
+        Nama Pengirim: ${data.nama_pengirim}
+        Nomor Pengirim: ${data.nomor_pengirim}`
+    );
 }

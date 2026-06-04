@@ -1,12 +1,15 @@
 export const pendingOrders = {};
 export const pendingProof = {};
-export const aiStatus = {};
+
 export const sessions = {};
+export const aiStatus = {};
 export const paymentStatus = {};
+
 export const groupSession = {};
 export const deliverySession = {};
-export const orderId = "";
-export const campusZone = {
+
+export let lastOrderId = null;
+export let campusZone = {
     3000: [
         'ca',
         'cb',
