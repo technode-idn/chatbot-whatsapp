@@ -14,19 +14,19 @@ export async function verificationOrder(text, userId, client) {
 
         if(line.includes(':')) {
 
-            const [key, value] = line.split(':');
+            const [key, ...valueParts] = line.split(':');
 
             data[
                 key.trim()
                 .toLowerCase()
                 .replaceAll(' ', '_')
-            ] = value.trim();
+            ] = valueParts.join(':').trim();
         }
     }
 
     console.log(data);
 
-    await handleGroupResponse(client, data, userId);
+    return await handleGroupResponse(client, data, userId);
 }
 
 export async function verificationPayment(text, client) {

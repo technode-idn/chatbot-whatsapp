@@ -17,12 +17,12 @@ export async function exportExcel() {
 
         XLSX.writeFile(
             workbook,
-            './chatbot-structure/export/hasil_form.xlsx'
+            'hasil_form.xlsx'
         );
 
-        return true;
+        return;
     } catch (error) {
         console.log(error);
-        return false;
+        return;
     }
 }

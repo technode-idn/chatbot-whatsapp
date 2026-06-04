@@ -4,13 +4,63 @@ import {
     pendingOrders,
     paymentStatus,
     groupSession,
-    deliverySession,
-    lastOrderId
+    deliverySession
 } from '../settings/globalVariables.js';
 
 const tenants = rawDataTenant.trim() ? JSON.parse(rawDataTenant) : [];
 
 const users = rawDataUsers.trim() ? JSON.parse(rawDataUsers) : [];
+
+function normalizeAvailabilityStatus(status) {
+    const normalizedStatus = String(status || '').trim().toLowerCase();
+
+    if(!normalizedStatus) {
+        return null;
+    }
+
+    const unavailableKeywords = [
+        '❌',
+        'tidak tersedia',
+        'tidak ada',
+        'belum tersedia',
+        'belum ada',
+        'nggak tersedia',
+        'ngga tersedia',
+        'ga tersedia',
+        'gak tersedia',
+        'kosong',
+        'habis',
+        'sold out',
+        'unavailable'
+    ];
+
+    if(unavailableKeywords.some(keyword => normalizedStatus.includes(keyword))) {
+        return 'unavailable';
+    }
+
+    const availableKeywords = [
+        '✅',
+        'tersedia',
+        'stok ada',
+        'ada',
+        'ready',
+        'available',
+        'ya',
+        'yes'
+    ];
+
+    if(availableKeywords.some(keyword => normalizedStatus.includes(keyword))) {
+        return 'available';
+    }
+
+    return null;
+}
+
+function parsePrice(value) {
+    const digits = String(value || '').replace(/[^\d]/g, '');
+
+    return digits ? Number(digits) : 0;
+}
 
 export async function sendOrderToGroup(client, orderData, userId) {
 
@@ -51,16 +101,30 @@ export async function handleGroupResponse(client, data, userId) {
     const orderId = data["order_id"];
 
     const order = pendingOrders[orderId];
+    const availabilityStatus = normalizeAvailabilityStatus(status);
 
     // Memeriksa Status Pesanan
     // ========================
     if (!order) {
-        return ('Pesanan tidak ditemukan');
+        return {
+            success: false,
+            message: 'Pesanan tidak ditemukan. Pastikan Order ID sesuai dengan pesan konfirmasi.'
+        };
+    }
+
+    if (!availabilityStatus) {
+        return {
+            success: false,
+            message: 'Status produk belum terbaca. Isi Status Produk dengan ✅ / tersedia atau ❌ / tidak tersedia.'
+        };
     }
 
     // Jika Stok Barang Tersedia
     // =========================
-    if (status === "✅") {
+    if (availabilityStatus === "available") {
+        const totalProduct = Number(order["data"]["jumlah_pesanan"]) || 1;
+        const totalPrice = parsePrice(data["total_harga"]);
+
         users.push({
             order_id : orderId,
             user_id: order["customer"],
@@ -70,9 +134,9 @@ export async function handleGroupResponse(client, data, userId) {
             address: order["data"]["alamat_lengkap_pengantaran"],
             product_name: order["data"]["produk_pesanan"],
             tenant_name: data["toko_penerima"],
-            total_product: order["data"]["jumlah_pesanan"],
-            product_unit_price: data["total_harga"] / order["data"]["jumlah_pesanan"],
-            total_price: data["total_harga"]
+            total_product: totalProduct,
+            product_unit_price: totalPrice / totalProduct,
+            total_price: totalPrice
         });
 
         await fs.writeFile(
@@ -95,7 +159,7 @@ export async function handleGroupResponse(client, data, userId) {
 
     // Jika Stok Barang Tidak Tersedia
     // ===============================
-    if (status === "❌") {
+    if (availabilityStatus === "unavailable") {
         await client.sendMessage(
             order["customer"],
             'Mohon Maaf, produk sedang tidak tersedia ❌'
@@ -104,7 +168,9 @@ export async function handleGroupResponse(client, data, userId) {
 
     delete pendingOrders[orderId];
 
-    return;
+    return {
+        success: true
+    };
 }
 
 export async function sendProofToGroup(proof, orderId, client) {

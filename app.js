@@ -5,7 +5,7 @@ import puppeteer from 'puppeteer';
 import { exportExcel } from './chatbot-structure/system/exportExcel.js';
 import { aiMode } from './chatbot-structure/system/aiMode.js';
 import { ordering } from './chatbot-structure/system/ordering.js';
-import { handleGroupResponse, sendProofToGroup, handleGroupResponse2 } from './chatbot-structure/system/broadcasting.js';
+import { sendProofToGroup, handleGroupResponse2 } from './chatbot-structure/system/broadcasting.js';
 import { payment } from './chatbot-structure/system/payment.js';
 import { ongkir } from './chatbot-structure/system/ongkir.js';
 import { pendingProof, aiStatus, sessions, paymentStatus, groupSession, deliverySession } from './chatbot-structure/settings/globalVariables.js';
@@ -17,24 +17,32 @@ import {
 // Membuat Settingan Whatsapp Web
 // ==============================
 const client = new Client({
-    authStrategy: new LocalAuth(),
-
-    puppeteer: {
-        executablePath: "C:\\Program Files (x86)\\Microsoft\\Edge\\Application\\msedge.exe",
-        headless: true,
-        args: [
-            '--no-sandbox',
-            '--disable-setuid-sandbox',
-            '--disable-dev-shm-usage',
-            '--disable-accelerated-2d-canvas',
-            '--disabled-gpu'
-        ]
-    }
+    authStrategy: new LocalAuth()
 });
 
 // Menyimpan Session Users
 // =======================
 const welcomedUsers = new Set();
+
+function isAvailabilityResponse(text) {
+    const hasOrderId = /^\s*order id\s*:/im.test(text);
+    const hasStatusProduk = /^\s*status produk\s*:/im.test(text);
+
+    return (
+        hasOrderId &&
+        (text.toLowerCase().includes('pesanan') || hasStatusProduk)
+    );
+}
+
+function isPaymentResponse(text) {
+    const hasOrderId = /^\s*order id\s*:/im.test(text);
+    const hasPaymentStatus = /^\s*status\s*:/im.test(text);
+
+    return (
+        hasOrderId &&
+        (text.toLowerCase().includes('pembayaran') || hasPaymentStatus)
+    );
+}
 
 // Membuat QR Code
 // ===============
@@ -80,6 +88,7 @@ client.on('message', async message => {
     // Menyimpan Informasi Pengirim
     // ============================
     const userId = message.from;
+    const isGroupMessage = userId.endsWith('@g.us');
 
     // Ekstraksi Pesan
     // ===============
@@ -103,6 +112,56 @@ client.on('message', async message => {
         }
     }
 
+    // Follow-Up Dari Group Tenant / Admin
+    // ===================================
+    if(isGroupMessage) {
+        if(groupSession[userId]) {
+            console.log("GROUP SESSION ACTIVE");
+            console.log(text);
+
+            if(isAvailabilityResponse(text)) {
+                const result = await verificationOrder(
+                    message.body,
+                    userId,
+                    client
+                );
+
+                if(result?.message) {
+                    await message.reply(result.message);
+                }
+
+                if(result?.success) {
+                    delete groupSession[userId];
+                }
+
+                return;
+            }
+
+            if(isPaymentResponse(text)) {
+                await verificationPayment(
+                    message.body,
+                    client
+                );
+
+                delete groupSession[userId];
+
+                return;
+            }
+
+            return;
+        }
+
+        if(deliverySession[userId]) {
+            await handleGroupResponse2(text, client);
+
+            delete deliverySession[userId];
+
+            return;
+        }
+
+        return;
+    }
+
     // Memeriksa & Menyimpan Data Pengirim, Jika Pertama Kalinya Berkunjung
     // ====================================================================
     if(!welcomedUsers.has(userId)) {
@@ -117,17 +176,8 @@ client.on('message', async message => {
 
     // Handling Untuk Export File (Excel)
     // ==================================
-    if(userId == "58493310615674@lid") {
-        if(text === "export") {
-            const success = await exportExcel();
-
-            if(success) {
-                const file = MessageMedia.fromFilePath('./chatbot-structure/export/hasil_form.xlsx');
-                await message.reply(media);
-            } else {
-                await message.reply('Export Gagagl');
-            }
-        }
+    if(text === "export") {
+        await exportExcel();
     }
 
     // Handling Berpindah Menu
@@ -165,39 +215,6 @@ client.on('message', async message => {
         return;
     }
 
-    // Follow-Up Customer Mengenai Ketersediaan Produk (Tenant Session)
-    // ================================================================
-    if(groupSession[userId]) {
-
-        console.log("GROUP SESSION ACTIVE");
-        console.log(text);
-
-        if(text.includes('pesanan')) {
-
-            await verificationOrder(
-                message.body,
-                userId,
-                client
-            );
-
-            delete groupSession[userId];
-
-            return;
-        }
-
-        if(text.includes('pembayaran')) {
-
-            await verificationPayment(
-                message.body,
-                client
-            );
-
-            delete groupSession[userId];
-
-            return;
-        }
-    }
-
     // Handling Pemilihan Metode Payment (Payment Session)
     // ===================================================
     if(paymentStatus[userId]) {
@@ -210,13 +227,22 @@ client.on('message', async message => {
             await message.reply(responseOngkir);
         } else if(text == "2") {
             const responsePayment = await payment(userId);
+            
+            if(!responsePayment) {
+                await message.reply('Data pembayaran belum ditemukan. Mohon coba lagi setelah pesanan dikonfirmasi.');
+                return;
+            }
+
+            const totalPrice = Number(responsePayment["total_price"]) || 0;
+            const shippingCost = Number(responseOngkir) || 0;
+            const totalPayment = totalPrice + shippingCost;
             const qris_photo = MessageMedia.fromFilePath(responsePayment["qris_photo"]);
 
             await message.reply(
                 qris_photo,
                 undefined,
                 {
-                    caption: `Total harga yang harus dibayar sejumlah Rp ${responsePayment["total"] + responseOngkir}\nSudah ditambah dengan ongkir ${responseOngkir} ya kak 😊🙏🏻`
+                    caption: `Total harga yang harus dibayar sejumlah Rp ${totalPayment}\nSudah ditambah dengan ongkir ${shippingCost} ya kak 😊🙏🏻`
                 }
             );
         }
@@ -226,12 +252,6 @@ client.on('message', async message => {
         pendingProof[userId] = true;
 
         return;
-    }
-
-    // Mengirimkan Data Pengiriman Kepada Customer (Delivery Session)
-    // ==============================================================
-    if(deliverySession['120363407187484870@g.us']) {
-        await handleGroupResponse2(text)
     }
 
     // Pengelolaan Pilihan Menu

@@ -1,27 +1,46 @@
 import fs from 'fs/promises';
-import { rawDataUsers, rawDataTenant } from '../settings/loadFiles.js';
+import { rawDataTenant } from '../settings/loadFiles.js';
 
 const tenants = rawDataTenant.trim() ? JSON.parse(rawDataTenant) : [];
-const dataUsers = JSON.parse(rawDataUsers);
+const DATA_USERS_PATH = './chatbot-structure/data/data_form_users.json';
+
+async function loadDataUsers() {
+    const rawDataUsers = await fs.readFile(DATA_USERS_PATH, 'utf8');
+
+    return rawDataUsers.trim()
+        ? JSON.parse(rawDataUsers)
+        : [];
+}
+
+function findTenantQris(tenantName) {
+    const normalizedTenantName = String(tenantName || '').trim().toLowerCase();
+
+    const selectedTenant = tenants.find((tenant) => (
+        String(tenant.store || '').trim().toLowerCase() === normalizedTenantName
+    ));
+
+    return selectedTenant?.qris || tenants[tenants.length - 1]?.qris;
+}
 
 export async function payment(userId) {
+    const dataUsers = await loadDataUsers();
 
-    for(const dataUser of dataUsers) {
+    for(let index = dataUsers.length - 1; index >= 0; index--) {
+        const dataUser = dataUsers[index];
+
         if(dataUser["user_id"] == userId) {
-            const tenant_name = dataUser["tenant_name"];
-            const total = dataUser["total_price"];
-            for(const tenant of tenants) {
-                if(tenant["store"] == tenant_name) {
-                    return {
-                        qris_photo: tenant["qris"],
-                        total_price: total
-                    };
-                }
+            const qrisPhoto = findTenantQris(dataUser["tenant_name"]);
+
+            if(!qrisPhoto) {
+                return null;
             }
+
             return {
-                qris_photo: tenants[7]["qris"],
-                total_price: total
-            }
+                qris_photo: qrisPhoto,
+                total_price: Number(dataUser["total_price"]) || 0
+            };
         }
     }
+
+    return null;
 }

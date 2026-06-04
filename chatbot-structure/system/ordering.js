@@ -13,9 +13,14 @@ export async function ordering(client, text, userId) {
         for (const line of lines) {
 
             if (line.includes('📌')) {
-                const[key, value] = line.split(':');
+                const [key, ...valueParts] = line.split(':');
+                const normalizedKey = key
+                    .replace('📌','')
+                    .trim()
+                    .replace(/\s+/g, '_')
+                    .replace('telpon', 'telepon');
 
-                data[key.replace('📌','').trim().replace(' ', '_')] = value.trim();
+                data[normalizedKey] = valueParts.join(':').trim();
             }
 
         }
