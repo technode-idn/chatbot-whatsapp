@@ -1,8 +1,8 @@
 import fs from 'fs/promises';
-import { sendOrderToGroup } from './broadcasting.js';
+import { sendOrderToGroup } from './broadcasting/sendOrder.js';
 import { sessions } from '../settings/globalVariables.js';
 
-export async function ordering(client, text, userId) {
+export async function ordering(text, userId, client) {
     // Ekstraksi Form Pesanan Customer
     // ===============================
     try {
@@ -18,7 +18,6 @@ export async function ordering(client, text, userId) {
                     .replace('📌','')
                     .trim()
                     .replace(/\s+/g, '_')
-                    .replace('telpon', 'telepon');
 
                 data[normalizedKey] = valueParts.join(':').trim();
             }
@@ -27,7 +26,7 @@ export async function ordering(client, text, userId) {
 
         // Mengirim Informasi Pesanan Ke Group Tenant
         // ==========================================
-        await sendOrderToGroup(client, data, userId);
+        await sendOrderToGroup(data, userId, client);
 
         delete sessions[userId];
 

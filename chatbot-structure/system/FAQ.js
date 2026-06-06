@@ -1,7 +1,7 @@
 
 import axios from "axios";
 
-export async function aiMode(text) {
+export async function faq(text) {
     try {
         console.log("Mau kirim ke FastApi")
     

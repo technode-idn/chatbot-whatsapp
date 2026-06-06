@@ -1,7 +1,7 @@
 import XLSX from 'xlsx';
 import { rawDataUsers } from '../settings/loadFiles.js';
 
-export async function exportExcel() {
+export async function exportData() {
     try {
         const users = JSON.parse(rawDataUsers);
 
@@ -17,7 +17,7 @@ export async function exportExcel() {
 
         XLSX.writeFile(
             workbook,
-            'hasil_form.xlsx'
+            'customer_recap.xlsx'
         );
 
         return;

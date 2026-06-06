@@ -1,14 +1,12 @@
 import { rawDataUsers } from "../settings/loadFiles.js";
-import {
-    handleGroupResponse,
-    sendToGroup
-} from "./broadcasting.js";
+import { handleGroupResponse } from "./broadcasting/sendOrder.js";
+import { pendingProof } from "../settings/globalVariables.js";
 
-export async function verificationOrder(text, userId, client) {
+export async function verificationOrder(text, client) {
 
     const data = {};
 
-    const lines = text.split('\n');
+    const lines = text.split('\n').map(item => item.toLowerCase().trim());
 
     for(const line of lines) {
 
@@ -16,28 +14,20 @@ export async function verificationOrder(text, userId, client) {
 
             const [key, ...valueParts] = line.split(':');
 
-            data[
-                key.trim()
-                .toLowerCase()
-                .replaceAll(' ', '_')
-            ] = valueParts.join(':').trim();
+            data[key.trim().replaceAll(' ', '_')] = valueParts.join(':').trim();
         }
     }
 
-    console.log(data);
-
-    return await handleGroupResponse(client, data, userId);
+    return await handleGroupResponse(data, client);
 }
 
 export async function verificationPayment(text, client) {
 
     const data = {};
 
-    const users = rawDataUsers.trim()
-        ? JSON.parse(rawDataUsers)
-        : [];
+    const users = rawDataUsers.trim() ? JSON.parse(rawDataUsers) : [];
 
-    const lines = text.split('\n');
+    const lines = text.split('\n').map(item => item.toLowerCase().trim());
 
     for(const line of lines) {
 
@@ -45,8 +35,7 @@ export async function verificationPayment(text, client) {
 
             const [key, value] = line.split(':');
 
-            data[key.trim().toLowerCase()] =
-                value.trim();
+            data[key.trim()] = value.trim();
         }
     }
 
@@ -74,7 +63,7 @@ export async function verificationPayment(text, client) {
             "Terima kasih, pesanan akan segera kami proses 🙏🏻"
         );
 
-        await sendToGroup(selectedUser, client);
+        delete pendingProof[customerId];
 
     } else {
 

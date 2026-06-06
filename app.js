@@ -2,17 +2,14 @@ import pkg from 'whatsapp-web.js';
 const { Client, LocalAuth, MessageMedia } = pkg;
 import qrcode from "qrcode-terminal";
 import puppeteer from 'puppeteer';
-import { exportExcel } from './chatbot-structure/system/exportExcel.js';
-import { aiMode } from './chatbot-structure/system/aiMode.js';
+import { exportData } from './chatbot-structure/system/exportData.js';
+import { faq } from './chatbot-structure/system/FAQ.js';
 import { ordering } from './chatbot-structure/system/ordering.js';
-import { sendProofToGroup, handleGroupResponse2 } from './chatbot-structure/system/broadcasting.js';
+import { sendProofToGroup } from './chatbot-structure/system/broadcasting/sendProof.js';
 import { payment } from './chatbot-structure/system/payment.js';
 import { ongkir } from './chatbot-structure/system/ongkir.js';
 import { pendingProof, aiStatus, sessions, paymentStatus, groupSession, deliverySession } from './chatbot-structure/settings/globalVariables.js';
-import {
-    verificationOrder,
-    verificationPayment
-} from './chatbot-structure/system/verification.js';
+import { verificationOrder, verificationPayment } from './chatbot-structure/system/verification.js';
 
 // Membuat Settingan Whatsapp Web
 // ==============================
@@ -87,8 +84,11 @@ client.on('message', async message => {
 
     // Menyimpan Informasi Pengirim
     // ============================
-    const userId = message.from;
-    const isGroupMessage = userId.endsWith('@g.us');
+    if(message.from.endsWith('@g.us')) {
+        const groupId = message.from;
+    } else {
+        const userId = message.from;
+    }
 
     // Ekstraksi Pesan
     // ===============
@@ -104,57 +104,37 @@ client.on('message', async message => {
     // ==================================================================================
     if(message.hasMedia) {
         if(pendingProof[userId]) {
-            await sendProofToGroup(text, client);
-            delete pendingProof[userId];
+            const proof_photo = await message.downloadMedia();
+
+            await sendProofToGroup(proof_photo, userId, client);
+
             return;
         } else {
             return;
         }
     }
 
-    // Follow-Up Dari Group Tenant / Admin
-    // ===================================
-    if(isGroupMessage) {
-        if(groupSession[userId]) {
-            console.log("GROUP SESSION ACTIVE");
-            console.log(text);
+    // Follow-Up Dari Group Tenant (Group Session)
+    // ===========================================
+    if(groupSession[groupId]) {
+        if(isAvailabilityResponse(text)) {
+            const result = await verificationOrder(message.body, client);
 
-            if(isAvailabilityResponse(text)) {
-                const result = await verificationOrder(
-                    message.body,
-                    userId,
-                    client
-                );
-
-                if(result?.message) {
-                    await message.reply(result.message);
-                }
-
-                if(result?.success) {
-                    delete groupSession[userId];
-                }
-
-                return;
+            if(result?.message) {
+                await message.reply(result.message);
             }
 
-            if(isPaymentResponse(text)) {
-                await verificationPayment(
-                    message.body,
-                    client
-                );
-
-                delete groupSession[userId];
-
-                return;
+            if(result?.success) {
+                delete groupSession[groupId];
             }
 
             return;
         }
 
-        if(deliverySession[userId]) {
-            await handleGroupResponse2(text, client);
+        if(isPaymentResponse(text)) {
+            await verificationPayment(message.body, client);
 
-            delete deliverySession[userId];
+            delete groupSession[groupId];
 
             return;
         }
@@ -168,7 +148,7 @@ client.on('message', async message => {
         welcomedUsers.add(userId);
 
         await message.reply(
-            "Halo kak👋\nTerima kasih sudah menghubungi Klikbi Go🍽️🚚\nSaya admin KlikBiGo, ada yang bisa kami bantu? 😊\n[1] Pesan Produk\n[2] Tanya Produk\n[3] FAQ\n[4] Hubungi Admin"
+            "Halo kak👋\n\nTerima kasih sudah menghubungi Klikbi Go🍽️🚚\n\nSaya admin KlikBiGo, ada yang bisa kami bantu? 😊\n[1] Pesan Produk\n[2] FAQ\n[3] Hubungi Admin"
         );
 
         return;
@@ -177,7 +157,7 @@ client.on('message', async message => {
     // Handling Untuk Export File (Excel)
     // ==================================
     if(text === "export") {
-        await exportExcel();
+        await exportData();
     }
 
     // Handling Berpindah Menu
@@ -188,7 +168,7 @@ client.on('message', async message => {
         delete aiStatus[userId];
 
         await message.reply(
-            "Halo kak👋\nTerima kasih sudah menghubungi Klikbi Go🍽️🚚\nSaya admin KlikBiGo, ada yang bisa kami bantu? 😊\n[1] Pesan Produk\n[2] Tanya Produk\n[3] FAQ\n[4] Hubungi Admin"
+            "Halo kak👋\n\nTerima kasih sudah menghubungi Klikbi Go🍽️🚚\n\nSaya admin KlikBiGo, ada yang bisa kami bantu? 😊\n[1] Pesan Produk\n[2] FAQ\n[3] Hubungi Admin"
         );
         
         return;
@@ -197,7 +177,7 @@ client.on('message', async message => {
     // Menjalankan AI Mode, Jika Pengirim Memilih Menu 1 (AI Session)
     // ==============================================================
     if(aiStatus[userId]) {
-        const responseAi =  await aiMode(text);
+        const responseAi =  await faq(text);
 
         await message.reply(responseAi);
 
@@ -208,7 +188,7 @@ client.on('message', async message => {
     // Menjalankan Sistem Pendataan Formulir, Jika Pengirim Memilih Menu 2 (Ordering Session)
     // ======================================================================================
     if(sessions[userId]) {
-        const responseOrder = await ordering(client, text, userId);        
+        const responseOrder = await ordering(text, userId, client);        
 
         await message.reply(responseOrder);
 
@@ -224,7 +204,6 @@ client.on('message', async message => {
             await message.reply(
                 "Siap kak\nPembayaran dilakukan secara cash saat pesanan diterima ya.\nPesanan akan segera kami proses"
             );
-            await message.reply(responseOngkir);
         } else if(text == "2") {
             const responsePayment = await payment(userId);
             
@@ -242,7 +221,7 @@ client.on('message', async message => {
                 qris_photo,
                 undefined,
                 {
-                    caption: `Total harga yang harus dibayar sejumlah Rp ${totalPayment}\nSudah ditambah dengan ongkir ${shippingCost} ya kak 😊🙏🏻`
+                    caption: `Total harga yang harus dibayar sejumlah Rp ${totalPayment}\nSudah ditambah dengan ongkir ${shippingCost} ya kak 😊🙏🏻\nMohon konfirmasi dan screenshot jika pembayaran sudah dilakukan 🙏🏻`
                 }
             );
         }
@@ -261,7 +240,7 @@ client.on('message', async message => {
             sessions[userId] = true;
 
             await message.reply(
-                "Baik kak, supaya kami bisa proses pesanannya, mohon info ya :\n\n📌Nama Pemesan : \n📌Produk Pesanan : \n📌Jumlah Pesanan : \n📌Alamat Lengkap Pengantaran : \n📌Nomor Telpon Aktif : \n\nTerima Kasih🙏😊"
+                "Baik kak, supaya kami bisa proses pesanannya, mohon info ya.\n\n📌Nama Pemesan : \n📌Produk Pesanan : \n📌Jumlah Pesanan : \n📌Alamat Lengkap Pengantaran : \n📌Nomor Telepon Aktif : \n\nTerima Kasih🙏😊"
             );
             
             return;
@@ -276,8 +255,6 @@ client.on('message', async message => {
 
             return;
         case "3":
-            return;
-        case "4":
             return;
     }
 });
