@@ -1,6 +1,7 @@
 import { rawDataUsers } from "../settings/loadFiles.js";
 import { handleGroupResponse } from "./broadcasting/sendOrder.js";
 import { pendingProof } from "../settings/globalVariables.js";
+import { inputDelivery } from "./broadcasting/sendDelivery.js";
 
 export async function verificationOrder(text, client) {
 
@@ -35,19 +36,17 @@ export async function verificationPayment(text, client) {
 
             const [key, value] = line.split(':');
 
-            data[key.trim()] = value.trim();
+            data[key.trim().replaceAll(' ', '_')] = value.trim();
         }
     }
 
     let customerId = null;
-    let selectedUser = null;
 
     for(const user of users) {
 
         if(String(user.order_id) === String(data.order_id)) {
 
             customerId = user.user_id;
-            selectedUser = user;
             break;
         }
     }
@@ -58,10 +57,7 @@ export async function verificationPayment(text, client) {
 
     if(data.status === "✅") {
 
-        await client.sendMessage(
-            customerId,
-            "Terima kasih, pesanan akan segera kami proses 🙏🏻"
-        );
+        await inputDelivery(data.order_id, client)
 
         delete pendingProof[customerId];
 

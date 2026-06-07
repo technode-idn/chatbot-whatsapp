@@ -8,8 +8,10 @@ import { ordering } from './chatbot-structure/system/ordering.js';
 import { sendProofToGroup } from './chatbot-structure/system/broadcasting/sendProof.js';
 import { payment } from './chatbot-structure/system/payment.js';
 import { ongkir } from './chatbot-structure/system/ongkir.js';
-import { pendingProof, aiStatus, sessions, paymentStatus, groupSession, deliverySession } from './chatbot-structure/settings/globalVariables.js';
+import { pendingProof, aiStatus, sessions, paymentStatus, groupSession, deliverySession, formSession, multipleFormSession } from './chatbot-structure/settings/globalVariables.js';
 import { verificationOrder, verificationPayment } from './chatbot-structure/system/verification.js';
+import { handleDeliveryResponse } from './chatbot-structure/system/broadcasting/sendDelivery.js';
+import { generateFormMultipleOrder } from './chatbot-structure/settings/generateFormMultipleOrder.js';
 
 // Membuat Settingan Whatsapp Web
 // ==============================
@@ -165,8 +167,6 @@ client.on('message', async message => {
     if(text === "menu" || text === "keluar") {
         delete sessions[userId];
 
-        delete aiStatus[userId];
-
         await message.reply(
             "Halo kak👋\n\nTerima kasih sudah menghubungi Klikbi Go🍽️🚚\n\nSaya admin KlikBiGo, ada yang bisa kami bantu? 😊\n[1] Pesan Produk\n[2] FAQ\n[3] Hubungi Admin"
         );
@@ -181,6 +181,40 @@ client.on('message', async message => {
 
         await message.reply(responseAi);
 
+
+        return;
+    }
+
+    // Pemilihan Metode Pemesanan, Single or Multiple (Form Session)
+    // =============================================================
+    if(formSession[userId]) {
+        if(text == "1") {
+            await message.reply(
+                "Baik kak, supaya kami bisa proses pesanannya, mohon info ya.\n\n📌Nama Pemesan : \n📌Produk Pesanan : \n📌Jumlah Pesanan : \n📌Alamat Lengkap Pengantaran : \n📌Nomor Telepon Aktif : \n\nTerima Kasih🙏😊\n\n_*Jika ingin keluar, ketik menu/keluar_"
+            );
+
+            sessions[userId] = true;
+        } else if(text == "2") {
+            await message.reply("Berapa produk yang ingin anda pesan?\n[1] 1\n[2] 2\n[3] 3\n [4] 4\n[5] 5");
+
+            multipleFormSession[userId] = true;
+        }
+
+        delete formSession[userId];
+
+        return;
+    }
+
+    // Metode Pemesanan Multiple Order (Multiple Order Session)
+    // ========================================================
+    if(multipleFormSession[userId]) {
+        const responseForm = await generateFormMultipleOrder(text);
+
+        await message.reply(responseForm);
+
+        sessions[userId] = true;
+
+        delete multipleFormSession[userId];
 
         return;
     }
@@ -233,15 +267,21 @@ client.on('message', async message => {
         return;
     }
 
+    // Mengirimkan Informasi Pengirim Kepada Customer (Delivery Session)
+    // =================================================================
+    if(deliverySession[groupId]) {
+        await handleDeliveryResponse(text, client);
+
+        return;
+    }
+
     // Pengelolaan Pilihan Menu
     // ========================
     switch(text) {
         case "1":
-            sessions[userId] = true;
+            formSession[userId] = true;
 
-            await message.reply(
-                "Baik kak, supaya kami bisa proses pesanannya, mohon info ya.\n\n📌Nama Pemesan : \n📌Produk Pesanan : \n📌Jumlah Pesanan : \n📌Alamat Lengkap Pengantaran : \n📌Nomor Telepon Aktif : \n\nTerima Kasih🙏😊"
-            );
+            await message.reply("Berapa banyak yang ingin Anda pesan?\n[1] Single Order\n[2] Multiple Order")
             
             return;
         case "2":

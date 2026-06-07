@@ -1,5 +1,6 @@
 import { pendingOrders, paymentStatus, groupSession } from "../../settings/globalVariables";
 import { rawDataUsers } from "../../settings/loadFiles";
+import { sendOrderMessage, validationOrderMessage } from "../../settings/validationOrderText";
 
 const users = rawDataUsers.trim() ? JSON.parse(rawDataUsers) : [];
 
@@ -20,12 +21,12 @@ export async function sendOrderToGroup(orderData, userId, client) {
 
     await client.sendMessage(
         '120363407187484870@g.us',
-        `📦 PESANAN BARU\n\nNama: ${orderData["nama_pemesan"]}\nProduk: ${orderData["produk_pesanan"]}\nJumlah Pesanan: ${orderData["jumlah_pesanan"]}\nAlamat Pengantaran: ${orderData["alamat_lengkap_pengantaran"]}\nNomor: ${orderData["nomor_telepon_aktif"]}`
+        sendOrderMessage(orderData)
     );
 
     await client.sendMessage(
         '120363407187484870@g.us',
-        `MOHON KONFIRMASI PESANAN\n========================\nOrder ID: ${orderId}\n\nStatus Produk: \nToko Penerima: \nTotal Harga: \n\nJika Tersedia\n| Status Produk -> ✅\n| Total Harga -> Isi\nJika Tidak Tersedia\n| Status Produk -> ❌\n| Total Harga -> -`
+        validationOrderMessage(orderId, orderData)
     );
 
     groupSession['120363407187484870@g.us'] = true;

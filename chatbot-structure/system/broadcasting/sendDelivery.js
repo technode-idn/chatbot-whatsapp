@@ -3,11 +3,11 @@ import { rawDataUsers } from "../../settings/loadFiles";
 
 const users = rawDataUsers.trim() ? JSON.parse(rawDataUsers) : [];
 
-export async function sendToGroup(data, client) {
+export async function inputDelivery(orderId, client) {
 
     await client.sendMessage(
         '120363407187484870@g.us',
-        `MOHON KONFIRMASI PENGIRIMAN\n==========================\nOrder ID: ${data["order_id"]}\n\nNama Pengirim: \nNomor Pengirim: `
+        `MOHON KONFIRMASI PENGIRIMAN\n==========================\nOrder ID: ${orderId}\n\nNama Pengirim: \nNomor Pengirim: `
     );
 
     deliverySession['120363407187484870@g.us'] = true;
@@ -15,7 +15,7 @@ export async function sendToGroup(data, client) {
     return;
 }
 
-export async function handleGroupResponse2(text, client) {
+export async function handleDeliveryResponse(text, client) {
 
     const data = {};
 
@@ -49,9 +49,8 @@ export async function handleGroupResponse2(text, client) {
 
     await client.sendMessage(
         customerId,
-        `Berikut informasi pengirim:
-
-        Nama Pengirim: ${data.nama_pengirim}
-        Nomor Pengirim: ${data.nomor_pengirim}`
+        `Informasi Pengiriman:\n\nNama Pengirim: ${data.nama_pengirim}\nNomor Pengirim: ${data.nomor_pengirim}`
     );
+
+    delete deliverySession['120363407187484870@g.us'];
 }

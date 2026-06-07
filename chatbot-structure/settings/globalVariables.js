@@ -5,6 +5,8 @@ export const aiStatus = {};
 export const paymentStatus = {};
 export const groupSession = {};
 export const deliverySession = {};
+export const formSession = {};
+export const multipleFormSession = {};
 export let lastOrderId = null;
 export let campusZone = {
     3000: [
