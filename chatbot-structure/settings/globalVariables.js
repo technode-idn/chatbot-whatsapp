@@ -7,6 +7,7 @@ export const groupSession = {};
 export const deliverySession = {};
 export const formSession = {};
 export const multipleFormSession = {};
+export const editingOrder = {};
 export let lastOrderId = null;
 export let campusZone = {
     3000: [

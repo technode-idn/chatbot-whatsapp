@@ -1,6 +1,6 @@
 import fs from 'fs/promises';
-import { sendOrderToGroup } from './broadcasting/sendOrder.js';
-import { sessions } from '../settings/globalVariables.js';
+import { sendOrderToGroup } from '../broadcasting/sendOrder.js';
+import { sessions } from '../../settings/globalVariables.js';
 
 export async function ordering(text, userId, client) {
     // Ekstraksi Form Pesanan Customer

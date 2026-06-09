@@ -4,14 +4,14 @@ import qrcode from "qrcode-terminal";
 import puppeteer from 'puppeteer';
 import { exportData } from './chatbot-structure/system/exportData.js';
 import { faq } from './chatbot-structure/system/FAQ.js';
-import { ordering } from './chatbot-structure/system/ordering.js';
+import { ordering } from './chatbot-structure/system/ordering/ordering.js';
 import { sendProofToGroup } from './chatbot-structure/system/broadcasting/sendProof.js';
 import { payment } from './chatbot-structure/system/payment.js';
 import { ongkir } from './chatbot-structure/system/ongkir.js';
-import { pendingProof, aiStatus, sessions, paymentStatus, groupSession, deliverySession, formSession, multipleFormSession } from './chatbot-structure/settings/globalVariables.js';
+import { pendingProof, aiStatus, sessions, paymentStatus, groupSession, deliverySession, formSession, multipleFormSession, editingOrder } from './chatbot-structure/settings/globalVariables.js';
 import { verificationOrder, verificationPayment } from './chatbot-structure/system/verification.js';
 import { handleDeliveryResponse } from './chatbot-structure/system/broadcasting/sendDelivery.js';
-import { generateFormMultipleOrder } from './chatbot-structure/settings/generateFormMultipleOrder.js';
+import { generateFormMultipleOrder } from './chatbot-structure/system/ordering/generateFormMultipleOrder.js';
 
 // Membuat Settingan Whatsapp Web
 // ==============================
@@ -116,34 +116,6 @@ client.on('message', async message => {
         }
     }
 
-    // Follow-Up Dari Group Tenant (Group Session)
-    // ===========================================
-    if(groupSession[groupId]) {
-        if(isAvailabilityResponse(text)) {
-            const result = await verificationOrder(message.body, client);
-
-            if(result?.message) {
-                await message.reply(result.message);
-            }
-
-            if(result?.success) {
-                delete groupSession[groupId];
-            }
-
-            return;
-        }
-
-        if(isPaymentResponse(text)) {
-            await verificationPayment(message.body, client);
-
-            delete groupSession[groupId];
-
-            return;
-        }
-
-        return;
-    }
-
     // Memeriksa & Menyimpan Data Pengirim, Jika Pertama Kalinya Berkunjung
     // ====================================================================
     if(!welcomedUsers.has(userId)) {
@@ -171,6 +143,34 @@ client.on('message', async message => {
             "Halo kak👋\n\nTerima kasih sudah menghubungi Klikbi Go🍽️🚚\n\nSaya admin KlikBiGo, ada yang bisa kami bantu? 😊\n[1] Pesan Produk\n[2] FAQ\n[3] Hubungi Admin"
         );
         
+        return;
+    }
+
+    // Follow-Up Dari Group Tenant (Group Session)
+    // ===========================================
+    if(groupSession[groupId]) {
+        if(isAvailabilityResponse(text)) {
+            const result = await verificationOrder(message.body, client);
+
+            if(result?.message) {
+                await message.reply(result.message);
+            }
+
+            if(result?.success) {
+                delete groupSession[groupId];
+            }
+
+            return;
+        }
+
+        if(isPaymentResponse(text)) {
+            await verificationPayment(message.body, client);
+
+            delete groupSession[groupId];
+
+            return;
+        }
+
         return;
     }
 
@@ -227,6 +227,12 @@ client.on('message', async message => {
         await message.reply(responseOrder);
 
         return;
+    }
+
+    // Mengganti/Edit, Jika Suatu Produk Tidak Tersedia (Editing Order Session)
+    // ========================================================================
+    if(editingOrder[userId]) {
+        await editingOrder();
     }
 
     // Handling Pemilihan Metode Payment (Payment Session)
