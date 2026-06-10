@@ -1,16 +1,25 @@
-import { deliverySession } from "../../settings/globalVariables";
-import { rawDataUsers } from "../../settings/loadFiles";
+import fs from 'fs/promises';
+import { deliverySession } from "../../settings/globalVariables.js";
 
-const users = rawDataUsers.trim() ? JSON.parse(rawDataUsers) : [];
+const GROUP_ID = '120363407187484870@g.us';
+const DATA_USERS_PATH = './chatbot-structure/data/data_form_users.json';
+
+async function loadDataUsers() {
+    const rawDataUsers = await fs.readFile(DATA_USERS_PATH, 'utf8');
+
+    return rawDataUsers.trim()
+        ? JSON.parse(rawDataUsers)
+        : [];
+}
 
 export async function inputDelivery(orderId, client) {
 
     await client.sendMessage(
-        '120363407187484870@g.us',
+        GROUP_ID,
         `MOHON KONFIRMASI PENGIRIMAN\n==========================\nOrder ID: ${orderId}\n\nNama Pengirim: \nNomor Pengirim: `
     );
 
-    deliverySession['120363407187484870@g.us'] = true;
+    deliverySession[GROUP_ID] = true;
 
     return;
 }
@@ -18,6 +27,7 @@ export async function inputDelivery(orderId, client) {
 export async function handleDeliveryResponse(text, client) {
 
     const data = {};
+    const users = await loadDataUsers();
 
     const lines = text.split('\n');
 
@@ -25,10 +35,10 @@ export async function handleDeliveryResponse(text, client) {
 
         if(line.includes(':')) {
 
-            const [key, value] = line.split(':');
+            const [key, ...valueParts] = line.split(':');
 
             data[key.trim().toLowerCase().replaceAll(' ', '_')] =
-                value.trim();
+                valueParts.join(':').trim();
         }
     }
 
@@ -52,5 +62,5 @@ export async function handleDeliveryResponse(text, client) {
         `Informasi Pengiriman:\n\nNama Pengirim: ${data.nama_pengirim}\nNomor Pengirim: ${data.nomor_pengirim}`
     );
 
-    delete deliverySession['120363407187484870@g.us'];
+    delete deliverySession[GROUP_ID];
 }

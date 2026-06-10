@@ -1,6 +1,7 @@
-import { pendingOrders, paymentStatus, groupSession, editingOrder } from "../../settings/globalVariables";
-import { rawDataUsers } from "../../settings/loadFiles";
-import { sendOrderMessage, validationOrderMessage } from "../ordering/validationOrderText";
+import fs from 'fs/promises';
+import { pendingOrders, paymentStatus, groupSession, editingOrder } from "../../settings/globalVariables.js";
+import { rawDataUsers } from "../../settings/loadFiles.js";
+import { sendOrderMessage, validationOrderMessage } from "../ordering/validationOrderText.js";
 
 const users = rawDataUsers.trim() ? JSON.parse(rawDataUsers) : [];
 
@@ -39,7 +40,7 @@ export async function handleGroupResponse(data, client) {
 
     for(const status in data) {
         if(status.includes('status_produk')) {
-            const[status] = data[status];
+            allDataStatus[status] = data[status];
         }
     }
 
@@ -56,9 +57,18 @@ export async function handleGroupResponse(data, client) {
         };
     }
 
+    if (!Object.keys(allDataStatus).length) {
+        return {
+            success: false,
+            message: 'Status produk belum terbaca. Pastikan formatnya berisi "Status Produk: ✅" atau "Status Produk: ❌".'
+        };
+    }
+
+    const hasRejectedProduct = Object.values(allDataStatus).some(status => String(status).includes("❌"));
+
     // Jika Stok Barang Tersedia
     // =========================
-    if (!Object.values(allDataStatus).includes("❌")) {
+    if (!hasRejectedProduct) {
         const totalStatusProduk = Object.keys(allDataStatus).filter(key => key.includes("status_produk")).length;
         const totalPrice = parsePrice(data["total_harga"]);
 
@@ -124,8 +134,8 @@ export async function handleGroupResponse(data, client) {
 
     // Jika Stok Barang Tidak Tersedia
     // ===============================
-    if (Object.values(allDataStatus).includes("❌")) {
-        const keys = Object.keys(allDataStatus).filter(key => allDataStatus[key] === "❌");
+    if (hasRejectedProduct) {
+        const keys = Object.keys(allDataStatus).filter(key => String(allDataStatus[key]).includes("❌"));
 
         if(keys.length > 1) {
             const text = ["Mohon Maaf:\n"];
@@ -139,12 +149,15 @@ export async function handleGroupResponse(data, client) {
 
             await client.sendMessage(
                 order["customer"],
-                text
+                text.join("")
             );
         } else {
+            const keyNumber = keys[0].match(/\d+$/)?.[0];
+            const productName = keyNumber ? order["data"][`produk_pesanan_${keyNumber}`] : order["data"]["produk_pesanan"];
+
             await client.sendMessage(
                 order["customer"],
-                `Mohon Maaf, ${order["data"]["produk_pesanan"]} sedang tidak tersedia ❌\n\nApakah kakak ingin mengganti produk?\n[1] Ya\n[2] Tidak`
+                `Mohon Maaf, ${productName} sedang tidak tersedia ❌\n\nApakah kakak ingin mengganti produk?\n[1] Ya\n[2] Tidak`
             );
         }
 

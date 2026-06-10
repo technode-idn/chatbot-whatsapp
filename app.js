@@ -25,7 +25,7 @@ const welcomedUsers = new Set();
 
 function isAvailabilityResponse(text) {
     const hasOrderId = /^\s*order id\s*:/im.test(text);
-    const hasStatusProduk = /^\s*status produk\s*:/im.test(text);
+    const hasStatusProduk = /^\s*status produk(?:\s+\d+)?\s*:/im.test(text);
 
     return (
         hasOrderId &&
@@ -86,11 +86,7 @@ client.on('message', async message => {
 
     // Menyimpan Informasi Pengirim
     // ============================
-    if(message.from.endsWith('@g.us')) {
-        const groupId = message.from;
-    } else {
-        const userId = message.from;
-    }
+    const userId = message.from;
 
     // Ekstraksi Pesan
     // ===============
@@ -108,12 +104,56 @@ client.on('message', async message => {
         if(pendingProof[userId]) {
             const proof_photo = await message.downloadMedia();
 
-            await sendProofToGroup(proof_photo, userId, client);
+            await sendProofToGroup(proof_photo, pendingProof[userId], client);
 
             return;
         } else {
             return;
         }
+    }
+
+    // Follow-Up Dari Group Tenant (Group Session)
+    // ===========================================
+    if(userId.endsWith('@g.us')) {
+        if(deliverySession[userId]) {
+            await handleDeliveryResponse(text, client);
+
+            return;
+        }
+
+        if(isAvailabilityResponse(text)) {
+            const result = await verificationOrder(message.body, client);
+
+            if(result?.message) {
+                await message.reply(result.message);
+            }
+
+            if(result?.success) {
+                delete groupSession[userId];
+            }
+
+            return;
+        }
+
+        if(isPaymentResponse(text)) {
+            const result = await verificationPayment(message.body, client);
+
+            if(result?.message) {
+                await message.reply(result.message);
+            }
+
+            if(result?.success) {
+                delete groupSession[userId];
+            }
+
+            return;
+        }
+
+        if(groupSession[userId]) {
+            return;
+        }
+
+        return;
     }
 
     // Memeriksa & Menyimpan Data Pengirim, Jika Pertama Kalinya Berkunjung
@@ -143,34 +183,6 @@ client.on('message', async message => {
             "Halo kak👋\n\nTerima kasih sudah menghubungi Klikbi Go🍽️🚚\n\nSaya admin KlikBiGo, ada yang bisa kami bantu? 😊\n[1] Pesan Produk\n[2] FAQ\n[3] Hubungi Admin"
         );
         
-        return;
-    }
-
-    // Follow-Up Dari Group Tenant (Group Session)
-    // ===========================================
-    if(groupSession[groupId]) {
-        if(isAvailabilityResponse(text)) {
-            const result = await verificationOrder(message.body, client);
-
-            if(result?.message) {
-                await message.reply(result.message);
-            }
-
-            if(result?.success) {
-                delete groupSession[groupId];
-            }
-
-            return;
-        }
-
-        if(isPaymentResponse(text)) {
-            await verificationPayment(message.body, client);
-
-            delete groupSession[groupId];
-
-            return;
-        }
-
         return;
     }
 
@@ -231,30 +243,31 @@ client.on('message', async message => {
 
     // Mengganti/Edit, Jika Suatu Produk Tidak Tersedia (Editing Order Session)
     // ========================================================================
-    if(editingOrder[userId]["status"]) {
-        if(text == "1") {
-            await editingOrder(editingOrder[userId]["order_id"], userId, client);
-        } else if(text == "2") {
-            return;
-        } else {
-            await ordering(text, userId, client);
-            delete editingOrder[userId];
-        }
+    // if(editingOrder[userId]["status"]) {
+    //     if(text == "1") {
+    //         await editingOrder(editingOrder[userId]["order_id"], userId, client);
+    //     } else if(text == "2") {
+    //         return;
+    //     } else {
+    //         await ordering(text, userId, client);
+    //         delete editingOrder[userId];
+    //     }
 
-        return;
-    }
+    //     return;
+    // }
 
     // Handling Pemilihan Metode Payment (Payment Session)
     // ===================================================
     if(paymentStatus[userId]) {
         const responseOngkir = await ongkir(userId);
+        let responsePayment = null;
 
         if(text == "1") {
             await message.reply(
                 "Siap kak\nPembayaran dilakukan secara cash saat pesanan diterima ya.\nPesanan akan segera kami proses"
             );
         } else if(text == "2") {
-            const responsePayment = await payment(userId);
+            responsePayment = await payment(userId);
             
             if(!responsePayment) {
                 await message.reply('Data pembayaran belum ditemukan. Mohon coba lagi setelah pesanan dikonfirmasi.');
@@ -277,14 +290,16 @@ client.on('message', async message => {
 
         delete paymentStatus[userId];
 
-        pendingProof[userId] = true;
+        if(responsePayment?.["order_id"]) {
+            pendingProof[userId] = responsePayment["order_id"];
+        }
 
         return;
     }
 
     // Mengirimkan Informasi Pengirim Kepada Customer (Delivery Session)
     // =================================================================
-    if(deliverySession[groupId]) {
+    if(deliverySession[userId]) {
         await handleDeliveryResponse(text, client);
 
         return;

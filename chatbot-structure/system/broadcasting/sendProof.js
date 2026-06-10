@@ -1,4 +1,4 @@
-import { groupSession } from "../../settings/globalVariables";
+import { groupSession } from "../../settings/globalVariables.js";
 
 export async function sendProofToGroup(proof, orderId, client) {
 
