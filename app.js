@@ -231,8 +231,17 @@ client.on('message', async message => {
 
     // Mengganti/Edit, Jika Suatu Produk Tidak Tersedia (Editing Order Session)
     // ========================================================================
-    if(editingOrder[userId]) {
-        await editingOrder();
+    if(editingOrder[userId]["status"]) {
+        if(text == "1") {
+            await editingOrder(editingOrder[userId]["order_id"], userId, client);
+        } else if(text == "2") {
+            return;
+        } else {
+            await ordering(text, userId, client);
+            delete editingOrder[userId];
+        }
+
+        return;
     }
 
     // Handling Pemilihan Metode Payment (Payment Session)

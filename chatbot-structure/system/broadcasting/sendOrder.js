@@ -118,6 +118,8 @@ export async function handleGroupResponse(data, client) {
         );
 
         paymentStatus[order["customer"]] = true;
+
+        delete pendingOrders[orderId];
     }
 
     // Jika Stok Barang Tidak Tersedia
@@ -146,10 +148,11 @@ export async function handleGroupResponse(data, client) {
             );
         }
 
-        editingOrder[order["customer"]] = true;
+        editingOrder[order["customer"]] = {
+            status: true,
+            order_id: orderId
+        };
     }
-
-    delete pendingOrders[orderId];
 
     return {
         success: true
