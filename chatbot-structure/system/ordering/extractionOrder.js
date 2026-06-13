@@ -1,8 +1,8 @@
 import fs from 'fs/promises';
-import { sendOrderToGroup } from '../broadcasting/sendOrder.js';
+import { validationOrder } from './validationOrder.js';
 import { sessions } from '../../settings/globalVariables.js';
 
-export async function ordering(text, userId, client) {
+export async function extractionOrder(text, userId, client) {
     // Ekstraksi Form Pesanan Customer
     // ===============================
     try {
@@ -26,7 +26,7 @@ export async function ordering(text, userId, client) {
 
         // Mengirim Informasi Pesanan Ke Group Tenant
         // ==========================================
-        await sendOrderToGroup(data, userId, client);
+        await validationOrder(data, userId, client);
 
         delete sessions[userId];
 
@@ -35,7 +35,7 @@ export async function ordering(text, userId, client) {
     } catch(error) {
         console.log(error);
 
-        return('Format yang dikirim tidak sesuai');
+        return('Format yang dikirim tidak sesuai, silahkan isi ulang kembali');
 
     }
 

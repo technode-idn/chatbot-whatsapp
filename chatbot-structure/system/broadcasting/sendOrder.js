@@ -1,7 +1,7 @@
 import fs from 'fs/promises';
 import { pendingOrders, paymentStatus, groupSession, editingOrder } from "../../settings/globalVariables.js";
 import { rawDataUsers } from "../../settings/loadFiles.js";
-import { sendOrderMessage, validationOrderMessage } from "../ordering/validationOrderText.js";
+import { sendOrderMessage, validationOrderMessage } from "../ordering/textOrder.js";
 
 const users = rawDataUsers.trim() ? JSON.parse(rawDataUsers) : [];
 
@@ -116,16 +116,10 @@ export async function handleGroupResponse(data, client) {
                 total_price: totalPrice
             });
 
-            await fs.writeFile(
-                './chatbot-structure/data/data_form_users.json',
-                JSON.stringify(users, null, 4)
-            );
+
         }
 
-        await client.sendMessage(
-            order["customer"],
-            'Produk tersedia ✅\n\nUntuk informasi pembayarannya, kakak bisa pilih:\n\n[1] Cash (bayar di tempat)\n[2] QRIS\n\nSilahkan diinformasikan mau pakai metode yang mana ya kak?'
-        );
+
 
         paymentStatus[order["customer"]] = true;
 
@@ -167,7 +161,5 @@ export async function handleGroupResponse(data, client) {
         };
     }
 
-    return {
-        success: true
-    };
+    return { success: true };
 }

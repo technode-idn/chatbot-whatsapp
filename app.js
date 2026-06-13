@@ -4,7 +4,7 @@ import qrcode from "qrcode-terminal";
 import puppeteer from 'puppeteer';
 import { exportData } from './chatbot-structure/system/exportData.js';
 import { faq } from './chatbot-structure/system/FAQ.js';
-import { ordering } from './chatbot-structure/system/ordering/ordering.js';
+import { extractionOrder } from './chatbot-structure/system/ordering/extractionOrder.js';
 import { sendProofToGroup } from './chatbot-structure/system/broadcasting/sendProof.js';
 import { payment } from './chatbot-structure/system/payment.js';
 import { ongkir } from './chatbot-structure/system/ongkir.js';
@@ -114,7 +114,7 @@ client.on('message', async message => {
 
     // Follow-Up Dari Group Tenant (Group Session)
     // ===========================================
-    if(userId.endsWith('@g.us')) {
+    if(groupSession[userId]) {
         if(deliverySession[userId]) {
             await handleDeliveryResponse(text, client);
 
@@ -148,12 +148,6 @@ client.on('message', async message => {
 
             return;
         }
-
-        if(groupSession[userId]) {
-            return;
-        }
-
-        return;
     }
 
     // Memeriksa & Menyimpan Data Pengirim, Jika Pertama Kalinya Berkunjung
@@ -202,7 +196,7 @@ client.on('message', async message => {
     if(formSession[userId]) {
         if(text == "1") {
             await message.reply(
-                "Baik kak, supaya kami bisa proses pesanannya, mohon info ya.\n\n📌Nama Pemesan : \n📌Produk Pesanan : \n📌Jumlah Pesanan : \n📌Alamat Lengkap Pengantaran : \n📌Nomor Telepon Aktif : \n\nTerima Kasih🙏😊\n\n_*Jika ingin keluar, ketik menu/keluar_"
+                "Baik kak, supaya kami bisa proses pesanannya, mohon info ya.\n\n📌Nama Pemesan: \n📌ID Produk: \n📌Jumlah Pesanan: \n📌Alamat Lengkap Pengantaran: \n📌Nomor Telepon Aktif: \n\nTerima Kasih🙏😊\n\n_*Jika ingin keluar, ketik menu/keluar_"
             );
 
             sessions[userId] = true;
@@ -234,7 +228,7 @@ client.on('message', async message => {
     // Menjalankan Sistem Pendataan Formulir, Jika Pengirim Memilih Menu 2 (Ordering Session)
     // ======================================================================================
     if(sessions[userId]) {
-        const responseOrder = await ordering(text, userId, client);        
+        const responseOrder = await extractionOrder(text, userId, client);        
 
         await message.reply(responseOrder);
 
@@ -243,28 +237,31 @@ client.on('message', async message => {
 
     // Mengganti/Edit, Jika Suatu Produk Tidak Tersedia (Editing Order Session)
     // ========================================================================
-    // if(editingOrder[userId]["status"]) {
-    //     if(text == "1") {
-    //         await editingOrder(editingOrder[userId]["order_id"], userId, client);
-    //     } else if(text == "2") {
-    //         return;
-    //     } else {
-    //         await ordering(text, userId, client);
-    //         delete editingOrder[userId];
-    //     }
+    if(editingOrder[userId]["status"]) {
+        if(text == "1") {
+            await editingOrder(editingOrder[userId]["order_id"], userId, client);
+        } else if(text == "2") {
+            return;
+        } else {
+            await extractionOrder(text, userId, client);
+            delete editingOrder[userId];
+        }
 
-    //     return;
-    // }
+        return;
+    }
 
     // Handling Pemilihan Metode Payment (Payment Session)
     // ===================================================
     if(paymentStatus[userId]) {
         const responseOngkir = await ongkir(userId);
+        const totalPrice = Number(responsePayment["total_price"]) || 0;
+        const shippingCost = Number(responseOngkir) || 0;
+        const totalPayment = totalPrice + shippingCost;
         let responsePayment = null;
 
         if(text == "1") {
             await message.reply(
-                "Siap kak\nPembayaran dilakukan secara cash saat pesanan diterima ya.\nPesanan akan segera kami proses"
+                `Siap kak\n\nUntuk total pembayaran ${totalPayment}, sudah dengan ongkir sebesar ${shippingCost} ya kak, dilakukan secara cash saat pesanan diterima.\n\nPesanan akan segera kami proses 😊🙏🏻`
             );
         } else if(text == "2") {
             responsePayment = await payment(userId);
@@ -274,9 +271,6 @@ client.on('message', async message => {
                 return;
             }
 
-            const totalPrice = Number(responsePayment["total_price"]) || 0;
-            const shippingCost = Number(responseOngkir) || 0;
-            const totalPayment = totalPrice + shippingCost;
             const qris_photo = MessageMedia.fromFilePath(responsePayment["qris_photo"]);
 
             await message.reply(
