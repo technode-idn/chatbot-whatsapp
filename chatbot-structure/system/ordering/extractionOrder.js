@@ -2,7 +2,7 @@ import fs from 'fs/promises';
 import { validationOrder } from './validationOrder.js';
 import { sessions } from '../../settings/globalVariables.js';
 
-export async function extractionOrder(text, userId, client) {
+export async function extractionOrder(text, userId, editingStatus = false, client) {
     // Ekstraksi Form Pesanan Customer
     // ===============================
     try {
@@ -26,7 +26,7 @@ export async function extractionOrder(text, userId, client) {
 
         // Mengirim Informasi Pesanan Ke Group Tenant
         // ==========================================
-        await validationOrder(data, userId, client);
+        await validationOrder(data, userId, editingStatus, client);
 
         delete sessions[userId];
 

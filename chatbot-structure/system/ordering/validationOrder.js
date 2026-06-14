@@ -12,10 +12,16 @@ function parsePrice(value) {
     return digits ? Number(digits) : 0;
 }
 
-export async function validationOrder(orderData, userId, client) {
+export async function validationOrder(orderData, userId, editingStatus, client) {
     // Membuat Order ID
     // ================
-    const orderId = "ORD-" + crypto.randomBytes(5).toString("hex").toUpperCase();
+    let orderId = null;
+
+    if(editingStatus) {
+        orderId = orderData["order_id"];
+    } else {
+        orderId = "ORD-" + crypto.randomBytes(5).toString("hex").toUpperCase();
+    }
 
     // Mengambil Data Produk Pesanan
     // =============================
@@ -81,6 +87,14 @@ export async function validationOrder(orderData, userId, client) {
         }
     }
 
+    // Revisi
+    // ======
+    pendingOrders[orderId] = {
+        customer: userId,
+        order_id: orderId,
+        data: orderData
+    };
+
     // Jika ada produk yang tidak tersedia
     // ===================================
     if(allProductNotAvailable.length > 0) {
@@ -97,16 +111,17 @@ export async function validationOrder(orderData, userId, client) {
             text.join("")
         );
 
-        editingOrder[userId] = true;
+        editingOrder[userId] = {
+            status: true,
+            all_data_available = allProductNotAvailable
+        };
+
+        // Kosongin Array allProductNotAvailable
     }
 
     // Jika semua produk tersedia
     // ==========================
     if(allProductNotAvailable.length === 0) {
-        pendingOrders[orderId] = {
-            customer: userId,
-            data: orderData
-        };
 
         await client.sendMessage(
             userId,

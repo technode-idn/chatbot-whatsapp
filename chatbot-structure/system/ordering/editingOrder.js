@@ -1,15 +1,12 @@
 import { pendingOrders } from "../../settings/globalVariables";
 
-export async function editingOrder(orderId, userId, client) {
-    const text = ["Silahkan Masukan Menu Pengganti:\n"];
+export async function editingOrder(orderDataAvailable, orderId, userId, client) {
+    const text = ["Silahkan Masukan Produk Pengganti:\n", `Order ID: ${orderId}`];
 
-    const orderData = pendingOrders[orderId]["data"];
-
-    const allProductReject = Object.keys(orderData).filter(key => (key.includes("produk_pesanan")) && (orderData[key] === "❌"));
-
-    if(allProductReject.length > 1) {
-        for(let i = 0; i < allProductReject.length; i++) {
-            text.push(`📌Produk Pesanan ${i}: \n`);
+    if(orderDataAvailable.length > 1) {
+        for(const dataAvailable of orderDataAvailable) {
+            const number = dataAvailable.match(/\d+$/)[0];
+            text.push(`📌Produk Pesanan ${number}: \n`);
         }
     } else {
         text.push("📌Produk Pesanan: \n");

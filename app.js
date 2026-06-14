@@ -237,11 +237,11 @@ client.on('message', async message => {
     // ========================================================================
     if(editingOrder[userId]["status"]) {
         if(text == "1") {
-            await editingOrder(editingOrder[userId]["order_id"], userId, client);
+            await editingOrder(editingOrder[userId]["all_data_available"], editingOrder[userId]["order_id"], userId, client);
         } else if(text == "2") {
             return;
         } else {
-            await extractionOrder(text, userId, client);
+            await extractionOrder(text, userId, true, client);
             delete editingOrder[userId];
         }
 
