@@ -1,6 +1,7 @@
 import fs from 'fs/promises';
+import crypto from 'crypto';
 import { rawDatabaseProduct, rawDataUsers } from "../../settings/loadFiles.js";
-import { editingOrder, paymentStatus } from "../../settings/globalVariables.js";
+import { editingOrder, paymentStatus, pendingOrders } from "../../settings/globalVariables.js";
 
 const database_product = JSON.parse(rawDatabaseProduct);
 const users = rawDataUsers.trim() ? JSON.parse(rawDataUsers) : [];
@@ -12,6 +13,10 @@ function parsePrice(value) {
 }
 
 export async function validationOrder(orderData, userId, client) {
+    // Membuat Order ID
+    // ================
+    const orderId = "ORD-" + crypto.randomBytes(5).toString("hex").toUpperCase();
+
     // Mengambil Data Produk Pesanan
     // =============================
     const allProductOrder = Object.keys(orderData).filter(key => String(orderData[key]).includes("id_produk"));
@@ -37,14 +42,11 @@ export async function validationOrder(orderData, userId, client) {
             // ===================================================
             if(product["total_product"] > allTotalProductOrder[i]) {
 
-                // Membuat Order ID
-                // ================
-                const orderId = Date.now().toString();
-
                 // Memasukkan Data Pesanan Ke Dalam Object
                 // =======================================
                 users.push({
                     order_id : orderId,
+                    user_id: userId,
                     product_id: orderData[allProductOrder[i]],
                     created_at: new Date().toISOString(),
                     customer_name: orderData["nama_pemesan"],
@@ -101,11 +103,19 @@ export async function validationOrder(orderData, userId, client) {
     // Jika semua produk tersedia
     // ==========================
     if(allProductNotAvailable.length === 0) {
+        pendingOrders[orderId] = {
+            customer: userId,
+            data: orderData
+        };
+
         await client.sendMessage(
             userId,
             'Produk tersedia ✅\n\nUntuk informasi pembayarannya, kakak bisa pilih:\n\n[1] Cash (bayar di tempat)\n[2] QRIS\n\nSilahkan diinformasikan mau pakai metode yang mana ya kak?'
         );
 
-        paymentStatus[userId] = true;
+        paymentStatus[userId] = {
+            status: true,
+            order_id: orderId
+        };
     }
 }

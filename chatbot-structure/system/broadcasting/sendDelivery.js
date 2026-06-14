@@ -1,22 +1,20 @@
 import fs from 'fs/promises';
-import { deliverySession } from "../../settings/globalVariables.js";
+import { deliverySession, groupSession } from "../../settings/globalVariables.js";
+import { rawDataUsers, rawDataUsers } from '../../settings/loadFiles.js';
 
 const GROUP_ID = '120363407187484870@g.us';
-const DATA_USERS_PATH = './chatbot-structure/data/data_form_users.json';
 
 async function loadDataUsers() {
-    const rawDataUsers = await fs.readFile(DATA_USERS_PATH, 'utf8');
+    const dataUsers = await fs.readFile(rawDataUsers, 'utf8');
 
-    return rawDataUsers.trim()
-        ? JSON.parse(rawDataUsers)
-        : [];
+    return dataUsers.trim() ? JSON.parse(dataUsers) : [];
 }
 
 export async function inputDelivery(orderId, client) {
 
     await client.sendMessage(
         GROUP_ID,
-        `MOHON KONFIRMASI PENGIRIMAN\n==========================\nOrder ID: ${orderId}\n\nNama Pengirim: \nNomor Pengirim: `
+        `MOHON KONFIRMASI PENGIRIMAN\n==========================\nOrder ID: ${orderId}\n\nID Pengirim: \nNomor Pengirim: `
     );
 
     deliverySession[GROUP_ID] = true;
@@ -25,11 +23,10 @@ export async function inputDelivery(orderId, client) {
 }
 
 export async function handleDeliveryResponse(text, client) {
-
     const data = {};
     const users = await loadDataUsers();
-
     const lines = text.split('\n');
+    let customerId = null;
 
     for(const line of lines) {
 
@@ -42,13 +39,11 @@ export async function handleDeliveryResponse(text, client) {
         }
     }
 
-    let customerId = null;
-
     for(const user of users) {
 
-        if(String(user.order_id) === String(data.order_id)) {
+        if(String(user["order_id"]) === String(data["order_id"])) {
 
-            customerId = user.user_id;
+            customerId = user["user_id"];
             break;
         }
     }
@@ -57,10 +52,14 @@ export async function handleDeliveryResponse(text, client) {
         return;
     }
 
+    const deliveryName = data.find(name => String(name["id_delivery"]) === data["id_pengirim"]);
+
     await client.sendMessage(
         customerId,
-        `Informasi Pengiriman:\n\nNama Pengirim: ${data.nama_pengirim}\nNomor Pengirim: ${data.nomor_pengirim}`
+        `Informasi Pengiriman:\n\nNama Pengirim: ${deliveryName["name"]}\nNomor Pengirim: ${data["nomor_pengirim"]}`
     );
 
     delete deliverySession[GROUP_ID];
+
+    delete groupSession[GROUP_ID];
 }

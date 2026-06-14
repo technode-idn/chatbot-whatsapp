@@ -1,16 +1,13 @@
 import fs from 'fs/promises';
-import { handleGroupResponse } from "./broadcasting/sendOrder.js";
-import { pendingProof } from "../settings/globalVariables.js";
+// import { handleGroupResponse } from "./broadcasting/sendOrder.js";
+import { pendingOrders, pendingProof } from "../settings/globalVariables.js";
 import { inputDelivery } from "./broadcasting/sendDelivery.js";
-
-const DATA_USERS_PATH = './chatbot-structure/data/data_form_users.json';
+import { rawDataUsers } from '../settings/loadFiles.js';
 
 async function loadDataUsers() {
-    const rawDataUsers = await fs.readFile(DATA_USERS_PATH, 'utf8');
+    const dataUsers = await fs.readFile(rawDataUsers, 'utf8');
 
-    return rawDataUsers.trim()
-        ? JSON.parse(rawDataUsers)
-        : [];
+    return dataUsers.trim() ? JSON.parse(dataUsers) : [];
 }
 
 function parseKeyValueText(text) {
@@ -28,11 +25,11 @@ function parseKeyValueText(text) {
     return data;
 }
 
-export async function verificationOrder(text, client) {
-    const data = parseKeyValueText(text);
+// export async function verificationOrder(text, client) {
+//     const data = parseKeyValueText(text);
 
-    return await handleGroupResponse(data, client);
-}
+//     return await handleGroupResponse(data, client);
+// }
 
 export async function verificationPayment(text, client) {
     const data = parseKeyValueText(text);
@@ -58,10 +55,6 @@ export async function verificationPayment(text, client) {
         await inputDelivery(data["order_id"], client);
 
         delete pendingProof[customerId];
-
-        return {
-            success: true
-        };
     }
 
     await client.sendMessage(
@@ -69,7 +62,5 @@ export async function verificationPayment(text, client) {
         "Bukti pembayaran tidak valid, silakan kirim ulang."
     );
 
-    return {
-        success: true
-    };
+    return;
 }

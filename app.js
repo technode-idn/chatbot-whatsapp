@@ -8,7 +8,7 @@ import { extractionOrder } from './chatbot-structure/system/ordering/extractionO
 import { sendProofToGroup } from './chatbot-structure/system/broadcasting/sendProof.js';
 import { payment } from './chatbot-structure/system/payment.js';
 import { ongkir } from './chatbot-structure/system/ongkir.js';
-import { pendingProof, aiStatus, sessions, paymentStatus, groupSession, deliverySession, formSession, multipleFormSession, editingOrder } from './chatbot-structure/settings/globalVariables.js';
+import { pendingProof, aiStatus, sessions, paymentStatus, groupSession, deliverySession, formSession, multipleFormSession, editingOrder, pendingOrders } from './chatbot-structure/settings/globalVariables.js';
 import { verificationOrder, verificationPayment } from './chatbot-structure/system/verification.js';
 import { handleDeliveryResponse } from './chatbot-structure/system/broadcasting/sendDelivery.js';
 import { generateFormMultipleOrder } from './chatbot-structure/system/ordering/generateFormMultipleOrder.js';
@@ -104,8 +104,10 @@ client.on('message', async message => {
         if(pendingProof[userId]) {
             const proof_photo = await message.downloadMedia();
 
-            await sendProofToGroup(proof_photo, pendingProof[userId], client);
+            await sendProofToGroup(proof_photo, pendingProof[userId], pendingOrders[userId], client);
 
+            delete pendingOrders[userId];
+            
             return;
         } else {
             return;
@@ -121,29 +123,25 @@ client.on('message', async message => {
             return;
         }
 
-        if(isAvailabilityResponse(text)) {
-            const result = await verificationOrder(message.body, client);
+        // if(isAvailabilityResponse(text)) {
+        //     const result = await verificationOrder(message.body, client);
 
-            if(result?.message) {
-                await message.reply(result.message);
-            }
+        //     if(result?.message) {
+        //         await message.reply(result.message);
+        //     }
 
-            if(result?.success) {
-                delete groupSession[userId];
-            }
+        //     if(result?.success) {
+        //         delete groupSession[userId];
+        //     }
 
-            return;
-        }
+        //     return;
+        // }
 
         if(isPaymentResponse(text)) {
             const result = await verificationPayment(message.body, client);
 
             if(result?.message) {
                 await message.reply(result.message);
-            }
-
-            if(result?.success) {
-                delete groupSession[userId];
             }
 
             return;
@@ -252,7 +250,7 @@ client.on('message', async message => {
 
     // Handling Pemilihan Metode Payment (Payment Session)
     // ===================================================
-    if(paymentStatus[userId]) {
+    if(paymentStatus[userId]["status"]) {
         const responseOngkir = await ongkir(userId);
         const totalPrice = Number(responsePayment["total_price"]) || 0;
         const shippingCost = Number(responseOngkir) || 0;
@@ -264,7 +262,7 @@ client.on('message', async message => {
                 `Siap kak\n\nUntuk total pembayaran ${totalPayment}, sudah dengan ongkir sebesar ${shippingCost} ya kak, dilakukan secara cash saat pesanan diterima.\n\nPesanan akan segera kami proses 😊🙏🏻`
             );
         } else if(text == "2") {
-            responsePayment = await payment(userId);
+            responsePayment = await payment(paymentStatus[userId]["order_id"]);
             
             if(!responsePayment) {
                 await message.reply('Data pembayaran belum ditemukan. Mohon coba lagi setelah pesanan dikonfirmasi.');
@@ -282,11 +280,11 @@ client.on('message', async message => {
             );
         }
 
-        delete paymentStatus[userId];
-
         if(responsePayment?.["order_id"]) {
             pendingProof[userId] = responsePayment["order_id"];
         }
+
+        delete paymentStatus[userId];
 
         return;
     }
