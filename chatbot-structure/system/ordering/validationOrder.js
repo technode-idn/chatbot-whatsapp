@@ -5,6 +5,7 @@ import { editingOrder, paymentStatus, pendingOrders } from "../../settings/globa
 
 const database_product = JSON.parse(rawDatabaseProduct);
 const users = rawDataUsers.trim() ? JSON.parse(rawDataUsers) : [];
+let orderDataFinal = null;
 
 function parsePrice(value) {
     const digits = String(value || '').replace(/[^\d]/g, '');
@@ -34,6 +35,18 @@ export async function validationOrder(orderData, userId, editingStatus, client) 
     // Menyimpan Data Produk Pesanan Yang Tidak Tersedia
     // =================================================
     const allProductNotAvailable = [];
+
+    // Menyimpan Data Pesanan Yang Tersedia
+    // ====================================
+    if(orderDataFinal && editingStatus) {
+        for(const orderDataEdit in orderData) {
+            if(orderDataEdit in orderDataFinal) {
+                orderDataFinal[orderDataEdit] = orderData[orderDataEdit];
+            }
+        }
+    } else {
+        orderDataFinal = orderData;
+    }
 
     // Memeriksa Setiap Produk Pesanan, Apakah Tersedia
     // ================================================
@@ -87,13 +100,11 @@ export async function validationOrder(orderData, userId, editingStatus, client) 
         }
     }
 
-    // Revisi
-    // ======
     pendingOrders[orderId] = {
         customer: userId,
         order_id: orderId,
-        data: orderData
-    };
+        data: orderDataFinal
+    }
 
     // Jika ada produk yang tidak tersedia
     // ===================================
@@ -116,7 +127,7 @@ export async function validationOrder(orderData, userId, editingStatus, client) 
             all_data_available = allProductNotAvailable
         };
 
-        // Kosongin Array allProductNotAvailable
+        allProductNotAvailable.length = 0;
     }
 
     // Jika semua produk tersedia

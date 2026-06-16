@@ -12,6 +12,8 @@ import { pendingProof, aiStatus, sessions, paymentStatus, groupSession, delivery
 import { verificationOrder, verificationPayment } from './chatbot-structure/system/verification.js';
 import { handleDeliveryResponse } from './chatbot-structure/system/broadcasting/sendDelivery.js';
 import { generateFormMultipleOrder } from './chatbot-structure/system/ordering/generateFormMultipleOrder.js';
+import { deleteOrder } from './chatbot-structure/system/ordering/deleteOrder.js';
+import { validationOrder } from './chatbot-structure/system/ordering/validationOrder.js';
 
 // Membuat Settingan Whatsapp Web
 // ==============================
@@ -239,7 +241,9 @@ client.on('message', async message => {
         if(text == "1") {
             await editingOrder(editingOrder[userId]["all_data_available"], editingOrder[userId]["order_id"], userId, client);
         } else if(text == "2") {
-            return;
+            await deleteOrder(editingOrder[userId]["all_data_available"], editingOrder[userId]["order_id"]);
+            await validationOrder(editingOrder[userId]["data"], userId, false, client);
+            delete editingOrder[userId];
         } else {
             await extractionOrder(text, userId, true, client);
             delete editingOrder[userId];
