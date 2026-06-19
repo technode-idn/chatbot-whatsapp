@@ -1,23 +1,9 @@
-
-import axios from "axios";
+import { rawDataFaq } from "../settings/loadFiles.js";
 
 export async function faq(text) {
-    try {
-        console.log("Mau kirim ke FastApi")
-    
-        const response = await axios.post(
-            'http://127.0.0.1:8000/predict',
-            {
-                message: text
-            }
-        );
-    
-        const intent = response.data.intent;
-    
-        return intent;
+    const allResponseFaq = JSON.parse(rawDataFaq);
 
-    } catch(error) {
-        console.log(error);
-        return 'Server Chatbot Error';
-    }
+    const faq_id = allResponseFaq.find(r => r["faq_id"] === text);
+
+    return faq_id["response"];
 }
