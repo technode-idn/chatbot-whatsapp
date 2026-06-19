@@ -8,12 +8,13 @@ import { extractionOrder } from './chatbot-structure/system/ordering/extractionO
 import { sendProofToGroup } from './chatbot-structure/system/broadcasting/sendProof.js';
 import { payment } from './chatbot-structure/system/payment.js';
 import { ongkir } from './chatbot-structure/system/ongkir.js';
-import { pendingProof, sessions, paymentStatus, groupSession, deliverySession, multipleFormSession, editingOrder, pendingOrders, userMode } from './chatbot-structure/settings/globalVariables.js';
-import { verificationOrder, verificationPayment } from './chatbot-structure/system/verification.js';
-import { handleDeliveryResponse } from './chatbot-structure/system/broadcasting/sendDelivery.js';
+import { paymentVerificationSession, pendingProof, sessions, paymentStatus, groupSession, deliverySession, multipleFormSession, editingOrder as editingOrderSession, pendingOrders, userMode } from './chatbot-structure/settings/globalVariables.js';
+import { verificationPayment } from './chatbot-structure/system/verification.js';
+import { handleDeliveryResponse, inputDelivery } from './chatbot-structure/system/broadcasting/sendDelivery.js';
 import { generateFormMultipleOrder } from './chatbot-structure/system/ordering/generateFormMultipleOrder.js';
 import { deleteOrder } from './chatbot-structure/system/ordering/deleteOrder.js';
 import { validationOrder } from './chatbot-structure/system/ordering/validationOrder.js';
+import { editingOrder as sendEditingOrderForm } from './chatbot-structure/system/ordering/editingOrder.js';
 
 // Membuat Settingan Whatsapp Web
 // ==============================
@@ -36,13 +37,63 @@ function isAvailabilityResponse(text) {
 }
 
 function isPaymentResponse(text) {
-    const hasOrderId = /^\s*order id\s*:/im.test(text);
-    const hasPaymentStatus = /^\s*status\s*:/im.test(text);
+    const hasOrderId = /^\s*order id\s*(?::|->)/im.test(text);
+    const hasPaymentStatus = /^\s*(?:\|\s*)?status\s*(?::|->)/im.test(text);
 
     return (
         hasOrderId &&
         (text.toLowerCase().includes('pembayaran') || hasPaymentStatus)
     );
+}
+
+function isDeliveryResponse(text) {
+    const hasOrderId = /^\s*order id\s*(?::|->)/im.test(text);
+    const hasDeliveryField = /^\s*id pengirim\s*(?::|->)/im.test(text)
+        || /^\s*nama pengirim\s*(?::|->)/im.test(text)
+        || /^\s*nomor pengirim\s*(?::|->)/im.test(text);
+
+    return (
+        hasDeliveryField ||
+        (hasOrderId && text.toLowerCase().includes('pengiriman'))
+    );
+}
+
+function isPaymentDecision(text) {
+    const rawText = String(text || '').trim();
+    const firstLine = rawText
+        .split(/\r?\n/)
+        .map(line => line.trim())
+        .find(Boolean);
+    const statusMatch = rawText.match(/^\s*(?:\|\s*)?status(?:\s+pembayaran)?\s*(?::|->)\s*(.+)$/im);
+    const knownStatuses = [
+        'ok',
+        'oke',
+        'valid',
+        'sesuai',
+        'benar',
+        'lunas',
+        'ya',
+        'yes',
+        'y',
+        'done',
+        'paid',
+        'sudah',
+        'berhasil',
+        'x',
+        'no',
+        'n',
+        'tidak',
+        'invalid',
+        'gagal',
+        'salah',
+        'batal'
+    ];
+
+    return [firstLine, statusMatch?.[1], rawText].some(candidate => {
+        const compactText = String(candidate || '').trim().toLowerCase().replace(/[^a-z0-9]/g, '');
+
+        return knownStatuses.includes(compactText);
+    });
 }
 
 // Membuat QR Code
@@ -100,20 +151,59 @@ client.on('message', async message => {
         return;
     }
 
+    if(message.fromMe) {
+        return;
+    }
+
+    const isGroupMessage = userId.endsWith('@g.us');
+
     // Memeriksa Apakah Pesan Yang Dikirim Berupa Media (Sticker, Gambar, Dokumen, Video)
     // ==================================================================================
     if(message.hasMedia) {
         if(pendingProof[userId]) {
             const proof_photo = await message.downloadMedia();
+            const orderId = pendingProof[userId];
+            const order = pendingOrders[orderId];
 
-            await sendProofToGroup(proof_photo, pendingProof[userId], pendingOrders[userId], client);
+            if(!order?.data) {
+                await message.reply('Data pesanan tidak ditemukan. Mohon hubungi admin.');
+                return;
+            }
 
-            delete pendingOrders[userId];
+            await sendProofToGroup(proof_photo, orderId, order.data, client);
             
             return;
         } else {
             return;
         }
+    }
+
+    // Follow-Up Dari Group Tenant (Group Session)
+    // ===========================================
+    if(isGroupMessage) {
+        if(!groupSession[userId]) {
+            return;
+        }
+
+        if(paymentVerificationSession[userId] && isPaymentDecision(text)) {
+            await verificationPayment(text, client, paymentVerificationSession[userId]);
+
+            return;
+        }
+
+        if(isPaymentResponse(text)) {
+            await verificationPayment(message.body, client);
+
+            return;
+        }
+
+        if(deliverySession[userId] && isDeliveryResponse(text)) {
+            await handleDeliveryResponse(text, client, deliverySession[userId]);
+
+            return;
+        }
+
+        return;
     }
 
     // Memeriksa & Menyimpan Data Pengirim, Jika Pertama Kalinya Berkunjung
@@ -141,6 +231,9 @@ client.on('message', async message => {
         delete userMode[userId];
         delete sessions[userId];
         delete multipleFormSession[userId];
+        delete editingOrderSession[userId];
+        delete paymentStatus[userId];
+        delete pendingProof[userId];
 
         await message.reply(
             "Halo kak👋\n\nTerima kasih sudah menghubungi Klikbi Go🍽️🚚\n\nSaya admin KlikBiGo, ada yang bisa kami bantu? 😊\n[1] Pesan Produk\n[2] FAQ\n[3] Hubungi Admin"
@@ -153,40 +246,6 @@ client.on('message', async message => {
     // ========================================================
     if(userMode[userId] === "human-admin") {
         return;
-    }
-
-    // Follow-Up Dari Group Tenant (Group Session)
-    // ===========================================
-    if(groupSession[userId]) {
-        if(deliverySession[userId]) {
-            await handleDeliveryResponse(text, client);
-
-            return;
-        }
-
-        // if(isAvailabilityResponse(text)) {
-        //     const result = await verificationOrder(message.body, client);
-
-        //     if(result?.message) {
-        //         await message.reply(result.message);
-        //     }
-
-        //     if(result?.success) {
-        //         delete groupSession[userId];
-        //     }
-
-        //     return;
-        // }
-
-        if(isPaymentResponse(text)) {
-            const result = await verificationPayment(message.body, client);
-
-            if(result?.message) {
-                await message.reply(result.message);
-            }
-
-            return;
-        }
     }
 
     // Menjalankan FAQ, Jika Pengirim Memilih Menu 2 (FAQ Session)
@@ -236,25 +295,38 @@ client.on('message', async message => {
     // Menjalankan Sistem Pendataan Formulir, Jika Pengirim Memilih Menu 2 (Ordering Session)
     // ======================================================================================
     if(sessions[userId]) {
-        const responseOrder = await extractionOrder(text, userId, client);        
+        const responseOrder = await extractionOrder(text, userId, false, client);        
 
-        await message.reply(responseOrder);
+        if(responseOrder) {
+            await message.reply(responseOrder);
+        }
 
         return;
     }
 
     // Mengganti/Edit, Jika Suatu Produk Tidak Tersedia (Editing Order Session)
     // ========================================================================
-    if(editingOrder[userId]["status"]) {
+    if(editingOrderSession[userId]?.status) {
+        const editSession = editingOrderSession[userId];
+
         if(text == "1") {
-            await editingOrder(editingOrder[userId]["all_data_available"], editingOrder[userId]["order_id"], userId, client);
+            await sendEditingOrderForm(editSession["all_data_available"], editSession["order_id"], userId, client);
         } else if(text == "2") {
-            await deleteOrder(editingOrder[userId]["all_data_available"], editingOrder[userId]["order_id"]);
-            await validationOrder(editingOrder[userId]["data"], userId, false, client);
-            delete editingOrder[userId];
+            const remainingOrder = deleteOrder(editSession["all_data_available"], editSession["order_id"]);
+
+            if(!remainingOrder?.hasProducts) {
+                delete pendingOrders[editSession["order_id"]];
+                delete editingOrderSession[userId];
+
+                await message.reply('Pesanan dibatalkan karena tidak ada produk yang bisa diproses.');
+                return;
+            }
+
+            await validationOrder(remainingOrder.data, userId, true, client);
+            delete editingOrderSession[userId];
         } else {
+            delete editingOrderSession[userId];
             await extractionOrder(text, userId, true, client);
-            delete editingOrder[userId];
         }
 
         return;
@@ -262,22 +334,30 @@ client.on('message', async message => {
 
     // Handling Pemilihan Metode Payment (Payment Session)
     // ===================================================
-    if(paymentStatus[userId]["status"]) {
+    if(paymentStatus[userId]?.status) {
+        const paymentSession = paymentStatus[userId];
+        const orderId = paymentSession["order_id"];
+        const responsePayment = await payment(orderId);
+
+        if(!responsePayment) {
+            await message.reply('Data pembayaran belum ditemukan. Mohon coba lagi setelah pesanan dikonfirmasi.');
+            return;
+        }
+
         const responseOngkir = await ongkir(userId);
-        const totalPrice = Number(responsePayment["total_price"]) || 0;
         const shippingCost = Number(responseOngkir) || 0;
+        const totalPrice = Number(responsePayment["total_price"]) || 0;
         const totalPayment = totalPrice + shippingCost;
-        let responsePayment = null;
 
         if(text == "1") {
             await message.reply(
                 `Siap kak\n\nUntuk total pembayaran ${totalPayment}, sudah dengan ongkir sebesar ${shippingCost} ya kak, dilakukan secara cash saat pesanan diterima.\n\nPesanan akan segera kami proses 😊🙏🏻`
             );
+            await inputDelivery(orderId, client);
+            delete pendingOrders[orderId];
         } else if(text == "2") {
-            responsePayment = await payment(paymentStatus[userId]["order_id"]);
-            
-            if(!responsePayment) {
-                await message.reply('Data pembayaran belum ditemukan. Mohon coba lagi setelah pesanan dikonfirmasi.');
+            if(!responsePayment["qris_photo"]) {
+                await message.reply('QRIS tenant belum ditemukan. Mohon pilih cash atau hubungi admin.');
                 return;
             }
 
@@ -290,10 +370,10 @@ client.on('message', async message => {
                     caption: `Total harga yang harus dibayar sejumlah Rp ${totalPayment}\nSudah ditambah dengan ongkir ${shippingCost} ya kak 😊🙏🏻\nMohon konfirmasi dan screenshot jika pembayaran sudah dilakukan 🙏🏻`
                 }
             );
-        }
-
-        if(responsePayment?.["order_id"]) {
-            pendingProof[userId] = responsePayment["order_id"];
+            pendingProof[userId] = orderId;
+        } else {
+            await message.reply('Mohon pilih metode pembayaran:\n[1] Cash\n[2] QRIS');
+            return;
         }
 
         delete paymentStatus[userId];
@@ -304,7 +384,11 @@ client.on('message', async message => {
     // Mengirimkan Informasi Pengirim Kepada Customer (Delivery Session)
     // =================================================================
     if(deliverySession[userId]) {
-        await handleDeliveryResponse(text, client);
+        const result = await handleDeliveryResponse(text, client);
+
+        if(result?.message) {
+            await message.reply(result.message);
+        }
 
         return;
     }

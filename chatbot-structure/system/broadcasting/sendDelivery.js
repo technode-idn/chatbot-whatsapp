@@ -1,65 +1,86 @@
 import fs from 'fs/promises';
 import { deliverySession, groupSession } from "../../settings/globalVariables.js";
-import { rawDataUsers, rawDataUsers } from '../../settings/loadFiles.js';
+import { DATA_DELIVERY_PATH, DATA_USERS_PATH } from '../../settings/loadFiles.js';
 
 const GROUP_ID = '120363407187484870@g.us';
 
-async function loadDataUsers() {
-    const dataUsers = await fs.readFile(rawDataUsers, 'utf8');
+async function loadJsonFile(path) {
+    const rawData = await fs.readFile(path, 'utf8');
 
-    return dataUsers.trim() ? JSON.parse(dataUsers) : [];
+    return rawData.trim() ? JSON.parse(rawData) : [];
+}
+
+function parseKeyValueText(text) {
+    const data = {};
+    const lines = text.split('\n').map(item => item.trim());
+
+    for(const line of lines) {
+        const match = line.match(/^\s*([^:]+?)\s*:\s*(.*)$/)
+            || line.match(/^\s*([^>-]+?)\s*->\s*(.*)$/);
+
+        if(match) {
+            const key = match[1]
+                .trim()
+                .toLowerCase()
+                .replace(/^[^a-z0-9]+/i, '')
+                .replace(/\s+/g, '_');
+
+            if(key) {
+                data[key] = match[2].trim();
+            }
+        }
+    }
+
+    return data;
 }
 
 export async function inputDelivery(orderId, client) {
-
     await client.sendMessage(
         GROUP_ID,
         `MOHON KONFIRMASI PENGIRIMAN\n==========================\nOrder ID: ${orderId}\n\nID Pengirim: \nNomor Pengirim: `
     );
 
-    deliverySession[GROUP_ID] = true;
-
-    return;
+    deliverySession[GROUP_ID] = orderId;
+    groupSession[GROUP_ID] = true;
 }
 
-export async function handleDeliveryResponse(text, client) {
-    const data = {};
-    const users = await loadDataUsers();
-    const lines = text.split('\n');
+export async function handleDeliveryResponse(text, client, fallbackOrderId = null) {
+    const data = parseKeyValueText(text);
+    const users = await loadJsonFile(DATA_USERS_PATH);
+    const deliveries = await loadJsonFile(DATA_DELIVERY_PATH);
+    const orderId = data["order_id"] || fallbackOrderId;
     let customerId = null;
 
-    for(const line of lines) {
-
-        if(line.includes(':')) {
-
-            const [key, ...valueParts] = line.split(':');
-
-            data[key.trim().toLowerCase().replaceAll(' ', '_')] =
-                valueParts.join(':').trim();
-        }
-    }
-
     for(const user of users) {
-
-        if(String(user["order_id"]) === String(data["order_id"])) {
-
+        if(String(user["order_id"]) === String(orderId)) {
             customerId = user["user_id"];
             break;
         }
     }
 
     if(!customerId) {
-        return;
+        return {
+            success: false,
+            message: 'Data customer tidak ditemukan untuk Order ID tersebut.'
+        };
     }
 
-    const deliveryName = data.find(name => String(name["id_delivery"]) === data["id_pengirim"]);
+    const deliveryPerson = deliveries.find(delivery => (
+        String(delivery["id_delivery"]) === String(data["id_pengirim"])
+    ));
+    const deliveryName = deliveryPerson?.["name"] || data["nama_pengirim"] || data["id_pengirim"] || '-';
+    const deliveryPhone = data["nomor_pengirim"] || '-';
 
     await client.sendMessage(
         customerId,
-        `Informasi Pengiriman:\n\nNama Pengirim: ${deliveryName["name"]}\nNomor Pengirim: ${data["nomor_pengirim"]}`
+        `Informasi Pengiriman:\n\nNama Pengirim: ${deliveryName}\nNomor Pengirim: ${deliveryPhone}`
     );
 
     delete deliverySession[GROUP_ID];
-
     delete groupSession[GROUP_ID];
+
+    return {
+        success: true,
+        message: 'Informasi pengiriman sudah dikirim ke customer.'
+    };
 }

@@ -1,11 +1,10 @@
 import fs from 'fs/promises';
 import crypto from 'crypto';
-import { rawDatabaseProduct, rawDataUsers } from "../../settings/loadFiles.js";
+import { DATABASE_PRODUCT_PATH, DATA_USERS_PATH, rawDatabaseProduct, rawDataUsers } from "../../settings/loadFiles.js";
 import { editingOrder, paymentStatus, pendingOrders } from "../../settings/globalVariables.js";
 
 const database_product = JSON.parse(rawDatabaseProduct);
 const users = rawDataUsers.trim() ? JSON.parse(rawDataUsers) : [];
-let orderDataFinal = null;
 
 function parsePrice(value) {
     const digits = String(value || '').replace(/[^\d]/g, '');
@@ -13,135 +12,196 @@ function parsePrice(value) {
     return digits ? Number(digits) : 0;
 }
 
+function parseQuantity(value) {
+    const digits = String(value || '').replace(/[^\d]/g, '');
+    const quantity = digits ? Number(digits) : 1;
+
+    return quantity > 0 ? quantity : 1;
+}
+
+function normalizeProductId(value) {
+    return String(value || '').trim().toUpperCase();
+}
+
+function productNumberFromKey(key) {
+    const number = key.match(/_(\d+)$/)?.[1];
+
+    return number ? Number(number) : 0;
+}
+
+function quantityKeyFromProductKey(productKey) {
+    const number = productKey.match(/_(\d+)$/)?.[1];
+
+    return number ? `jumlah_pesanan_${number}` : 'jumlah_pesanan';
+}
+
+function getOrderItems(orderData) {
+    return Object.keys(orderData)
+        .filter(key => key === 'id_produk' || /^id_produk_\d+$/.test(key))
+        .sort((a, b) => productNumberFromKey(a) - productNumberFromKey(b))
+        .map(productKey => {
+            const quantityKey = quantityKeyFromProductKey(productKey);
+            const productNumber = productNumberFromKey(productKey);
+
+            return {
+                productKey,
+                quantityKey,
+                label: productNumber ? String(productNumber) : '',
+                productId: normalizeProductId(orderData[productKey]),
+                quantity: parseQuantity(orderData[quantityKey])
+            };
+        })
+        .filter(item => item.productId);
+}
+
+function findProduct(productId) {
+    return database_product.find(product => (
+        normalizeProductId(product["id_produk"] || product["id_product"]) === productId
+    ));
+}
+
+function buildUnavailableMessage(unavailableItems) {
+    const text = ['Mohon Maaf:\n'];
+
+    for(const item of unavailableItems) {
+        const label = item.label ? ` ${item.label}` : '';
+        text.push(`Produk${label} (${item.productId}) sedang tidak tersedia.\n`);
+    }
+
+    text.push('\nApakah kakak ingin mengganti produk?\n[1] Ya\n[2] Tidak');
+
+    return text.join('');
+}
+
+async function persistData() {
+    await fs.writeFile(
+        DATA_USERS_PATH,
+        JSON.stringify(users, null, 4)
+    );
+
+    await fs.writeFile(
+        DATABASE_PRODUCT_PATH,
+        JSON.stringify(database_product, null, 2)
+    );
+}
+
 export async function validationOrder(orderData, userId, editingStatus, client) {
-    // Membuat Order ID
-    // ================
-    let orderId = null;
+    const orderId = editingStatus
+        ? (orderData["order_id"] || editingOrder[userId]?.["order_id"])
+        : "ORD-" + crypto.randomBytes(5).toString("hex").toUpperCase();
 
-    if(editingStatus) {
-        orderId = orderData["order_id"];
-    } else {
-        orderId = "ORD-" + crypto.randomBytes(5).toString("hex").toUpperCase();
+    if(!orderId) {
+        await client.sendMessage(
+            userId,
+            'Order ID tidak ditemukan. Mohon kirim ulang form penggantinya.'
+        );
+
+        return { success: false };
     }
 
-    // Mengambil Data Produk Pesanan
-    // =============================
-    const allProductOrder = Object.keys(orderData).filter(key => String(orderData[key]).includes("id_produk"));
+    const existingPendingOrder = pendingOrders[orderId];
+    const orderDataFinal = {
+        ...(editingStatus ? existingPendingOrder?.data : {}),
+        ...orderData,
+        order_id: orderId
+    };
 
-    // Mengambil Data Jumlah Pesanan
-    // =============================
-    const allTotalProductOrder = Object.keys(orderData).filter(key => String(orderData[key]).includes("jumlah_pesanan"));
+    const orderItems = getOrderItems(orderDataFinal);
 
-    // Menyimpan Data Produk Pesanan Yang Tidak Tersedia
-    // =================================================
-    const allProductNotAvailable = [];
-
-    // Menyimpan Data Pesanan Yang Tersedia
-    // ====================================
-    if(orderDataFinal && editingStatus) {
-        for(const orderDataEdit in orderData) {
-            if(orderDataEdit in orderDataFinal) {
-                orderDataFinal[orderDataEdit] = orderData[orderDataEdit];
-            }
-        }
-    } else {
-        orderDataFinal = orderData;
-    }
-
-    // Memeriksa Setiap Produk Pesanan, Apakah Tersedia
-    // ================================================
-    for(let i = 0; i < allProductOrder.length; i++) {
-        if(database_product.some(product => product["id_product"] === allProductOrder[i])) {
-
-            // Mengambil Data Produk Dari Database
-            // ===================================
-            const product = database_product.find(p => p["id_product"] === allProductOrder[i]);
-
-            // Memeriksa Jumlah Produk Pesanan Yang Masih Tersedia
-            // ===================================================
-            if(product["total_product"] > allTotalProductOrder[i]) {
-
-                // Memasukkan Data Pesanan Ke Dalam Object
-                // =======================================
-                users.push({
-                    order_id : orderId,
-                    user_id: userId,
-                    product_id: orderData[allProductOrder[i]],
-                    created_at: new Date().toISOString(),
-                    customer_name: orderData["nama_pemesan"],
-                    number: orderData["nomor_telepon_aktif"],
-                    address: orderData["alamat_lengkap_pengantaran"],
-                    tenant_name: product["tenant_name"],
-                    total_product: allTotalProductOrder[i],
-                    product_unit_price: product["product_unit_price"],
-                    total_price: parsePrice(product["product_unit_price"] * allTotalProductOrder[i])
-                });
-
-                // Menyimpan Data Pesanan Ke Dalam Database
-                // ========================================
-                await fs.writeFile(
-                    './chatbot-structure/data/data_form_users.json',
-                    JSON.stringify(users, null, 4)
-                );
-
-                // Memperbarui Jumlah Produk Dalam Database
-                // ========================================
-                product["total_product"] -= allTotalProductOrder[i];
-
-                fs.writeFile(
-                    './chatbot-structure/data/database_produk.json',
-                    JSON.stringify(database_product, null, 2)
-                );
-            } else {
-                // Mendata Produk Pesanan Yang Tidak Tersedia
-                // ==========================================
-                allProductNotAvailable.push(allProductOrder[i]);
-            }
-        }
-    }
-
-    pendingOrders[orderId] = {
-        customer: userId,
-        order_id: orderId,
-        data: orderDataFinal
-    }
-
-    // Jika ada produk yang tidak tersedia
-    // ===================================
-    if(allProductNotAvailable.length > 0) {
-        const text = ["Mohon Maaf:\n"];
-
-        for(const productNotAvailable of allProductNotAvailable) {
-            text.push(`Produk ${productNotAvailable} sedang tidak tersedia ❌\n`);
-        }
-
-        text.push("Apakah kakak ingin mengganti produk?\n[1] Ya\n[2] Tidak");
+    if(!orderItems.length) {
+        delete pendingOrders[orderId];
+        delete editingOrder[userId];
 
         await client.sendMessage(
             userId,
-            text.join("")
+            'Tidak ada produk yang bisa diproses di pesanan ini.'
         );
 
+        return { success: false };
+    }
+
+    const pendingOrder = pendingOrders[orderId] || {};
+    pendingOrder.customer = userId;
+    pendingOrder.order_id = orderId;
+    pendingOrder.data = orderDataFinal;
+    pendingOrder.processed_product_keys = pendingOrder.processed_product_keys || [];
+    pendingOrders[orderId] = pendingOrder;
+
+    const unavailableItems = [];
+    let hasNewAvailableProduct = false;
+
+    for(const item of orderItems) {
+        if(pendingOrder.processed_product_keys.includes(item.productKey)) {
+            continue;
+        }
+
+        const product = findProduct(item.productId);
+        const stock = Number(product?.["total_product"]) || 0;
+
+        if(!product || stock < item.quantity) {
+            unavailableItems.push(item);
+            continue;
+        }
+
+        const unitPrice = parsePrice(product["product_unit_price"]);
+
+        users.push({
+            order_id: orderId,
+            user_id: userId,
+            product_id: item.productId,
+            created_at: new Date().toISOString(),
+            customer_name: orderDataFinal["nama_pemesan"],
+            number: orderDataFinal["nomor_telepon_aktif"],
+            address: orderDataFinal["alamat_lengkap_pengantaran"],
+            tenant_name: product["tenant_name"],
+            total_product: item.quantity,
+            product_unit_price: unitPrice,
+            total_price: unitPrice * item.quantity
+        });
+
+        product["total_product"] = stock - item.quantity;
+        pendingOrder.processed_product_keys.push(item.productKey);
+        hasNewAvailableProduct = true;
+    }
+
+    if(hasNewAvailableProduct) {
+        await persistData();
+    }
+
+    if(unavailableItems.length > 0) {
         editingOrder[userId] = {
             status: true,
-            all_data_available = allProductNotAvailable
+            order_id: orderId,
+            data: orderDataFinal,
+            all_data_available: unavailableItems.map(item => item.productKey)
         };
-
-        allProductNotAvailable.length = 0;
-    }
-
-    // Jika semua produk tersedia
-    // ==========================
-    if(allProductNotAvailable.length === 0) {
 
         await client.sendMessage(
             userId,
-            'Produk tersedia ✅\n\nUntuk informasi pembayarannya, kakak bisa pilih:\n\n[1] Cash (bayar di tempat)\n[2] QRIS\n\nSilahkan diinformasikan mau pakai metode yang mana ya kak?'
+            buildUnavailableMessage(unavailableItems)
         );
 
-        paymentStatus[userId] = {
-            status: true,
+        return {
+            success: false,
+            requiresEditing: true,
             order_id: orderId
         };
     }
+
+    delete editingOrder[userId];
+
+    paymentStatus[userId] = {
+        status: true,
+        order_id: orderId
+    };
+
+    await client.sendMessage(
+        userId,
+        'Produk tersedia.\n\nUntuk informasi pembayarannya, kakak bisa pilih:\n\n[1] Cash (bayar di tempat)\n[2] QRIS\n\nSilahkan diinformasikan mau pakai metode yang mana ya kak?'
+    );
+
+    return {
+        success: true,
+        order_id: orderId
+    };
 }

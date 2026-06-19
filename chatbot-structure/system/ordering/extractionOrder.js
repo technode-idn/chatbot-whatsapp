@@ -1,4 +1,3 @@
-import fs from 'fs/promises';
 import { validationOrder } from './validationOrder.js';
 import { sessions } from '../../settings/globalVariables.js';
 
@@ -7,21 +6,27 @@ export async function extractionOrder(text, userId, editingStatus = false, clien
     // ===============================
     try {
         const data = {};
+        const lines = text.split('\n').map(item => item.trim());
 
-        const lines = text.split('\n').map(item => item.toLowerCase().trim());
-
-        for (const line of lines) {
-
-            if (line.includes('📌')) {
-                const [key, ...valueParts] = line.split(':');
-                const normalizedKey = key
-                    .replace('📌','')
-                    .trim()
-                    .replace(/\s+/g, '_')
-
-                data[normalizedKey] = valueParts.join(':').trim();
+        for(const line of lines) {
+            if(!line.includes(':')) {
+                continue;
             }
 
+            const [key, ...valueParts] = line.split(':');
+            const normalizedKey = key
+                .toLowerCase()
+                .trim()
+                .replace(/^[^a-z0-9]+/i, '')
+                .replace(/\s+/g, '_');
+
+            if(normalizedKey) {
+                data[normalizedKey] = valueParts.join(':').trim();
+            }
+        }
+
+        if(!Object.keys(data).length) {
+            return 'Format yang dikirim tidak sesuai, silahkan isi ulang kembali';
         }
 
         // Mengirim Informasi Pesanan Ke Group Tenant
@@ -30,13 +35,10 @@ export async function extractionOrder(text, userId, editingStatus = false, clien
 
         delete sessions[userId];
 
-        return ('Mohon ditunggu sebantar ya kak, kami sedang memeriksa ketersediaan produk 😊');
-
+        return;
     } catch(error) {
         console.log(error);
 
-        return('Format yang dikirim tidak sesuai, silahkan isi ulang kembali');
-
+        return 'Format yang dikirim tidak sesuai, silahkan isi ulang kembali';
     }
-
 }

@@ -1,5 +1,6 @@
 export const pendingOrders = {};
 export const pendingProof = {};
+export const paymentVerificationSession = {};
 export const sessions = {};
 export const paymentStatus = {};
 export const groupSession = {};
