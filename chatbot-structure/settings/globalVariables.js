@@ -8,6 +8,8 @@ export const deliverySession = {};
 export const multipleFormSession = {};
 export const editingOrder = {};
 export const userMode = {}
+export const allNumberOwnerTenant = [];
+export const tenantSession = {};
 export let lastOrderId = null;
 export let campusZone = {
     3000: [

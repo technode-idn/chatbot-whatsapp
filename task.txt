@@ -1,7 +1,16 @@
-NOT STARTED:
-- EXPORTING EXCEL
-
-IN PROGRESS:
-- MULTIPLE ORDER
-
-FINISHED:
+====================================================================================================================
+|                                                                                                                  |
+|                                   LIST AKTOR YANG MEMAKAI SISTEM INI                                             |
+|                                                                                                                  |
+====================================================================================================================
+1. Admin Klikbi Go
+   - Export rekapan penjualan
+2. Group Tenant
+   - Memvalidasi status pembayaran
+   - Mengisi form kurir
+3. Customer
+   - Ordering
+   - FAQ
+   - Hubungi admin manusia
+4. Owner Tenant
+   - 

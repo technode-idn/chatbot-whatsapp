@@ -1,33 +1,49 @@
 [
     {
+        "tenant_id": "TEN001",
         "store": "popkit",
+        "owner_phone": "08xxxxxxxxxx",
         "qris": "./chatbot-structure/img/qris_tenant_2.jpg"
     },
     {
+        "tenant_id": "TEN002",
         "store": "soeka_dimsum",
+        "owner_phone": "08xxxxxxxxxx",
         "qris": "./chatbot-structure/img/qris_tenant_3.jpg"
     },
     {
+        "tenant_id": "TEN003",
         "store": "miwiti",
+        "owner_phone": "08xxxxxxxxxx",
         "qris": "./chatbot-structure/img/qris_tenant_4.jpg"
     },
     {
+        "tenant_id": "TEN004",
         "store": "kusaji",
+        "owner_phone": "08xxxxxxxxxx",
         "qris": "./chatbot-structure/img/qris_tenant_4.jpg"
     },
     {
+        "tenant_id": "TEN005",
         "store": "servis_coffee",
+        "owner_phone": "08xxxxxxxxxx",
         "qris": "./chatbot-structure/img/qris_tenant_5.jpg"
     },
     {
+        "tenant_id": "TEN006",
         "store": "hagarasa",
+        "owner_phone": "08xxxxxxxxxx",
         "qris": "./chatbot-structure/img/qris_tenant_6.jpg"
     },
     {
+        "tenant_id": "TEN007",
         "store": "acio",
+        "owner_phone": "08xxxxxxxxxx",
         "qris": "./chatbot-structure/img/qris_tenant_7.jpg"
     },
     {
+        "tenant_id": "TEN008",
+        "store": "klikbi-go",
         "qris": "./chatbot-structure/img/qris_tenant_8.jpg"
     }
 ]

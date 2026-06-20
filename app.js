@@ -1,4 +1,5 @@
 import pkg from 'whatsapp-web.js';
+import nodeCron from 'node-cron';
 const { Client, LocalAuth, MessageMedia } = pkg;
 import qrcode from "qrcode-terminal";
 import puppeteer from 'puppeteer';
@@ -8,13 +9,16 @@ import { extractionOrder } from './chatbot-structure/system/ordering/extractionO
 import { sendProofToGroup } from './chatbot-structure/system/broadcasting/sendProof.js';
 import { payment } from './chatbot-structure/system/payment.js';
 import { ongkir } from './chatbot-structure/system/ongkir.js';
-import { paymentVerificationSession, pendingProof, sessions, paymentStatus, groupSession, deliverySession, multipleFormSession, editingOrder as editingOrderSession, pendingOrders, userMode } from './chatbot-structure/settings/globalVariables.js';
+import { paymentVerificationSession, pendingProof, sessions, paymentStatus, groupSession, deliverySession, multipleFormSession, editingOrder as editingOrderSession, pendingOrders, userMode, allNumberOwnerTenant, tenantSession } from './chatbot-structure/settings/globalVariables.js';
 import { verificationPayment } from './chatbot-structure/system/verification.js';
 import { handleDeliveryResponse, inputDelivery } from './chatbot-structure/system/broadcasting/sendDelivery.js';
 import { generateFormMultipleOrder } from './chatbot-structure/system/ordering/generateFormMultipleOrder.js';
 import { deleteOrder } from './chatbot-structure/system/ordering/deleteOrder.js';
 import { validationOrder } from './chatbot-structure/system/ordering/validationOrder.js';
 import { editingOrder as sendEditingOrderForm } from './chatbot-structure/system/ordering/editingOrder.js';
+import { broadcastForm } from './chatbot-structure/system/owner-tenant/broadcastForm.js';
+import { formStock } from './chatbot-structure/system/owner-tenant/stock.js';
+import { extraction } from './chatbot-structure/system/owner-tenant/extraction.js';
 
 // Membuat Settingan Whatsapp Web
 // ==============================
@@ -120,6 +124,12 @@ client.on('ready', () => {
     console.log('Bot Siap!');
 });
 
+// Broadcasting Form Pengisian Stock Ke Setiap Owner Tenant (Broadcasting Form)
+// ============================================================================
+nodeCron.schedule('0 7 * * 1-5', async() => {
+    await broadcastForm(client);
+});
+
 // Membaca Pesan Masuk
 // ===================
 client.on('message', async message => {
@@ -175,6 +185,20 @@ client.on('message', async message => {
             return;
         } else {
             return;
+        }
+    }
+
+    if(tenantSession["status"]) {
+        if(allNumberOwnerTenant.includes(userId)) {
+            if(text === "1") {
+                await formStock(userId, client);
+            } else if(text === "2") {
+                return;
+            } else if(text === "3") {
+                return;
+            } else {
+                await extraction(text);
+            }
         }
     }
 
@@ -268,7 +292,7 @@ client.on('message', async message => {
 
             sessions[userId] = true;
         } else if(text == "2") {
-            await message.reply("Berapa produk yang ingin anda pesan?\n[1] 1\n[2] 2\n[3] 3\n [4] 4\n[5] 5");
+            await message.reply("Berapa produk yang ingin anda pesan?\n[1] 1\n[2] 2\n[3] 3\n[4] 4\n[5] 5");
 
             multipleFormSession[userId] = true;
         }
