@@ -17,7 +17,7 @@ export async function exportData() {
 
         XLSX.writeFile(
             workbook,
-            'customer_recap.xlsx'
+            './chatbot-structure/file/customer_recap.xlsx'
         );
 
         return;

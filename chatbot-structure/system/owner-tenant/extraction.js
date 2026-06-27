@@ -1,4 +1,7 @@
-import { addStock } from "./stock.js";
+import { rawDataTenant } from "../../settings/loadFiles.js";
+import { addStock, editStock } from "./stock.js";
+
+const tenants = JSON.parse(rawDataTenant);
 
 export async function extraction(text) {
     try {
@@ -23,10 +26,17 @@ export async function extraction(text) {
         if(!Object.keys(data).length) {
             return 'Format yang dikirim tidak sesuai, silahkan isi ulang kembali';
         }
+
+        const tenant = tenants.find(t => t["store"] === data["tenant"]);
+        tenant["status_stock"] = "complete";
     
-        await addStock(data);
+        if(text.includes("pengisian")) {
+            const responseStock = await addStock(data);
+        } else {
+            const responseStock = await editStock(data);
+        }
     
-        return;
+        return responseStock;
     } catch(error) {
         console.log(error);
     

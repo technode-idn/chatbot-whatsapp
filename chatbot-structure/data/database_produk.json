@@ -5,12 +5,14 @@
       "BKSO": {
         "product_name": "Bakso",
         "price": 15000,
-        "stock": 0
+        "stock": 0,
+        "qty_sold": 0
       },
       "ESTEH": {
         "product_name": "Es Teh",
         "price": 4000,
-        "stock": 0
+        "stock": 0,
+        "qty_sold": 0
       }
     }
   },
@@ -20,12 +22,14 @@
       "DMSM": {
         "product_name": "Dimsum",
         "price": 10000,
-        "stock": 0
+        "stock": 0,
+        "qty_sold": 0
       },
       "JUICE": {
         "product_name": "Juice",
         "price": 7000,
-        "stock": 0
+        "stock": 0,
+        "qty_sold": 0
       }
     }
   }

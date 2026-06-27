@@ -16,8 +16,8 @@ import { generateFormMultipleOrder } from './chatbot-structure/system/ordering/g
 import { deleteOrder } from './chatbot-structure/system/ordering/deleteOrder.js';
 import { validationOrder } from './chatbot-structure/system/ordering/validationOrder.js';
 import { editingOrder as sendEditingOrderForm } from './chatbot-structure/system/ordering/editingOrder.js';
-import { broadcastForm } from './chatbot-structure/system/owner-tenant/broadcastForm.js';
-import { formStock } from './chatbot-structure/system/owner-tenant/stock.js';
+import { broadcastForm, editStockForm } from './chatbot-structure/system/owner-tenant/broadcastForm.js';
+import { formStock, resetStock } from './chatbot-structure/system/owner-tenant/stock.js';
 import { extraction } from './chatbot-structure/system/owner-tenant/extraction.js';
 
 // Membuat Settingan Whatsapp Web
@@ -130,6 +130,19 @@ nodeCron.schedule('0 7 * * 1-5', async() => {
     await broadcastForm(client);
 });
 
+// Broadcasting Follow-Up Pengisian Stock Ke Setiap Owner Tenant (Follow-Up Broadcasting Form)
+// ===========================================================================================
+nodeCron.schedule('0 8 * * 1-5', async() => {
+    await broadcastForm(client);
+});
+
+// Broadcasting Laporan Penjualan (Sales Report Broadcasting)
+// ==========================================================
+nodeCron.schedule('0 16 * * 1-5', async() => {
+    await generalSalesReport(client);
+    await resetStock();
+});
+
 // Membaca Pesan Masuk
 // ===================
 client.on('message', async message => {
@@ -188,18 +201,21 @@ client.on('message', async message => {
         }
     }
 
-    if(tenantSession["status"]) {
-        if(allNumberOwnerTenant.includes(userId)) {
+    // Tenant (Tenant Session)
+    // =======================
+    if(allNumberOwnerTenant.includes(userId)) {
+        if(tenantSession["status"]) {
             if(text === "1") {
-                await formStock(userId, client);
-            } else if(text === "2") {
-                return;
-            } else if(text === "3") {
-                return;
+                await editStockForm(userId, client);
+            } else if(text.includes("pengisian") || text.includes("perbarui")) {
+                const responseStock = await extraction(text);
+                await message.reply(responseStock);
             } else {
-                await extraction(text);
+                await message.reply("Halo Pemilik Tenant!\n\nAda yang bisa kami bantu.\n\n[1] Update/Restok Produk");
             }
         }
+
+        return;
     }
 
     // Follow-Up Dari Group Tenant (Group Session)
@@ -245,7 +261,16 @@ client.on('message', async message => {
     // Handling Untuk Export File (Excel)
     // ==================================
     if(text === "export") {
-        await exportData();
+        if(userId === "58493310615674@lid") {
+            await exportData();
+
+            const media = MessageMedia.fromFilePath("./chatbot-structure/file/customer_recap.xlsx");
+
+            await client.sendMessage(
+                userId,
+                media
+            );
+        }
     }
 
     // Handling Berpindah Menu
@@ -295,6 +320,10 @@ client.on('message', async message => {
             await message.reply("Berapa produk yang ingin anda pesan?\n[1] 1\n[2] 2\n[3] 3\n[4] 4\n[5] 5");
 
             multipleFormSession[userId] = true;
+        } else {
+            await message.reply("Mohon maaf, sepertinya kakak memilih diluar pilihan yang ada. Silahkan pilih ulang kembali 🙏😊");
+
+            return;
         }
 
         delete userMode[userId];
@@ -305,6 +334,11 @@ client.on('message', async message => {
     // Metode Pemesanan Multiple Order (Multiple Order Session)
     // ========================================================
     if(multipleFormSession[userId]) {
+        if(Number(text) > 5) {
+            await message.reply("Mohon maaf, sepertinya jumlah produk yang ingin kakak pesan sudah diluar batas 🙏😊");
+            return;
+        }
+
         const responseForm = await generateFormMultipleOrder(text);
 
         await message.reply(responseForm);
@@ -438,6 +472,8 @@ client.on('message', async message => {
             await message.reply("Baik, sekarang anda sudah terhubung dengan admin manusia, silakan tanyakan yang ingin anda tanyakan 🙏😊");
 
             return;
+        default:
+            await message.reply("Mohon maaf, sepertinya kakak memilih diluar pilihan yang ada. Silahkan pilih ulang menu kembali 🙏😊");
     }
 });
 

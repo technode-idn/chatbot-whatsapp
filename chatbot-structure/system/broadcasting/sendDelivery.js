@@ -37,7 +37,7 @@ function parseKeyValueText(text) {
 export async function inputDelivery(orderId, client) {
     await client.sendMessage(
         GROUP_ID,
-        `MOHON KONFIRMASI PENGIRIMAN\n==========================\nOrder ID: ${orderId}\n\nID Pengirim: \nNomor Pengirim: `
+        `MOHON KONFIRMASI PENGIRIMAN\n==========================\nOrder ID: ${orderId}\n\nID Pengirim: `
     );
 
     deliverySession[GROUP_ID] = orderId;
@@ -68,8 +68,9 @@ export async function handleDeliveryResponse(text, client, fallbackOrderId = nul
     const deliveryPerson = deliveries.find(delivery => (
         String(delivery["id_delivery"]) === String(data["id_pengirim"])
     ));
-    const deliveryName = deliveryPerson?.["name"] || data["nama_pengirim"] || data["id_pengirim"] || '-';
-    const deliveryPhone = data["nomor_pengirim"] || '-';
+
+    const deliveryName = deliveryPerson["name"];
+    const deliveryPhone = data["phone"];
 
     await client.sendMessage(
         customerId,

@@ -1,54 +1,65 @@
 import fs from 'fs/promises';
 import { allNumberOwnerTenant, tenantSession } from "../../settings/globalVariables";
-import { rawDataDailyStock, rawDataTenant } from "../../settings/loadFiles";
+import { rawDatabaseProduct, rawDataDailyStock, rawDataTenant } from "../../settings/loadFiles";
 
+const database_product = JSON.parse(rawDatabaseProduct);
 const tenants = JSON.parse(rawDataTenant)
 
 function delay(ms) {
     return new Promise(resolve => setTimeout(resolve, ms));
 }
 
-function createPendingStatus(tenant) {
-    const statuses = JSON.parse(rawDataDailyStock);
-    const today = new Date().toISOString().split("T");
-    const alreadyExist = statuses.find(item => item["tenant_id"] === tenant["tenant_id"] && item["date"] === today);
-
-    if(alreadyExist) {
-        return;
+function formStock(tenant) {
+    if(status === "editStock") {
+        const formStock = [`Tenant: ${tenant["store"]}\n`, "Silahkan perbarui stok.\n\n", "Kosongkan untuk yang tidak ingin diperbarui\n\n"];
+    } else {
+        const formStock = [`Tenant: ${tenant["store"]}\n`, "Mohon lakukan pengisian segera.\n\n"];
     }
 
-    statuses.push({
-        tenant_id: tenant["tenant_id"],
-        tenant_name: tenant["tenant_name"],
-        date: today,
-        status: 'pending'
-    });
+    for(const tenantName in database_product) {
+        if(tenantName === tenant["tenant_name"]) {
+            const tenantKey = Object.keys(database_product).find(key => key === tenantName);
+            const productTenant = Object.keys(database_product[tenantKey]["products"]);
 
-    await fs.readFile(
-        './chatbot-structure/data/daily_stock_status.json',
-        JSON.stringify(statuses, null, 4)
-    );
+            for(const product of productTenant) {
+                formStock.push(`${database_product[tenantKey]["products"][product]["product_name"]}: \n`);
+            }
+        }
+    }
 
-    return;
+    return formStock.join("");
 }
 
 export async function broadcastForm(client) {
-    const menuTenants = "Halo Pemilik Tenant\n\nTolong lakukan pengisian jumlah stok produk hari ini.\n\n[1] Isi Stok Harian Produk\n[2] Update/Restok Produk\n[3] Rekapan Penjualan Hari Ini";
-
     for(const tenant of tenants) {
+        if(!tenant?.status_stock) {
+            continue;
+        }
+
+        if(tenant["status_stock"] === "complete") {
+            continue;
+        }
+        
         await client.sendMessage(
             tenant["owner_phone"],
-            menuTenants
+            formStock(tenant)
         );
-
-        createPendingStatus(tenant);
-
-        allNumberOwnerTenant.push(tenant["owner_phone"])
 
         await delay(Math.floor(Math.random() * 5000) + 3000);
     }
 
     tenantSession["status"] = true;
+
+    return;
+}
+
+export async function editStockForm(userId, client) {
+    const tenant = tenants.find(t => t["owner_phone"] === userId);
+
+    await client.sendMessage(
+        userId,
+        formStock(tenant, "editStock")
+    );
 
     return;
 }
