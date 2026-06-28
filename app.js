@@ -3,6 +3,8 @@ import nodeCron from 'node-cron';
 const { Client, LocalAuth, MessageMedia } = pkg;
 import qrcode from "qrcode-terminal";
 import puppeteer from 'puppeteer';
+import Logger from "./chatbot-structure/system/security/logger.js";
+import SystemMonitor from './chatbot-structure/system/security/monitor.js';
 import { exportData } from './chatbot-structure/system/exportData.js';
 import { faq } from './chatbot-structure/system/FAQ.js';
 import { extractionOrder } from './chatbot-structure/system/ordering/extractionOrder.js';
@@ -16,15 +18,32 @@ import { generateFormMultipleOrder } from './chatbot-structure/system/ordering/g
 import { deleteOrder } from './chatbot-structure/system/ordering/deleteOrder.js';
 import { validationOrder } from './chatbot-structure/system/ordering/validationOrder.js';
 import { editingOrder as sendEditingOrderForm } from './chatbot-structure/system/ordering/editingOrder.js';
-import { broadcastForm, editStockForm } from './chatbot-structure/system/owner-tenant/broadcastForm.js';
-import { formStock, resetStock } from './chatbot-structure/system/owner-tenant/stock.js';
+import { broadcastForm } from './chatbot-structure/system/owner-tenant/broadcastForm.js';
+import { displayStock, editStock, formStock, resetStock } from './chatbot-structure/system/owner-tenant/stock.js';
 import { extraction } from './chatbot-structure/system/owner-tenant/extraction.js';
+import { getResponse, initializeResponse } from './chatbot-structure/system/security/response.js';
 
 // Membuat Settingan Whatsapp Web
 // ==============================
 const client = new Client({
     authStrategy: new LocalAuth()
 });
+
+// Inisialisasi Logger
+// ===================
+const logger = new Logger();
+
+// Inisialisasi Sistem Monitor
+// ===========================
+const monitor = new SystemMonitor(client, logger);
+
+// Inisialisasi Response
+// =====================
+initializeResponse(client, logger);
+
+// Mengambil Instance Response
+// ===========================
+const response = getResponse();
 
 // Menyimpan Session Users
 // =======================
@@ -100,41 +119,11 @@ function isPaymentDecision(text) {
     });
 }
 
-// Membuat QR Code
-// ===============
-client.on('qr', (qr) => {
-    qrcode.generate(qr, {small: true});
-});
-
-// Melacak Autentikasi
-// ===================
-client.on('authenticated',() => {
-    console.log("AUTHENTICATED");
-});
-
-// Melacak Proses Sinkronisasi
-// ===========================
-client.on('loading_screen', (percent, message) => {
-    console.log(percent, message);
-});
-
-// Follow-Up Bot Siap
-// ==================
-client.on('ready', () => {
-    console.log('Bot Siap!');
-});
-
 // Broadcasting Form Pengisian Stock Ke Setiap Owner Tenant (Broadcasting Form)
 // ============================================================================
-nodeCron.schedule('0 7 * * 1-5', async() => {
-    await broadcastForm(client);
-});
-
-// Broadcasting Follow-Up Pengisian Stock Ke Setiap Owner Tenant (Follow-Up Broadcasting Form)
-// ===========================================================================================
-nodeCron.schedule('0 8 * * 1-5', async() => {
-    await broadcastForm(client);
-});
+// nodeCron.schedule('0 7 * * 1-5', async() => {
+//     await broadcastMenu(client);
+// });
 
 // Broadcasting Laporan Penjualan (Sales Report Broadcasting)
 // ==========================================================
@@ -157,8 +146,8 @@ client.on('message', async message => {
 
     // Melacak Siapa Pengirim & Isi Pesannya
     // ======================================
-    console.log(message.from);
-    console.log(message.body);
+    logger.info(`FROM: ${message.from}`);
+    logger.info(`MESSAGE: ${message.body}`);
 
     // Menyimpan Informasi Pengirim
     // ============================
@@ -189,7 +178,7 @@ client.on('message', async message => {
             const order = pendingOrders[orderId];
 
             if(!order?.data) {
-                await message.reply('Data pesanan tidak ditemukan. Mohon hubungi admin.');
+                await response.send(userId, 'Data pesanan tidak ditemukan. Mohon hubungi admin.');
                 return;
             }
 
@@ -206,12 +195,19 @@ client.on('message', async message => {
     if(allNumberOwnerTenant.includes(userId)) {
         if(tenantSession["status"]) {
             if(text === "1") {
-                await editStockForm(userId, client);
-            } else if(text.includes("pengisian") || text.includes("perbarui")) {
+                await broadcastForm(client);
+            } else if(text === "2") {
+                const responseDisplay = await displayStock(userId);
+                await response.send(userId, responseDisplay);
+            } else if(text === "3") {
+                await response.send(userId, "Silahkan perbarui stoknya.\n\nID Produk: \nJumlah Stok: \nStatus: \n\n_Status diisi dengan tambah/kurang/reset_");
+            } else if(text === "4") {
+                await response.send(userId, "Baik, stok sisa kemarin digunakan.");
+            }else if(text.includes("pengisian") || text.includes("ID")) {
                 const responseStock = await extraction(text);
-                await message.reply(responseStock);
+                await response.send(userId, responseStock);
             } else {
-                await message.reply("Halo Pemilik Tenant!\n\nAda yang bisa kami bantu.\n\n[1] Update/Restok Produk");
+                await response.send(userId, "Halo Pemilik Tenant!\n\nAda yang bisa kami bantu.\n\n[1] Isi Ulang Stok [2] Lihat Stok\n[3] Update/Restok Produk\n\n_Gunakan fitur dibawah hanya untuk update stok harian_\n[4] Gunakan Stok Sisa Kemarin");
             }
         }
 
@@ -251,26 +247,44 @@ client.on('message', async message => {
     if(!welcomedUsers.has(userId)) {
         welcomedUsers.add(userId);
 
-        await message.reply(
-            "Halo kak👋\n\nTerima kasih sudah menghubungi Klikbi Go🍽️🚚\n\nSaya admin KlikBiGo, ada yang bisa kami bantu? 😊\n[1] Pesan Produk\n[2] FAQ\n[3] Hubungi Admin"
+        await response.send(userId, "Halo kak👋\n\nTerima kasih sudah menghubungi Klikbi Go🍽️🚚\n\nSaya admin KlikBiGo, ada yang bisa kami bantu? 😊\n[1] Pesan Produk\n[2] FAQ\n[3] Hubungi Admin"
         );
 
         return;
-    }
+    } 
 
     // Handling Untuk Export File (Excel)
     // ==================================
     if(text === "export") {
         if(userId === "58493310615674@lid") {
-            await exportData();
+            const allowed = await monitor.guardians.export.begin();
 
-            const media = MessageMedia.fromFilePath("./chatbot-structure/file/customer_recap.xlsx");
+            if(!allowed){
+                await response.send(userId, "Sedang ada proses export yang berjalan.");
 
-            await client.sendMessage(
-                userId,
-                media
-            );
+                return;
+            }
+
+            try {
+
+                await exportData();
+
+                const media = MessageMedia.fromFilePath("./chatbot-structure/file/customer_recap.xlsx");
+
+                await response.sendMedia(userId, media, "", "low");
+
+                await monitor.guardians.export.finish(true);
+
+            } catch(error) {
+
+                logger.error(error);
+
+                await monitor.guardians.export.finish(false);
+
+            }
+
         }
+
     }
 
     // Handling Berpindah Menu
@@ -284,8 +298,7 @@ client.on('message', async message => {
         delete paymentStatus[userId];
         delete pendingProof[userId];
 
-        await message.reply(
-            "Halo kak👋\n\nTerima kasih sudah menghubungi Klikbi Go🍽️🚚\n\nSaya admin KlikBiGo, ada yang bisa kami bantu? 😊\n[1] Pesan Produk\n[2] FAQ\n[3] Hubungi Admin"
+        await response.send(userId, "Halo kak👋\n\nTerima kasih sudah menghubungi Klikbi Go🍽️🚚\n\nSaya admin KlikBiGo, ada yang bisa kami bantu? 😊\n[1] Pesan Produk\n[2] FAQ\n[3] Hubungi Admin"
         );
         
         return;
@@ -302,7 +315,7 @@ client.on('message', async message => {
     if(userMode[userId] === "faq") {
         const responseFaq = await faq(text);
 
-        await message.reply(responseFaq);
+        await response.send(userId, responseFaq);
 
         return;
     }
@@ -311,17 +324,16 @@ client.on('message', async message => {
     // =============================================================
     if(userMode[userId] === "form") {
         if(text == "1") {
-            await message.reply(
-                "Baik kak, supaya kami bisa proses pesanannya, mohon info ya.\n\n📌Nama Pemesan: \n📌ID Produk: \n📌Jumlah Pesanan: \n📌Alamat Lengkap Pengantaran: \n📌Nomor Telepon Aktif: \n\nTerima Kasih🙏😊\n\n_*Jika ingin kembali, ketik keluar_"
+            await response.send(userId, "Baik kak, supaya kami bisa proses pesanannya, mohon info ya.\n\n📌Nama Pemesan: \n📌ID Produk: \n📌Jumlah Pesanan: \n📌Alamat Lengkap Pengantaran: \n📌Nomor Telepon Aktif: \n\nTerima Kasih🙏😊\n\n_*Jika ingin kembali, ketik keluar_"
             );
 
             sessions[userId] = true;
         } else if(text == "2") {
-            await message.reply("Berapa produk yang ingin anda pesan?\n[1] 1\n[2] 2\n[3] 3\n[4] 4\n[5] 5");
+            await response.send(userId, "Berapa produk yang ingin anda pesan?\n[1] 1\n[2] 2\n[3] 3\n[4] 4\n[5] 5");
 
             multipleFormSession[userId] = true;
         } else {
-            await message.reply("Mohon maaf, sepertinya kakak memilih diluar pilihan yang ada. Silahkan pilih ulang kembali 🙏😊");
+            await response.send(userId, "Mohon maaf, sepertinya kakak memilih diluar pilihan yang ada. Silahkan pilih ulang kembali 🙏😊");
 
             return;
         }
@@ -335,13 +347,13 @@ client.on('message', async message => {
     // ========================================================
     if(multipleFormSession[userId]) {
         if(Number(text) > 5) {
-            await message.reply("Mohon maaf, sepertinya jumlah produk yang ingin kakak pesan sudah diluar batas 🙏😊");
+            await response.send(userId, "Mohon maaf, sepertinya jumlah produk yang ingin kakak pesan sudah diluar batas 🙏😊");
             return;
         }
 
         const responseForm = await generateFormMultipleOrder(text);
 
-        await message.reply(responseForm);
+        await response.send(userId, responseForm);
 
         sessions[userId] = true;
 
@@ -356,7 +368,7 @@ client.on('message', async message => {
         const responseOrder = await extractionOrder(text, userId, false, client);        
 
         if(responseOrder) {
-            await message.reply(responseOrder);
+            await response.send(userId, responseOrder);
         }
 
         return;
@@ -376,7 +388,7 @@ client.on('message', async message => {
                 delete pendingOrders[editSession["order_id"]];
                 delete editingOrderSession[userId];
 
-                await message.reply('Pesanan dibatalkan karena tidak ada produk yang bisa diproses.');
+                await response.send(userId, 'Pesanan dibatalkan karena tidak ada produk yang bisa diproses.');
                 return;
             }
 
@@ -398,7 +410,7 @@ client.on('message', async message => {
         const responsePayment = await payment(orderId);
 
         if(!responsePayment) {
-            await message.reply('Data pembayaran belum ditemukan. Mohon coba lagi setelah pesanan dikonfirmasi.');
+            await response.send(userId, 'Data pembayaran belum ditemukan. Mohon coba lagi setelah pesanan dikonfirmasi.');
             return;
         }
 
@@ -408,29 +420,28 @@ client.on('message', async message => {
         const totalPayment = totalPrice + shippingCost;
 
         if(text == "1") {
-            await message.reply(
+            await response.send(userId, 
                 `Siap kak\n\nUntuk total pembayaran ${totalPayment}, sudah dengan ongkir sebesar ${shippingCost} ya kak, dilakukan secara cash saat pesanan diterima.\n\nPesanan akan segera kami proses 😊🙏🏻`
             );
             await inputDelivery(orderId, client);
             delete pendingOrders[orderId];
         } else if(text == "2") {
             if(!responsePayment["qris_photo"]) {
-                await message.reply('QRIS tenant belum ditemukan. Mohon pilih cash atau hubungi admin.');
+                await response.send(userId, 'QRIS tenant belum ditemukan. Mohon pilih cash atau hubungi admin.');
                 return;
             }
 
             const qris_photo = MessageMedia.fromFilePath(responsePayment["qris_photo"]);
 
-            await message.reply(
+            await response.sendMedia(
+                userId, 
                 qris_photo,
-                undefined,
-                {
-                    caption: `Total harga yang harus dibayar sejumlah Rp ${totalPayment}\nSudah ditambah dengan ongkir ${shippingCost} ya kak 😊🙏🏻\nMohon konfirmasi dan screenshot jika pembayaran sudah dilakukan 🙏🏻`
-                }
+                `Total harga yang harus dibayar sejumlah Rp ${totalPayment}\nSudah ditambah dengan ongkir ${shippingCost} ya kak 😊🙏🏻\nMohon konfirmasi dan screenshot jika pembayaran sudah dilakukan 🙏🏻`
             );
+
             pendingProof[userId] = orderId;
         } else {
-            await message.reply('Mohon pilih metode pembayaran:\n[1] Cash\n[2] QRIS');
+            await response.send(userId, 'Mohon pilih metode pembayaran:\n[1] Cash\n[2] QRIS');
             return;
         }
 
@@ -445,7 +456,7 @@ client.on('message', async message => {
         const result = await handleDeliveryResponse(text, client);
 
         if(result?.message) {
-            await message.reply(result.message);
+            await response.send(userId, result.message);
         }
 
         return;
@@ -457,25 +468,30 @@ client.on('message', async message => {
         case "1":
             userMode[userId] = "form";
 
-            await message.reply("Berapa banyak yang ingin Anda pesan?\n[1] Single Order\n[2] Multiple Order");
+            await response.send(userId, "Berapa banyak yang ingin Anda pesan?\n[1] Single Order\n[2] Multiple Order");
             
             return;
         case "2":
             userMode[userId] = "faq";
 
-            await message.reply("[1] KlikBi Go Jual Apa Saja?\n[2] Bagaimana Cara Saya Memesan?\n[3] Kapan Jam Operasionalnya?\n[4] Apakah Ada Kurir Yang Mengantar?\n[5] Metode Pembayarannya Apa Saja?\n\n_Ketik keluar untuk kembali ke menu awal_");
+            await response.send(userId, "[1] KlikBi Go Jual Apa Saja?\n[2] Bagaimana Cara Saya Memesan?\n[3] Kapan Jam Operasionalnya?\n[4] Apakah Ada Kurir Yang Mengantar?\n[5] Metode Pembayarannya Apa Saja?\n\n_Ketik keluar untuk kembali ke menu awal_");
 
             return;
         case "3":
             userMode[userId] = "human-admin";
 
-            await message.reply("Baik, sekarang anda sudah terhubung dengan admin manusia, silakan tanyakan yang ingin anda tanyakan 🙏😊");
+            await response.send(userId, "Baik, sekarang anda sudah terhubung dengan admin manusia, silakan tanyakan yang ingin anda tanyakan 🙏😊");
 
             return;
         default:
-            await message.reply("Mohon maaf, sepertinya kakak memilih diluar pilihan yang ada. Silahkan pilih ulang menu kembali 🙏😊");
+            await response.send(userId, "Mohon maaf, sepertinya kakak memilih diluar pilihan yang ada. Silahkan pilih ulang menu kembali 🙏😊");
     }
 });
 
+// Menjalankan Sistem Monitor
+// ==========================
+monitor.start();
+
 // Inisialisasi Chatbot
+// ====================
 client.initialize();

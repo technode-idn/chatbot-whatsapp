@@ -1,3 +1,7 @@
+import { getResponse } from "../security/response.js";
+
+const response = getResponse();
+
 export async function editingOrder(orderDataUnavailable = [], orderId, userId, client) {
     const unavailableKeys = Array.isArray(orderDataUnavailable)
         ? orderDataUnavailable
@@ -22,7 +26,7 @@ export async function editingOrder(orderDataUnavailable = [], orderId, userId, c
         text.push("ID Produk: \nJumlah Pesanan: ");
     }
 
-    await client.sendMessage(
+    await response.send(
         userId,
         text.join("")
     );

@@ -1,36 +1,158 @@
 {
-  "popkit": {
-    "tenant_id": "TEN001",
-    "products": {
-      "BKSO": {
-        "product_name": "Bakso",
-        "price": 15000,
-        "stock": 0,
-        "qty_sold": 0
-      },
-      "ESTEH": {
-        "product_name": "Es Teh",
-        "price": 4000,
-        "stock": 0,
-        "qty_sold": 0
-      }
+    "popkit": {
+        "tenant_id": "TEN001",
+        "products": {
+            "POPD01": {
+                "product_name": "Americano",
+                "price": 10000,
+                "stock": 0,
+                "qty_sold": 0
+            },
+            "POPD02": {
+                "product_name": "Kopi Susu",
+                "price": 13000,
+                "stock": 0,
+                "qty_sold": 0
+            },
+            "POPD03": {
+                "product_name": "Kopi Susu Gula Aren",
+                "price": 15000,
+                "stock": 0,
+                "qty_sold": 0
+            },
+            "POPD04": {
+                "product_name": "Milk Tea Cup",
+                "price": 8000,
+                "stock": 0,
+                "qty_sold": 0
+            },
+            "POPF01": {
+                "product_name": "Nasi Daun Jeruk Popchick Matah",
+                "price": 17000,
+                "stock": 0,
+                "qty_sold": 0
+            },
+            "POPF02": {
+                "product_name": "Nasi Daun Jeruk Popchick Original",
+                "price": 15000,
+                "stock": 0,
+                "qty_sold": 0
+            },
+            "POPF03": {
+                "product_name": "Nasi Popchick Asam Manis",
+                "price": 15000,
+                "stock": 0,
+                "qty_sold": 0
+            },
+            "POPF04": {
+                "product_name": "Nasi Popchick Blackpepper",
+                "price": 15000,
+                "stock": 0,
+                "qty_sold": 0
+            },
+            "POPF05": {
+                "product_name": "Nasi Popchick Hot Spicy",
+                "price": 15000,
+                "stock": 0,
+                "qty_sold": 0
+            },
+            "POPF06": {
+                "product_name": "Nasi Popchick Mentai",
+                "price": 20000,
+                "stock": 0,
+                "qty_sold": 0
+            },
+            "POPF07": {
+                "product_name": "Nasi Popchick Original",
+                "price": 13000,
+                "stock": 0,
+                "qty_sold": 0
+            },
+            "POPF08": {
+                "product_name": "Nasi Popchick Sambal Matah",
+                "price": 15000,
+                "stock": 0,
+                "qty_sold": 0
+            },
+            "POPF09": {
+                "product_name": "Nasi Popchick Soy Garlic",
+                "price": 15000,
+                "stock": 0,
+                "qty_sold": 0
+            },
+            "POPF10": {
+                "product_name": "Nasi Popchick BBQ",
+                "price": 15000,
+                "stock": 0,
+                "qty_sold": 0
+            },
+            "POPF11": {
+                "product_name": "Ala Carte Popchick Asam Manis",
+                "price": 15000,
+                "stock": 0,
+                "qty_sold": 0
+            },
+            "POPF12": {
+                "product_name": "Popchick Hot Spicy",
+                "price": 10000,
+                "stock": 0,
+                "qty_sold": 0
+            }
+        }
+    },
+    "soeka_dimsum": {
+        "tenant_id": "TEN002",
+        "products": {
+            "POPA02": {
+                "product_name": "Add Nasi Original",
+                "price": 5000,
+                "stock": 0,
+                "qty_sold": 0
+            }
+        }
+    },
+    "miwiti_kusaji": {
+        "tenant_id": "TEN003",
+        "products": {
+            "POPD01": {
+                "product_name": "Americano",
+                "price": 10000,
+                "stock": 0,
+                "qty_sold": 0
+            }
+        }
+    },
+    "servis_coffee": {
+        "tenant_id": "TEN004",
+        "products": {
+            "POPD02": {
+                "product_name": "Kopi susu",
+                "price": 13000,
+                "stock": 0,
+                "qty_sold": 0
+            }
+        }
+    },
+    "hagarasa": {
+        "tenant_id": "TEN005",
+        "products": {
+            "POPD03": {
+                "product_name": "Kopi susu gula aren",
+                "price": 15000,
+                "stock": 0,
+                "qty_sold": 0
+            }
+        }
+    },
+    "acio": {
+        "tenant_id": "TEN006",
+        "products": {
+            "POPD04": {
+                "product_name": "Milk tea cup",
+                "price": 8000,
+                "stock": 0,
+                "qty_sold": 0
+            }
+        }
     }
-  },
-  "soeka_dimsum": {
-    "tenant_id": "TEN002",
-    "products": {
-      "DMSM": {
-        "product_name": "Dimsum",
-        "price": 10000,
-        "stock": 0,
-        "qty_sold": 0
-      },
-      "JUICE": {
-        "product_name": "Juice",
-        "price": 7000,
-        "stock": 0,
-        "qty_sold": 0
-      }
-    }
-  }
 }

@@ -1,8 +1,10 @@
 import fs from 'fs/promises';
 import { deliverySession, groupSession } from "../../settings/globalVariables.js";
 import { DATA_DELIVERY_PATH, DATA_USERS_PATH } from '../../settings/loadFiles.js';
+import { getResponse } from '../security/response.js';
 
 const GROUP_ID = '120363407187484870@g.us';
+const response = getResponse();
 
 async function loadJsonFile(path) {
     const rawData = await fs.readFile(path, 'utf8');
@@ -35,9 +37,10 @@ function parseKeyValueText(text) {
 }
 
 export async function inputDelivery(orderId, client) {
-    await client.sendMessage(
+    await response.send(
         GROUP_ID,
-        `MOHON KONFIRMASI PENGIRIMAN\n==========================\nOrder ID: ${orderId}\n\nID Pengirim: `
+        `MOHON KONFIRMASI PENGIRIMAN\n==========================\nOrder ID: ${orderId}\n\nID Pengirim: `,
+        "normal"
     );
 
     deliverySession[GROUP_ID] = orderId;
@@ -72,7 +75,7 @@ export async function handleDeliveryResponse(text, client, fallbackOrderId = nul
     const deliveryName = deliveryPerson["name"];
     const deliveryPhone = data["phone"];
 
-    await client.sendMessage(
+    await response.send(
         customerId,
         `Informasi Pengiriman:\n\nNama Pengirim: ${deliveryName}\nNomor Pengirim: ${deliveryPhone}`
     );

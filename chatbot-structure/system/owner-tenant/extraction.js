@@ -17,6 +17,7 @@ export async function extraction(text) {
             const normalizedKey = key
                 .toLowerCase()
                 .trim()
+                .replace(/\s+/g, '_');
     
             if(normalizedKey) {
                 data[normalizedKey] = valueParts.join(':').trim();

@@ -1,6 +1,8 @@
 import { rawDatabaseProduct } from "../../settings/loadFiles.js";
+import { getResponse } from "../security/response.js";
 
 const database_product = JSON.parse(rawDatabaseProduct);
+const response = getResponse();
 
 export async function generalSalesReport(client) {
     const text = ["*LAPORAN PENJUALAN HARIAN 📝*\n", "=============================\n"];
@@ -21,8 +23,9 @@ export async function generalSalesReport(client) {
         totalRevenue = 0;
     }
 
-    await client.sendMessage(
+    await response.send(
         '120363407187484870@g.us',
-        text
+        text,
+        "normal"
     );
 }

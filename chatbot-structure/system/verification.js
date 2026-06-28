@@ -2,6 +2,9 @@ import fs from 'fs/promises';
 import { paymentVerificationSession, pendingOrders, pendingProof } from "../settings/globalVariables.js";
 import { inputDelivery } from "./broadcasting/sendDelivery.js";
 import { DATA_USERS_PATH } from '../settings/loadFiles.js';
+import { getResponse } from './security/response.js';
+
+const response = getResponse();
 
 async function loadDataUsers() {
     const dataUsers = await fs.readFile(DATA_USERS_PATH, 'utf8');
@@ -127,10 +130,7 @@ export async function verificationPayment(text, client, fallbackOrderId = null) 
         delete pendingOrders[orderId];
         delete paymentVerificationSession['120363407187484870@g.us'];
 
-        await client.sendMessage(
-            customerId,
-            'Pembayaran berhasil diverifikasi. Pesanan akan segera kami proses.'
-        );
+        await response.send(customerId, 'Pembayaran berhasil diverifikasi. Pesanan akan segera kami proses.');
 
         return {
             success: true,
@@ -145,10 +145,7 @@ export async function verificationPayment(text, client, fallbackOrderId = null) 
         };
     }
 
-    await client.sendMessage(
-        customerId,
-        "Bukti pembayaran tidak valid, silakan kirim ulang."
-    );
+    await response.send(customerId, "Bukti pembayaran tidak valid, silakan kirim ulang.");
 
     delete paymentVerificationSession['120363407187484870@g.us'];
 

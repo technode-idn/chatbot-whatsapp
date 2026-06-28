@@ -1,20 +1,18 @@
 import fs from 'fs/promises';
 import { allNumberOwnerTenant, tenantSession } from "../../settings/globalVariables";
 import { rawDatabaseProduct, rawDataDailyStock, rawDataTenant } from "../../settings/loadFiles";
+import { getResponse } from '../security/response';
 
 const database_product = JSON.parse(rawDatabaseProduct);
-const tenants = JSON.parse(rawDataTenant)
+const tenants = JSON.parse(rawDataTenant);
+const response = getResponse();
 
 function delay(ms) {
     return new Promise(resolve => setTimeout(resolve, ms));
 }
 
 function formStock(tenant) {
-    if(status === "editStock") {
-        const formStock = [`Tenant: ${tenant["store"]}\n`, "Silahkan perbarui stok.\n\n", "Kosongkan untuk yang tidak ingin diperbarui\n\n"];
-    } else {
-        const formStock = [`Tenant: ${tenant["store"]}\n`, "Mohon lakukan pengisian segera.\n\n"];
-    }
+    const formStock = [`Tenant: ${tenant["store"]}\n`, "Mohon lakukan pengisian segera.\n\n"];
 
     for(const tenantName in database_product) {
         if(tenantName === tenant["tenant_name"]) {
@@ -30,7 +28,7 @@ function formStock(tenant) {
     return formStock.join("");
 }
 
-export async function broadcastForm(client) {
+export async function broadcastForm() {
     for(const tenant of tenants) {
         if(!tenant?.status_stock) {
             continue;
@@ -40,26 +38,16 @@ export async function broadcastForm(client) {
             continue;
         }
         
-        await client.sendMessage(
+        await response.send(
             tenant["owner_phone"],
-            formStock(tenant)
+            formStock(tenant),
+            "normal"
         );
 
         await delay(Math.floor(Math.random() * 5000) + 3000);
     }
 
     tenantSession["status"] = true;
-
-    return;
-}
-
-export async function editStockForm(userId, client) {
-    const tenant = tenants.find(t => t["owner_phone"] === userId);
-
-    await client.sendMessage(
-        userId,
-        formStock(tenant, "editStock")
-    );
 
     return;
 }

@@ -2,9 +2,11 @@ import fs from 'fs/promises';
 import crypto from 'crypto';
 import { DATABASE_PRODUCT_PATH, DATA_USERS_PATH, rawDatabaseProduct, rawDataUsers } from "../../settings/loadFiles.js";
 import { editingOrder, paymentStatus, pendingOrders } from "../../settings/globalVariables.js";
+import { getResponse } from '../security/response.js';
 
 const database_product = JSON.parse(rawDatabaseProduct);
 const users = rawDataUsers.trim() ? JSON.parse(rawDataUsers) : [];
+const response = getResponse();
 
 function parsePrice(value) {
     const digits = String(value || '').replace(/[^\d]/g, '');
@@ -91,7 +93,7 @@ export async function validationOrder(orderData, userId, editingStatus, client) 
         : "ORD-" + crypto.randomBytes(5).toString("hex").toUpperCase();
 
     if(!orderId) {
-        await client.sendMessage(
+        await response.send(
             userId,
             'Order ID tidak ditemukan. Mohon kirim ulang form penggantinya.'
         );
@@ -112,7 +114,7 @@ export async function validationOrder(orderData, userId, editingStatus, client) 
         delete pendingOrders[orderId];
         delete editingOrder[userId];
 
-        await client.sendMessage(
+        await response.send(
             userId,
             'Tidak ada produk yang bisa diproses di pesanan ini.'
         );
@@ -176,7 +178,7 @@ export async function validationOrder(orderData, userId, editingStatus, client) 
             all_data_available: unavailableItems.map(item => item.productKey)
         };
 
-        await client.sendMessage(
+        await response.send(
             userId,
             buildUnavailableMessage(unavailableItems)
         );
@@ -195,7 +197,7 @@ export async function validationOrder(orderData, userId, editingStatus, client) 
         order_id: orderId
     };
 
-    await client.sendMessage(
+    await response.send(
         userId,
         'Produk tersedia.\n\nUntuk informasi pembayarannya, kakak bisa pilih:\n\n[1] Cash (bayar di tempat)\n[2] QRIS\n\nSilahkan diinformasikan mau pakai metode yang mana ya kak?'
     );
