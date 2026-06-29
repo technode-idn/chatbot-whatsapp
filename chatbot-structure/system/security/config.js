@@ -93,24 +93,33 @@ const config = {
     // Response
     // ==========================
     response: {
+
         typing: true,
 
-        typingDuration: 1200,
+        // Lama indikator "typing..."
+        typingDuration: 500,
 
         high: {
-            minDelay: 1500,
-            maxDelay: 3000
+
+            minDelay: 150,
+            maxDelay: 300
+
         },
 
         normal: {
-            minDelay: 2500,
-            maxDelay: 4500
+
+            minDelay: 300,
+            maxDelay: 700
+
         },
 
         low: {
-            minDelay: 5000,
-            maxDelay: 8000
+
+            minDelay: 1000,
+            maxDelay: 1500
+
         }
+
     }
 
 };

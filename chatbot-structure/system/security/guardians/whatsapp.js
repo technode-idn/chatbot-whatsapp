@@ -1,4 +1,5 @@
 import config from "../config.js";
+import qrcode from "qrcode-terminal";
 
 class WhatsAppGuardian {
 
@@ -19,11 +20,15 @@ class WhatsAppGuardian {
 
     start() {
 
-        this.client.on("qr", () => {
+        this.client.on("qr", (qr) => {
 
             this.logger.warning(
                 "WhatsApp membutuhkan QR Code."
             );
+
+            qrcode.generate(qr, {
+                small: true
+            });
 
         });
 

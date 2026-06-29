@@ -1,6 +1,6 @@
 import fs from 'fs/promises';
 import { campusZone } from "../settings/globalVariables.js";
-import { calculateShipping } from "./shippingCalculator.js";
+import { calculateShipping, hasMapLocation } from "./shippingCalculator.js";
 
 const DATA_USERS_PATH = './chatbot-structure/data/data_form_users.json';
 
@@ -39,7 +39,9 @@ export async function ongkir(userId) {
         return 0;
     }
 
-    const location = getCampusShipping(address);
+    const location = hasMapLocation(address)
+        ? null
+        : getCampusShipping(address);
 
     if(location) {
         return location;

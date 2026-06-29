@@ -1,34 +1,44 @@
-import fs from 'fs/promises';
-import { allNumberOwnerTenant, tenantSession } from "../../settings/globalVariables";
-import { rawDatabaseProduct, rawDataDailyStock, rawDataTenant } from "../../settings/loadFiles";
-import { getResponse } from '../security/response';
+import { allNumberOwnerTenant, tenantSession } from "../../settings/globalVariables.js";
+import { rawDatabaseProduct, rawDataTenant } from "../../settings/loadFiles.js";
+import { getResponse } from '../security/response.js';
 
 const database_product = JSON.parse(rawDatabaseProduct);
 const tenants = JSON.parse(rawDataTenant);
-const response = getResponse();
+
+for(const tenant of tenants) {
+    if(tenant?.owner_phone && !allNumberOwnerTenant.includes(tenant.owner_phone)) {
+        allNumberOwnerTenant.push(tenant.owner_phone);
+    }
+}
 
 function delay(ms) {
     return new Promise(resolve => setTimeout(resolve, ms));
 }
 
 function formStock(tenant) {
+    if(!tenant) {
+        return 'Data tenant tidak ditemukan. Mohon hubungi admin.';
+    }
+
     const formStock = [`Tenant: ${tenant["store"]}\n`, "Mohon lakukan pengisian segera.\n\n"];
+    const tenantKey = Object.keys(database_product).find(key => key === tenant["store"]);
 
-    for(const tenantName in database_product) {
-        if(tenantName === tenant["tenant_name"]) {
-            const tenantKey = Object.keys(database_product).find(key => key === tenantName);
-            const productTenant = Object.keys(database_product[tenantKey]["products"]);
+    if(!tenantKey) {
+        return 'Data produk tenant tidak ditemukan. Mohon hubungi admin.';
+    }
 
-            for(const product of productTenant) {
-                formStock.push(`${database_product[tenantKey]["products"][product]["product_name"]}: \n`);
-            }
-        }
+    const productTenant = Object.keys(database_product[tenantKey]["products"]);
+
+    for(const product of productTenant) {
+        formStock.push(`${database_product[tenantKey]["products"][product]["product_name"]}: \n`);
     }
 
     return formStock.join("");
 }
 
 export async function broadcastMenu() {
+    const response = getResponse();
+
     for(const tenant of tenants) {
         if(!tenant?.status_stock) {
             continue;
@@ -48,8 +58,12 @@ export async function broadcastMenu() {
     return;
 }
 
-export function generateFormStock(userId) {
+export async function generateFormStock(userId) {
+    const response = getResponse();
     const tenant = tenants.find(t => t["owner_phone"] === userId);
+    const form = formStock(tenant);
 
-    formStock(tenant);
+    await response.send(userId, form, "normal");
+
+    return form;
 }

@@ -6,7 +6,6 @@ import { getResponse } from '../security/response.js';
 
 const database_product = JSON.parse(rawDatabaseProduct);
 const users = rawDataUsers.trim() ? JSON.parse(rawDataUsers) : [];
-const response = getResponse();
 
 function parsePrice(value) {
     const digits = String(value || '').replace(/[^\d]/g, '');
@@ -57,9 +56,46 @@ function getOrderItems(orderData) {
 }
 
 function findProduct(productId) {
-    return database_product.find(product => (
-        normalizeProductId(product["id_produk"] || product["id_product"]) === productId
-    ));
+    if(Array.isArray(database_product)) {
+        const product = database_product.find(product => (
+            normalizeProductId(product["id_produk"] || product["id_product"]) === productId
+        ));
+
+        return product ? { product } : null;
+    }
+
+    for(const [tenantKey, tenant] of Object.entries(database_product || {})) {
+        const products = tenant?.["products"] || {};
+
+        for(const [id, product] of Object.entries(products)) {
+            if(normalizeProductId(id) === productId || normalizeProductId(product["id_produk"] || product["id_product"]) === productId) {
+                return {
+                    product,
+                    productId: id,
+                    tenantName: tenant["tenant_name"] || tenant["store"] || tenantKey
+                };
+            }
+        }
+    }
+
+    return null;
+}
+
+function getProductStock(product) {
+    return Number(product?.["total_product"] ?? product?.["stock"] ?? 0) || 0;
+}
+
+function setProductStock(product, stock) {
+    if(Object.prototype.hasOwnProperty.call(product, "stock")) {
+        product["stock"] = stock;
+        return;
+    }
+
+    product["total_product"] = stock;
+}
+
+function getProductPrice(product) {
+    return parsePrice(product?.["product_unit_price"] ?? product?.["price"]);
 }
 
 function buildUnavailableMessage(unavailableItems) {
@@ -88,6 +124,7 @@ async function persistData() {
 }
 
 export async function validationOrder(orderData, userId, editingStatus, client) {
+    const response = getResponse();
     const orderId = editingStatus
         ? (orderData["order_id"] || editingOrder[userId]?.["order_id"])
         : "ORD-" + crypto.randomBytes(5).toString("hex").toUpperCase();
@@ -137,15 +174,16 @@ export async function validationOrder(orderData, userId, editingStatus, client) 
             continue;
         }
 
-        const product = findProduct(item.productId);
-        const stock = Number(product?.["total_product"]) || 0;
+        const productEntry = findProduct(item.productId);
+        const product = productEntry?.product;
+        const stock = getProductStock(product);
 
         if(!product || stock < item.quantity) {
             unavailableItems.push(item);
             continue;
         }
 
-        const unitPrice = parsePrice(product["product_unit_price"]);
+        const unitPrice = getProductPrice(product);
 
         users.push({
             order_id: orderId,
@@ -155,13 +193,14 @@ export async function validationOrder(orderData, userId, editingStatus, client) 
             customer_name: orderDataFinal["nama_pemesan"],
             number: orderDataFinal["nomor_telepon_aktif"],
             address: orderDataFinal["alamat_lengkap_pengantaran"],
-            tenant_name: product["tenant_name"],
+            tenant_name: product["tenant_name"] || productEntry?.tenantName,
             total_product: item.quantity,
             product_unit_price: unitPrice,
             total_price: unitPrice * item.quantity
         });
 
-        product["total_product"] = stock - item.quantity;
+        setProductStock(product, stock - item.quantity);
+        product["qty_sold"] = (Number(product["qty_sold"]) || 0) + item.quantity;
         pendingOrder.processed_product_keys.push(item.productKey);
         hasNewAvailableProduct = true;
     }

@@ -18,15 +18,20 @@ import { generateFormMultipleOrder } from './chatbot-structure/system/ordering/g
 import { deleteOrder } from './chatbot-structure/system/ordering/deleteOrder.js';
 import { validationOrder } from './chatbot-structure/system/ordering/validationOrder.js';
 import { editingOrder as sendEditingOrderForm } from './chatbot-structure/system/ordering/editingOrder.js';
-import { generateFormStock } from './chatbot-structure/system/owner-tenant/broadcastForm.js';
-import { displayStock, editStock, formStock, resetStock } from './chatbot-structure/system/owner-tenant/stock.js';
+import { broadcastMenu, generateFormStock } from './chatbot-structure/system/owner-tenant/broadcastForm.js';
+import { displayStock, editStock, resetStock } from './chatbot-structure/system/owner-tenant/stock.js';
 import { extraction } from './chatbot-structure/system/owner-tenant/extraction.js';
 import { getResponse, initializeResponse } from './chatbot-structure/system/security/response.js';
+import { generalSalesReport } from './chatbot-structure/system/broadcasting/generalSalesReport.js';
 
 // Membuat Settingan Whatsapp Web
 // ==============================
 const client = new Client({
-    authStrategy: new LocalAuth()
+    authStrategy: new LocalAuth(),
+    puppeteer: {
+        executablePath: "C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe",
+        headless: true
+    }
 });
 
 // Inisialisasi Logger
@@ -127,7 +132,7 @@ nodeCron.schedule('0 7 * * 1-5', async() => {
 
 // Broadcasting Laporan Penjualan (Sales Report Broadcasting)
 // ==========================================================
-nodeCron.schedule('0 16 * * 1-5', async() => {
+nodeCron.schedule('31 13 * * 1-5', async() => {
     await generalSalesReport(client);
     await resetStock();
 });
@@ -141,6 +146,7 @@ client.on('message', async message => {
         '129454609268764@lid', // Ayah
         '77855006433494@lid', // Diaz
         '58493310615674@lid', // Azmi
+        '98599765577810@lid',
         '120363407187484870@g.us' // Group
     ];
 
@@ -155,11 +161,11 @@ client.on('message', async message => {
 
     // Ekstraksi Pesan
     // ===============
-    const text = message.body;
+    const text = message.body.trim();
 
     // Memeriksa Apakah Nomor Pengirim Terdapat Di Dalam Daftar
     // ========================================================
-    if(!allowedNumbers.includes(userId)) {
+    if(!allowedNumbers.includes(userId) && !allNumberOwnerTenant.includes(userId)) {
         return;
     }
 
@@ -193,22 +199,21 @@ client.on('message', async message => {
     // Tenant (Tenant Session)
     // =======================
     if(allNumberOwnerTenant.includes(userId)) {
-        if(tenantSession["status"]) {
-            if(text === "1") {
-                await generateFormStock(userId);
-            } else if(text === "2") {
-                const responseDisplay = await displayStock(userId);
-                await response.send(userId, responseDisplay);
-            } else if(text === "3") {
-                await response.send(userId, "Silahkan perbarui stoknya.\n\nID Produk: \nJumlah Stok: \nStatus: \n\n_Status diisi dengan tambah/kurang/reset_");
-            } else if(text === "4") {
-                await response.send(userId, "Baik, stok sisa kemarin digunakan.");
-            }else if(text.includes("pengisian") || text.includes("ID")) {
-                const responseStock = await extraction(text);
-                await response.send(userId, responseStock);
-            } else {
-                await response.send(userId, "Halo Pemilik Tenant!\n\nAda yang bisa kami bantu.\n\n[1] Isi Ulang Stok [2] Lihat Stok\n[3] Update/Restok Produk\n\n_Gunakan fitur dibawah hanya untuk update stok harian_\n[4] Gunakan Stok Sisa Kemarin");
-            }
+        if(text === "1") {
+            await resetStock(true);
+            await generateFormStock(userId);
+        } else if(text === "2") {
+            const responseDisplay = await displayStock(userId);
+            await response.send(userId, responseDisplay);
+        } else if(text === "3") {
+            await response.send(userId, "Silahkan perbarui stoknya.\n\nID Produk: \nJumlah Stok: \nStatus: \n\n_Status diisi dengan tambah/kurang/reset_");
+        } else if(text === "4") {
+            await response.send(userId, "Baik, stok sisa kemarin digunakan.");
+        } else if(text.toLowerCase().includes("pengisian") || text.toLowerCase().includes("id produk")) {
+            const responseStock = await extraction(text);
+            await response.send(userId, responseStock);
+        } else if(tenantSession["status"]) {
+            await response.send(userId, "Halo Pemilik Tenant!\n\nAda yang bisa kami bantu.\n\n[1] Isi Ulang Stok [2] Lihat Stok\n[3] Update/Restok Produk\n\n_Gunakan fitur dibawah hanya untuk update stok harian_\n[4] Gunakan Stok Sisa Kemarin");
         }
 
         return;
@@ -324,7 +329,7 @@ client.on('message', async message => {
     // =============================================================
     if(userMode[userId] === "form") {
         if(text == "1") {
-            await response.send(userId, "Baik kak, supaya kami bisa proses pesanannya, mohon info ya.\n\n📌Nama Pemesan: \n📌ID Produk: \n📌Jumlah Pesanan: \n📌Alamat Lengkap Pengantaran: \n📌Nomor Telepon Aktif: \n\nTerima Kasih🙏😊\n\n_*Jika ingin kembali, ketik keluar_"
+            await response.send(userId, "Baik kak, supaya kami bisa proses pesanannya, mohon info ya.\n\n📌Nama Pemesan: \n📌ID Produk: \n📌Jumlah Pesanan: \n📌Alamat Lengkap Pengantaran: contoh Asrama Felicia / Stasiun Bogor / Jl. Lodaya II\n📌Nomor Telepon Aktif: \n\nTerima Kasih🙏😊\n\n_*Jika ingin kembali, ketik keluar_"
             );
 
             sessions[userId] = true;
@@ -474,7 +479,7 @@ client.on('message', async message => {
         case "2":
             userMode[userId] = "faq";
 
-            await response.send(userId, "[1] KlikBi Go Jual Apa Saja?\n[2] Bagaimana Cara Saya Memesan?\n[3] Kapan Jam Operasionalnya?\n[4] Apakah Ada Kurir Yang Mengantar?\n[5] Metode Pembayarannya Apa Saja?\n\n_Ketik keluar untuk kembali ke menu awal_");
+            await response.send(userId, "[1] KlikBi Go Jual Apa Saja?\n[2] Bagaimana Cara Saya Memesan?\n[3] Kapan Jam Operasionalnya?\n[4] Apakah Ada Kurir Yang Mengantar?\n[5] Metode Pembayarannya Apa Saja?\n\n_Ketik 'keluar' untuk kembali ke menu awal_");
 
             return;
         case "3":
@@ -495,3 +500,4 @@ monitor.start();
 // Inisialisasi Chatbot
 // ====================
 client.initialize();
+

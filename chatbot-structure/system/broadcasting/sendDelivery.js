@@ -4,7 +4,6 @@ import { DATA_DELIVERY_PATH, DATA_USERS_PATH } from '../../settings/loadFiles.js
 import { getResponse } from '../security/response.js';
 
 const GROUP_ID = '120363407187484870@g.us';
-const response = getResponse();
 
 async function loadJsonFile(path) {
     const rawData = await fs.readFile(path, 'utf8');
@@ -37,6 +36,8 @@ function parseKeyValueText(text) {
 }
 
 export async function inputDelivery(orderId, client) {
+    const response = getResponse();
+
     await response.send(
         GROUP_ID,
         `MOHON KONFIRMASI PENGIRIMAN\n==========================\nOrder ID: ${orderId}\n\nID Pengirim: `,
@@ -48,6 +49,7 @@ export async function inputDelivery(orderId, client) {
 }
 
 export async function handleDeliveryResponse(text, client, fallbackOrderId = null) {
+    const response = getResponse();
     const data = parseKeyValueText(text);
     const users = await loadJsonFile(DATA_USERS_PATH);
     const deliveries = await loadJsonFile(DATA_DELIVERY_PATH);
@@ -72,8 +74,15 @@ export async function handleDeliveryResponse(text, client, fallbackOrderId = nul
         String(delivery["id_delivery"]) === String(data["id_pengirim"])
     ));
 
+    if(!deliveryPerson) {
+        return {
+            success: false,
+            message: 'Data pengirim tidak ditemukan. Pastikan ID Pengirim sesuai database delivery.'
+        };
+    }
+
     const deliveryName = deliveryPerson["name"];
-    const deliveryPhone = data["phone"];
+    const deliveryPhone = deliveryPerson["phone"];
 
     await response.send(
         customerId,

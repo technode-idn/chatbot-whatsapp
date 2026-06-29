@@ -1,8 +1,7 @@
 import { getResponse } from "../security/response.js";
 
-const response = getResponse();
-
 export async function editingOrder(orderDataUnavailable = [], orderId, userId, client) {
+    const response = getResponse();
     const unavailableKeys = Array.isArray(orderDataUnavailable)
         ? orderDataUnavailable
         : [];

@@ -39,6 +39,6 @@ export async function extractionOrder(text, userId, editingStatus = false, clien
     } catch(error) {
         console.log(error);
 
-        return 'Format yang dikirim tidak sesuai, silahkan isi ulang kembali';
+        return 'Maaf kak, pesanan belum bisa diproses karena ada kendala sistem. Silakan coba beberapa saat lagi atau hubungi admin.';
     }
 }

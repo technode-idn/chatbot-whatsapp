@@ -161,19 +161,23 @@ class ResponseQueue {
 
                 const chat = await this.client.getChatById(task.chatId);
 
-                if(config.response.typing){
+                if (config.response.typing) {
+
+                    const typingTime =
+                        config.response.typingDuration +
+                        this.getDelay(task.priority);
 
                     await chat.sendStateTyping();
 
+                    await this.sleep(typingTime);
+
+                } else {
+
                     await this.sleep(
-                        config.response.typingDuration
+                        this.getDelay(task.priority)
                     );
 
                 }
-
-                await this.sleep(
-                    this.getDelay(task.priority)
-                );
 
                 if(task.type === "text"){
 
@@ -224,7 +228,7 @@ class ResponseQueue {
 
         message,
 
-        priority = "high"
+        priority = "normal"
 
     ){
 
@@ -250,7 +254,7 @@ class ResponseQueue {
 
         caption = "",
 
-        priority = "high"
+        priority = "normal"
 
     ){
 

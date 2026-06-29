@@ -8,7 +8,7 @@ export const deliverySession = {};
 export const multipleFormSession = {};
 export const editingOrder = {};
 export const userMode = {}
-export const allNumberOwnerTenant = []; // ISI PERMANENT
+export const allNumberOwnerTenant = ["77855006433494@lid"]; // ISI PERMANENT
 export const tenantSession = {};
 export let lastOrderId = null;
 export let campusZone = {
@@ -25,4 +25,11 @@ export let campusZone = {
     7000: [
         'baranangsiang'
     ]
+}
+
+export const localAddressAliases = {
+    'asrama felicia': {
+        latitude: -6.5887628,
+        longitude: 106.8085395
+    }
 }

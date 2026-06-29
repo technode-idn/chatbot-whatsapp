@@ -2,9 +2,9 @@ import { rawDatabaseProduct } from "../../settings/loadFiles.js";
 import { getResponse } from "../security/response.js";
 
 const database_product = JSON.parse(rawDatabaseProduct);
-const response = getResponse();
 
 export async function generalSalesReport(client) {
+    const response = getResponse();
     const text = ["*LAPORAN PENJUALAN HARIAN 📝*\n", "=============================\n"];
 
     const totalRevenue = 0

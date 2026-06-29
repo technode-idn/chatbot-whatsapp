@@ -4,8 +4,6 @@ import { inputDelivery } from "./broadcasting/sendDelivery.js";
 import { DATA_USERS_PATH } from '../settings/loadFiles.js';
 import { getResponse } from './security/response.js';
 
-const response = getResponse();
-
 async function loadDataUsers() {
     const dataUsers = await fs.readFile(DATA_USERS_PATH, 'utf8');
 
@@ -89,6 +87,7 @@ function readPaymentStatus(status) {
 }
 
 export async function verificationPayment(text, client, fallbackOrderId = null) {
+    const response = getResponse();
     const data = parseKeyValueText(text);
     const users = await loadDataUsers();
     const orderId = data["order_id"] || fallbackOrderId;

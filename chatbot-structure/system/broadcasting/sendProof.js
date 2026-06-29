@@ -3,9 +3,9 @@ import { sendOrderMessage } from "../ordering/textOrder.js";
 import { getResponse } from "../security/response.js";
 
 const GROUP_ID = '120363407187484870@g.us';
-const response = getResponse();
 
 export async function sendProofToGroup(proof, orderId, orderData, client) {
+    const response = getResponse();
     const orderMessage = orderData
         ? sendOrderMessage(orderData)
         : 'Detail pesanan tidak ditemukan.';

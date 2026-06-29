@@ -1,158 +1,1112 @@
 {
-    "popkit": {
-        "tenant_id": "TEN001",
-        "products": {
-            "POPD01": {
-                "product_name": "Americano",
-                "price": 10000,
-                "stock": 0,
-                "qty_sold": 0
-            },
-            "POPD02": {
-                "product_name": "Kopi Susu",
-                "price": 13000,
-                "stock": 0,
-                "qty_sold": 0
-            },
-            "POPD03": {
-                "product_name": "Kopi Susu Gula Aren",
-                "price": 15000,
-                "stock": 0,
-                "qty_sold": 0
-            },
-            "POPD04": {
-                "product_name": "Milk Tea Cup",
-                "price": 8000,
-                "stock": 0,
-                "qty_sold": 0
-            },
-            "POPF01": {
-                "product_name": "Nasi Daun Jeruk Popchick Matah",
-                "price": 17000,
-                "stock": 0,
-                "qty_sold": 0
-            },
-            "POPF02": {
-                "product_name": "Nasi Daun Jeruk Popchick Original",
-                "price": 15000,
-                "stock": 0,
-                "qty_sold": 0
-            },
-            "POPF03": {
-                "product_name": "Nasi Popchick Asam Manis",
-                "price": 15000,
-                "stock": 0,
-                "qty_sold": 0
-            },
-            "POPF04": {
-                "product_name": "Nasi Popchick Blackpepper",
-                "price": 15000,
-                "stock": 0,
-                "qty_sold": 0
-            },
-            "POPF05": {
-                "product_name": "Nasi Popchick Hot Spicy",
-                "price": 15000,
-                "stock": 0,
-                "qty_sold": 0
-            },
-            "POPF06": {
-                "product_name": "Nasi Popchick Mentai",
-                "price": 20000,
-                "stock": 0,
-                "qty_sold": 0
-            },
-            "POPF07": {
-                "product_name": "Nasi Popchick Original",
-                "price": 13000,
-                "stock": 0,
-                "qty_sold": 0
-            },
-            "POPF08": {
-                "product_name": "Nasi Popchick Sambal Matah",
-                "price": 15000,
-                "stock": 0,
-                "qty_sold": 0
-            },
-            "POPF09": {
-                "product_name": "Nasi Popchick Soy Garlic",
-                "price": 15000,
-                "stock": 0,
-                "qty_sold": 0
-            },
-            "POPF10": {
-                "product_name": "Nasi Popchick BBQ",
-                "price": 15000,
-                "stock": 0,
-                "qty_sold": 0
-            },
-            "POPF11": {
-                "product_name": "Ala Carte Popchick Asam Manis",
-                "price": 15000,
-                "stock": 0,
-                "qty_sold": 0
-            },
-            "POPF12": {
-                "product_name": "Popchick Hot Spicy",
-                "price": 10000,
-                "stock": 0,
-                "qty_sold": 0
-            }
-        }
-    },
-    "soeka_dimsum": {
-        "tenant_id": "TEN002",
-        "products": {
-            "POPA02": {
-                "product_name": "Add Nasi Original",
-                "price": 5000,
-                "stock": 0,
-                "qty_sold": 0
-            }
-        }
-    },
-    "miwiti_kusaji": {
-        "tenant_id": "TEN003",
-        "products": {
-            "POPD01": {
-                "product_name": "Americano",
-                "price": 10000,
-                "stock": 0,
-                "qty_sold": 0
-            }
-        }
-    },
-    "servis_coffee": {
-        "tenant_id": "TEN004",
-        "products": {
-            "POPD02": {
-                "product_name": "Kopi susu",
-                "price": 13000,
-                "stock": 0,
-                "qty_sold": 0
-            }
-        }
-    },
-    "hagarasa": {
-        "tenant_id": "TEN005",
-        "products": {
-            "POPD03": {
-                "product_name": "Kopi susu gula aren",
-                "price": 15000,
-                "stock": 0,
-                "qty_sold": 0
-            }
-        }
-    },
-    "acio": {
-        "tenant_id": "TEN006",
-        "products": {
-            "POPD04": {
-                "product_name": "Milk tea cup",
-                "price": 8000,
-                "stock": 0,
-                "qty_sold": 0
-            }
-        }
+  "popkit": {
+    "tenant_id": "TEN001",
+    "products": {
+      "POPA02": {
+        "product_name": "Add Nasi Original",
+        "price": 5000,
+        "stock": 10,
+        "qty_sold": 0
+      },
+      "POPD01": {
+        "product_name": "Americano",
+        "price": 10000,
+        "stock": 0,
+        "qty_sold": 15
+      },
+      "POPD02": {
+        "product_name": "Kopi susu",
+        "price": 13000,
+        "stock": 0,
+        "qty_sold": 10
+      },
+      "POPD03": {
+        "product_name": "Kopi susu gula aren",
+        "price": 15000,
+        "stock": 0,
+        "qty_sold": 10
+      },
+      "POPD04": {
+        "product_name": "Milk tea cup",
+        "price": 8000,
+        "stock": 10,
+        "qty_sold": 0
+      },
+      "POPF01": {
+        "product_name": "Nasi daun jeruk popchick matah",
+        "price": 17000,
+        "stock": 10,
+        "qty_sold": 0
+      },
+      "POPF02": {
+        "product_name": "Nasi daun jeruk popchick original",
+        "price": 15000,
+        "stock": 10,
+        "qty_sold": 0
+      },
+      "POPF03": {
+        "product_name": "Nasi popchick asam manis",
+        "price": 15000,
+        "stock": 10,
+        "qty_sold": 0
+      },
+      "POPF04": {
+        "product_name": "Nasi popchick blackpepper",
+        "price": 15000,
+        "stock": 10,
+        "qty_sold": 0
+      },
+      "POPF05": {
+        "product_name": "Nasi popchick hot spicy",
+        "price": 15000,
+        "stock": 10,
+        "qty_sold": 0
+      },
+      "POPF06": {
+        "product_name": "Nasi popchick mentai",
+        "price": 20000,
+        "stock": 10,
+        "qty_sold": 0
+      },
+      "POPF07": {
+        "product_name": "Nasi popchick Original",
+        "price": 13000,
+        "stock": 10,
+        "qty_sold": 0
+      },
+      "POPF08": {
+        "product_name": "Nasi popchick sambal matah",
+        "price": 15000,
+        "stock": 10,
+        "qty_sold": 0
+      },
+      "POPF09": {
+        "product_name": "Nasi popchick soy garlic",
+        "price": 15000,
+        "stock": 10,
+        "qty_sold": 0
+      },
+      "POPF10": {
+        "product_name": "Nasi popchick bbq",
+        "price": 15000,
+        "stock": 10,
+        "qty_sold": 0
+      },
+      "POPF11": {
+        "product_name": "Ala Carte Popchick Asam Manis",
+        "price": 15000,
+        "stock": 10,
+        "qty_sold": 0
+      },
+      "POPF12": {
+        "product_name": "Popchick hot spicy",
+        "price": 15000,
+        "stock": 10,
+        "qty_sold": 0
+      },
+      "POPF13": {
+        "product_name": "Ala Carte Popchick Blackpepper",
+        "price": 15000,
+        "stock": 10,
+        "qty_sold": 0
+      },
+      "POPF14": {
+        "product_name": "Ala Carte Popchick Mentai",
+        "price": 20000,
+        "stock": 10,
+        "qty_sold": 0
+      },
+      "POPF15": {
+        "product_name": "Ala Carte Popchick Original",
+        "price": 13000,
+        "stock": 10,
+        "qty_sold": 0
+      },
+      "POPF16": {
+        "product_name": "Ala Carte Popchick Matah",
+        "price": 16000,
+        "stock": 10,
+        "qty_sold": 0
+      },
+      "POPF17": {
+        "product_name": "Ala Carte Popchick Soy Garlic",
+        "price": 15000,
+        "stock": 10,
+        "qty_sold": 0
+      },
+      "POPD05": {
+        "product_name": "Spanish Latte",
+        "price": 13000,
+        "stock": 10,
+        "qty_sold": 0
+      },
+      "POPD06": {
+        "product_name": "Teh manis",
+        "price": 5000,
+        "stock": 10,
+        "qty_sold": 0
+      },
+      "POPD07": {
+        "product_name": "Teh tawar",
+        "price": 5000,
+        "stock": 10,
+        "qty_sold": 0
+      },
+      "POPD08": {
+        "product_name": "Pinkit",
+        "price": 8000,
+        "stock": 10,
+        "qty_sold": 0
+      }
     }
+  },
+  "soeka_dimsum": {
+    "tenant_id": "TEN002",
+    "products": {
+      "SOEF01": {
+        "product_name": "Soeka O.G Dimsum (Small)",
+        "price": 15000,
+        "stock": 0,
+        "qty_sold": 0
+      },
+      "SOEF02": {
+        "product_name": "Soeka O.G Dimsum (Big)",
+        "price": 20000,
+        "stock": 0,
+        "qty_sold": 0
+      },
+      "SOEF03": {
+        "product_name": "Soeka Dimsum Mentai (Small)",
+        "price": 20000,
+        "stock": 0,
+        "qty_sold": 0
+      },
+      "SOEF04": {
+        "product_name": "Soeka Dimsum Mentai (Big)",
+        "price": 28000,
+        "stock": 0,
+        "qty_sold": 0
+      },
+      "SOEF05": {
+        "product_name": "Soeka Party",
+        "price": 80000,
+        "stock": 0,
+        "qty_sold": 0
+      },
+      "SOEA01": {
+        "product_name": "Soeka add chilli oil",
+        "price": 3000,
+        "stock": 0,
+        "qty_sold": 0
+      },
+      "SOEA02": {
+        "product_name": "Soeka add cheese slice",
+        "price": 3000,
+        "stock": 0,
+        "qty_sold": 0
+      },
+      "SOEF06": {
+        "product_name": "Soeka Birthday Pack",
+        "price": 10000,
+        "stock": 0,
+        "qty_sold": 0
+      },
+      "SOEF07": {
+        "product_name": "Soeka Dimsum Kuah Keju",
+        "price": 22000,
+        "stock": 0,
+        "qty_sold": 0
+      }
+    }
+  },
+  "miwiti_kusaji": {
+    "tenant_id": "TEN003",
+    "products": {
+      "MIWF01": {
+        "product_name": "Frozen Tahu baso ayam",
+        "price": 26000,
+        "stock": 0,
+        "qty_sold": 0
+      },
+      "MIWF02": {
+        "product_name": "Tahu Baso Miwiti: Ikan Frozen",
+        "price": 27000,
+        "stock": 0,
+        "qty_sold": 0
+      },
+      "MIWF03": {
+        "product_name": "Tahu Baso Miwiti: Ikan Frozen",
+        "price": 28000,
+        "stock": 0,
+        "qty_sold": 0
+      },
+      "MIWF04": {
+        "product_name": "Baso Ikan Miwiti",
+        "price": 30000,
+        "stock": 0,
+        "qty_sold": 0
+      },
+      "MIWF05": {
+        "product_name": "Miwiti : Batagor",
+        "price": 15000,
+        "stock": 0,
+        "qty_sold": 0
+      },
+      "MIWF06": {
+        "product_name": "Dimsum ayam Isi 3",
+        "price": 10000,
+        "stock": 0,
+        "qty_sold": 0
+      },
+      "MIWF07": {
+        "product_name": "Dimsum ayam Isi 4",
+        "price": 13000,
+        "stock": 0,
+        "qty_sold": 0
+      },
+      "MIWF08": {
+        "product_name": "Dimsum ayam Isi 5",
+        "price": 15000,
+        "stock": 0,
+        "qty_sold": 0
+      },
+      "MIWF09": {
+        "product_name": "Dimsum ayam pack (isi 50)",
+        "price": 155000,
+        "stock": 0,
+        "qty_sold": 0
+      },
+      "MIWF10": {
+        "product_name": "Dimsum Ikan Miwiti",
+        "price": 29000,
+        "stock": 0,
+        "qty_sold": 0
+      },
+      "MIWF11": {
+        "product_name": "Miwiti : Bakso Kuah + Nasi",
+        "price": 18000,
+        "stock": 0,
+        "qty_sold": 0
+      },
+      "MIWF12": {
+        "product_name": "Miwiti : Bakso Kuah 15rb",
+        "price": 15000,
+        "stock": 0,
+        "qty_sold": 0
+      },
+      "MIWF13": {
+        "product_name": "Miwiti : Bakso Kuah 20rb",
+        "price": 20000,
+        "stock": 0,
+        "qty_sold": 0
+      },
+      "MIWF14": {
+        "product_name": "Miwiti : Katsu",
+        "price": 10000,
+        "stock": 0,
+        "qty_sold": 0
+      },
+      "MIWF15": {
+        "product_name": "Miwiti : Katsu",
+        "price": 10000,
+        "stock": 0,
+        "qty_sold": 0
+      },
+      "MIWF16": {
+        "product_name": "Miwiti : Pangsit 2 pcs",
+        "price": 5000,
+        "stock": 0,
+        "qty_sold": 0
+      },
+      "MIWF17": {
+        "product_name": "Miwiti : Pangsit Chili Oil",
+        "price": 15000,
+        "stock": 0,
+        "qty_sold": 0
+      },
+      "MIWF18": {
+        "product_name": "Miwiti : Pempek",
+        "price": 15000,
+        "stock": 0,
+        "qty_sold": 0
+      },
+      "MIWF19": {
+        "product_name": "Miwiti : Rice Bowl",
+        "price": 15000,
+        "stock": 0,
+        "qty_sold": 0
+      },
+      "MIWF20": {
+        "product_name": "Miwiti : Rolade",
+        "price": 10000,
+        "stock": 0,
+        "qty_sold": 0
+      },
+      "MIWF21": {
+        "product_name": "Miwiti : Siomay",
+        "price": 15000,
+        "stock": 0,
+        "qty_sold": 0
+      },
+      "MIWF22": {
+        "product_name": "Miwiti : Tahu Baso 1 Dus",
+        "price": 27000,
+        "stock": 0,
+        "qty_sold": 0
+      },
+      "MIWF23": {
+        "product_name": "Miwiti : Tahu Baso Ayam",
+        "price": 2600,
+        "stock": 0,
+        "qty_sold": 0
+      },
+      "MIWF24": {
+        "product_name": "Miwiti : Tahu Baso Campur",
+        "price": 29000,
+        "stock": 0,
+        "qty_sold": 0
+      },
+      "MIWF25": {
+        "product_name": "Miwiti : Tahu Baso Goreng (porsi)",
+        "price": 10000,
+        "stock": 0,
+        "qty_sold": 0
+      },
+      "MIWF26": {
+        "product_name": "Miwiti : Tahu Baso Goreng (satuan)",
+        "price": 3000,
+        "stock": 0,
+        "qty_sold": 0
+      },
+      "MIWF27": {
+        "product_name": "Miwiti : Tahu Baso Kuah",
+        "price": 12000,
+        "stock": 0,
+        "qty_sold": 0
+      },
+      "MIWF28": {
+        "product_name": "Miwiti : Tahu Baso Kukus",
+        "price": 10000,
+        "stock": 0,
+        "qty_sold": 0
+      },
+      "MIWF29": {
+        "product_name": "Miwiti : Frozen Tahu Baso Sapi",
+        "price": 28000,
+        "stock": 0,
+        "qty_sold": 0
+      },
+      "MIWF30": {
+        "product_name": "Miwiti : Tahu Baso Sapi Goreng Isi 10",
+        "price": 30000,
+        "stock": 0,
+        "qty_sold": 0
+      },
+      "MIWF31": {
+        "product_name": "Miwiti: Baso Sapi Frozen",
+        "price": 40000,
+        "stock": 0,
+        "qty_sold": 0
+      },
+      "MIWF32": {
+        "product_name": "Miwiti: Bowl (kemasan)",
+        "price": 2000,
+        "stock": 0,
+        "qty_sold": 0
+      },
+      "MIWF33": {
+        "product_name": "Miwiti: Nasi Kucing",
+        "price": 10000,
+        "stock": 0,
+        "qty_sold": 0
+      },
+      "MIWF34": {
+        "product_name": "Pangsit Frozen",
+        "price": 25000,
+        "stock": 0,
+        "qty_sold": 0
+      },
+      "MIWF35": {
+        "product_name": "Pempek Miwiti",
+        "price": 27000,
+        "stock": 0,
+        "qty_sold": 0
+      },
+      "MIWF36": {
+        "product_name": "Siomay Miwiti",
+        "price": 15000,
+        "stock": 0,
+        "qty_sold": 0
+      },
+      "MIWD01": {
+        "product_name": "Miwiti Lemon Tea",
+        "price": 7000,
+        "stock": 0,
+        "qty_sold": 0
+      },
+      "MIWD02": {
+        "product_name": "Miwiti Es Teh",
+        "price": 5000,
+        "stock": 0,
+        "qty_sold": 0
+      },
+      "MIWF38": {
+        "product_name": "Miwiti Nasi",
+        "price": 5000,
+        "stock": 0,
+        "qty_sold": 0
+      }
+    }
+  },
+  "servis_coffee": {
+    "tenant_id": "TEN004",
+    "products": {
+      "SRCD01": {
+        "product_name": "Servis Basic",
+        "price": 10000,
+        "stock": 0,
+        "qty_sold": 0
+      },
+      "SRCD02": {
+        "product_name": "Servis Salted Caramel",
+        "price": 15000,
+        "stock": 0,
+        "qty_sold": 0
+      },
+      "SRCD03": {
+        "product_name": "Servis Aren",
+        "price": 13000,
+        "stock": 0,
+        "qty_sold": 0
+      },
+      "SRCD04": {
+        "product_name": "Servis Americano",
+        "price": 8000,
+        "stock": 0,
+        "qty_sold": 0
+      },
+      "SRCD05": {
+        "product_name": "Servis Matcha-presso",
+        "price": 16000,
+        "stock": 0,
+        "qty_sold": 0
+      },
+      "SRCD06": {
+        "product_name": "Moccacino",
+        "price": 14000,
+        "stock": 0,
+        "qty_sold": 0
+      },
+      "SRCD07": {
+        "product_name": "Special chocolate",
+        "price": 14000,
+        "stock": 0,
+        "qty_sold": 0
+      },
+      "SRCD08": {
+        "product_name": "Special matcha",
+        "price": 14000,
+        "stock": 0,
+        "qty_sold": 0
+      },
+      "SRCA01": {
+        "product_name": "add double shot",
+        "price": 3000,
+        "stock": 0,
+        "qty_sold": 0
+      },
+      "SRCA02": {
+        "product_name": "add ekstra aren",
+        "price": 2000,
+        "stock": 0,
+        "qty_sold": 0
+      },
+      "SRCA03": {
+        "product_name": "add ekstra susu",
+        "price": 2500,
+        "stock": 0,
+        "qty_sold": 0
+      },
+      "SRCA04": {
+        "product_name": "add ekstra caramel",
+        "price": 3000,
+        "stock": 0,
+        "qty_sold": 0
+      },
+      "SRCA05": {
+        "product_name": "upsize servis",
+        "price": 6000,
+        "stock": 0,
+        "qty_sold": 0
+      }
+    }
+  },
+  "hagarasa": {
+    "tenant_id": "TEN005",
+    "products": {
+      "HGRD01": {
+        "product_name": "Original Tea M",
+        "price": 5000,
+        "stock": 0,
+        "qty_sold": 0
+      },
+      "HGRD02": {
+        "product_name": "Original Tea XL",
+        "price": 6000,
+        "stock": 0,
+        "qty_sold": 0
+      },
+      "HGRD03": {
+        "product_name": "Lychee Tea M",
+        "price": 6000,
+        "stock": 0,
+        "qty_sold": 0
+      },
+      "HGRD04": {
+        "product_name": "Lychee Tea XL",
+        "price": 8000,
+        "stock": 0,
+        "qty_sold": 0
+      },
+      "HGRD05": {
+        "product_name": "Mango Tea M",
+        "price": 6000,
+        "stock": 0,
+        "qty_sold": 0
+      },
+      "HGRD06": {
+        "product_name": "Mango Tea XL",
+        "price": 9000,
+        "stock": 0,
+        "qty_sold": 0
+      },
+      "HGRD07": {
+        "product_name": "Orange Tea M",
+        "price": 6000,
+        "stock": 0,
+        "qty_sold": 0
+      },
+      "HGRD08": {
+        "product_name": "Orange Tea XL",
+        "price": 9000,
+        "stock": 0,
+        "qty_sold": 0
+      },
+      "HGRD09": {
+        "product_name": "Sirsak Tea M",
+        "price": 6000,
+        "stock": 0,
+        "qty_sold": 0
+      },
+      "HGRD10": {
+        "product_name": "Sirsak Tea XL",
+        "price": 9000,
+        "stock": 0,
+        "qty_sold": 0
+      },
+      "HGRD11": {
+        "product_name": "Guava Tea M",
+        "price": 6000,
+        "stock": 0,
+        "qty_sold": 0
+      },
+      "HGRD12": {
+        "product_name": "Guava Tea XL",
+        "price": 9000,
+        "stock": 0,
+        "qty_sold": 0
+      },
+      "HGRD13": {
+        "product_name": "Lemon Tea M",
+        "price": 8000,
+        "stock": 0,
+        "qty_sold": 0
+      },
+      "HGRD14": {
+        "product_name": "Lemon Tea XL",
+        "price": 9000,
+        "stock": 0,
+        "qty_sold": 0
+      },
+      "HGRD15": {
+        "product_name": "Green Apple Tea M",
+        "price": 9000,
+        "stock": 0,
+        "qty_sold": 0
+      },
+      "HGRD16": {
+        "product_name": "Green Apple Tea XL",
+        "price": 12000,
+        "stock": 0,
+        "qty_sold": 0
+      },
+      "HGRD17": {
+        "product_name": "Yuzu Tea M",
+        "price": 12000,
+        "stock": 0,
+        "qty_sold": 0
+      },
+      "HGRD18": {
+        "product_name": "Yuzu Tea XL",
+        "price": 16000,
+        "stock": 0,
+        "qty_sold": 0
+      },
+      "HGRD19": {
+        "product_name": "Susu Segar Original M",
+        "price": 12000,
+        "stock": 0,
+        "qty_sold": 0
+      },
+      "HGRD20": {
+        "product_name": "Susu Segar Original XL",
+        "price": 16000,
+        "stock": 0,
+        "qty_sold": 0
+      },
+      "HGRD21": {
+        "product_name": "Susu Segar Leci M",
+        "price": 12000,
+        "stock": 0,
+        "qty_sold": 0
+      },
+      "HGRD22": {
+        "product_name": "Susu Segar Leci XL",
+        "price": 18000,
+        "stock": 0,
+        "qty_sold": 0
+      },
+      "HGRD23": {
+        "product_name": "Susu Segar Mango M",
+        "price": 12000,
+        "stock": 0,
+        "qty_sold": 0
+      },
+      "HGRD24": {
+        "product_name": "Susu Segar Mango XL",
+        "price": 18000,
+        "stock": 0,
+        "qty_sold": 0
+      },
+      "HGRD25": {
+        "product_name": "Susu Segar Orange M",
+        "price": 12000,
+        "stock": 0,
+        "qty_sold": 0
+      },
+      "HGRD26": {
+        "product_name": "Susu Segar Orange XL",
+        "price": 18000,
+        "stock": 0,
+        "qty_sold": 0
+      },
+      "HGRD27": {
+        "product_name": "Susu Segar Aren M",
+        "price": 14000,
+        "stock": 0,
+        "qty_sold": 0
+      },
+      "HGRD28": {
+        "product_name": "Susu Segar Aren XL",
+        "price": 20000,
+        "stock": 0,
+        "qty_sold": 0
+      },
+      "HGRD29": {
+        "product_name": "Susu Segar Regal M",
+        "price": 16000,
+        "stock": 0,
+        "qty_sold": 0
+      },
+      "HGRD30": {
+        "product_name": "Susu Segar Regal XL",
+        "price": 21000,
+        "stock": 0,
+        "qty_sold": 0
+      },
+      "HGRD31": {
+        "product_name": "Susu Segar Pandan M",
+        "price": 16000,
+        "stock": 0,
+        "qty_sold": 0
+      },
+      "HGRD32": {
+        "product_name": "Susu Segar Pandan XL",
+        "price": 24000,
+        "stock": 0,
+        "qty_sold": 0
+      },
+      "HGRD33": {
+        "product_name": "Susu Segar Pandan Regal M",
+        "price": 20000,
+        "stock": 0,
+        "qty_sold": 0
+      },
+      "HGRD34": {
+        "product_name": "Susu Segar Pandan Regal XL",
+        "price": 28000,
+        "stock": 0,
+        "qty_sold": 0
+      },
+      "HGRD35": {
+        "product_name": "Strawberry Punch M",
+        "price": 17000,
+        "stock": 0,
+        "qty_sold": 0
+      },
+      "HGRD36": {
+        "product_name": "Strawberry Punch XL",
+        "price": 23000,
+        "stock": 0,
+        "qty_sold": 0
+      },
+      "HGRD37": {
+        "product_name": "Markisa Punch M",
+        "price": 17000,
+        "stock": 0,
+        "qty_sold": 0
+      },
+      "HGRD38": {
+        "product_name": "Markisa Punch XL",
+        "price": 23000,
+        "stock": 0,
+        "qty_sold": 0
+      },
+      "HGRD39": {
+        "product_name": "Original Yoghurt M",
+        "price": 14000,
+        "stock": 0,
+        "qty_sold": 0
+      },
+      "HGRD40": {
+        "product_name": "Original Yoghurt XL",
+        "price": 18000,
+        "stock": 0,
+        "qty_sold": 0
+      },
+      "HGRD41": {
+        "product_name": "Lychee Yoghurt M",
+        "price": 15000,
+        "stock": 0,
+        "qty_sold": 0
+      },
+      "HGRD42": {
+        "product_name": "Lychee Yoghurt XL",
+        "price": 20000,
+        "stock": 0,
+        "qty_sold": 0
+      },
+      "HGRD43": {
+        "product_name": "Lemon Yogurt M",
+        "price": 16000,
+        "stock": 0,
+        "qty_sold": 0
+      },
+      "HGRD44": {
+        "product_name": "Lemon Yogurt XL",
+        "price": 21000,
+        "stock": 0,
+        "qty_sold": 0
+      },
+      "HGRD45": {
+        "product_name": "Green Apple Yoghurt M",
+        "price": 17000,
+        "stock": 0,
+        "qty_sold": 0
+      },
+      "HGRD46": {
+        "product_name": "Green Apple Yoghurt XL",
+        "price": 23000,
+        "stock": 0,
+        "qty_sold": 0
+      },
+      "HGRD47": {
+        "product_name": "Milk Tea M",
+        "price": 9000,
+        "stock": 0,
+        "qty_sold": 0
+      },
+      "HGRD48": {
+        "product_name": "Milk Tea XL",
+        "price": 11000,
+        "stock": 0,
+        "qty_sold": 0
+      },
+      "HGRD49": {
+        "product_name": "Thai Tea M",
+        "price": 9000,
+        "stock": 0,
+        "qty_sold": 0
+      },
+      "HGRD50": {
+        "product_name": "Thai Tea XL",
+        "price": 12000,
+        "stock": 0,
+        "qty_sold": 0
+      },
+      "HGRD51": {
+        "product_name": "Green Tea M",
+        "price": 10000,
+        "stock": 0,
+        "qty_sold": 0
+      },
+      "HGRD52": {
+        "product_name": "Green Tea XL",
+        "price": 14000,
+        "stock": 0,
+        "qty_sold": 0
+      },
+      "HGRD53": {
+        "product_name": "Milk Tea Mango M",
+        "price": 10000,
+        "stock": 0,
+        "qty_sold": 0
+      },
+      "HGRD54": {
+        "product_name": "Milk Tea Mango XL",
+        "price": 12000,
+        "stock": 0,
+        "qty_sold": 0
+      },
+      "HGRD55": {
+        "product_name": "Milk Tea Pandan M",
+        "price": 12000,
+        "stock": 0,
+        "qty_sold": 0
+      },
+      "HGRD56": {
+        "product_name": "Milk Tea Pandan XL",
+        "price": 16000,
+        "stock": 0,
+        "qty_sold": 0
+      },
+      "HGRD57": {
+        "product_name": "Bubble Gum M",
+        "price": 11000,
+        "stock": 0,
+        "qty_sold": 0
+      },
+      "HGRD58": {
+        "product_name": "Bubble Gum XL",
+        "price": 15000,
+        "stock": 0,
+        "qty_sold": 0
+      },
+      "HGRD59": {
+        "product_name": "Red Velvet M",
+        "price": 12000,
+        "stock": 0,
+        "qty_sold": 0
+      },
+      "HGRD60": {
+        "product_name": "Red Velvet XL",
+        "price": 16000,
+        "stock": 0,
+        "qty_sold": 0
+      },
+      "HGRD61": {
+        "product_name": "Cokelat M",
+        "price": 12000,
+        "stock": 0,
+        "qty_sold": 0
+      },
+      "HGRD62": {
+        "product_name": "Cokelat XL",
+        "price": 16000,
+        "stock": 0,
+        "qty_sold": 0
+      },
+      "HGRD63": {
+        "product_name": "Taro M",
+        "price": 12000,
+        "stock": 0,
+        "qty_sold": 0
+      },
+      "HGRD64": {
+        "product_name": "Taro XL",
+        "price": 16000,
+        "stock": 0,
+        "qty_sold": 0
+      },
+      "HGRD65": {
+        "product_name": "Chocolate Wafer Cheese M",
+        "price": 14000,
+        "stock": 0,
+        "qty_sold": 0
+      },
+      "HGRD66": {
+        "product_name": "Chocolate Wafer Cheese XL",
+        "price": 18000,
+        "stock": 0,
+        "qty_sold": 0
+      },
+      "HGRD67": {
+        "product_name": "Cookies Cheese M",
+        "price": 15000,
+        "stock": 0,
+        "qty_sold": 0
+      },
+      "HGRD68": {
+        "product_name": "Cookies Cheese XL",
+        "price": 18000,
+        "stock": 0,
+        "qty_sold": 0
+      },
+      "HGRD69": {
+        "product_name": "Banana Nutella Cheese M",
+        "price": 18000,
+        "stock": 0,
+        "qty_sold": 0
+      },
+      "HGRD70": {
+        "product_name": "Banana Nutella Cheese XL",
+        "price": 27000,
+        "stock": 0,
+        "qty_sold": 0
+      },
+      "HGRD71": {
+        "product_name": "Vanilla Nutella Cheese M",
+        "price": 20000,
+        "stock": 0,
+        "qty_sold": 0
+      },
+      "HGRD72": {
+        "product_name": "Vanilla Nutella Cheese XL",
+        "price": 27000,
+        "stock": 0,
+        "qty_sold": 0
+      },
+      "HGRD73": {
+        "product_name": "Oreo Original M",
+        "price": 16000,
+        "stock": 0,
+        "qty_sold": 0
+      },
+      "HGRD74": {
+        "product_name": "Oreo Original XL",
+        "price": 22000,
+        "stock": 0,
+        "qty_sold": 0
+      },
+      "HGRD75": {
+        "product_name": "Oreo Supreme M",
+        "price": 16000,
+        "stock": 0,
+        "qty_sold": 0
+      },
+      "HGRD76": {
+        "product_name": "Oreo Supreme XL",
+        "price": 22000,
+        "stock": 0,
+        "qty_sold": 0
+      },
+      "HGRD77": {
+        "product_name": "Oreo Crumbs",
+        "price": 1000,
+        "stock": 0,
+        "qty_sold": 0
+      },
+      "HGRD78": {
+        "product_name": "Caramel Crumbs",
+        "price": 2000,
+        "stock": 0,
+        "qty_sold": 0
+      },
+      "HGRD79": {
+        "product_name": "Boba Jelly",
+        "price": 2000,
+        "stock": 0,
+        "qty_sold": 0
+      },
+      "HGRD80": {
+        "product_name": "Wafer",
+        "price": 3000,
+        "stock": 0,
+        "qty_sold": 0
+      },
+      "HGRD81": {
+        "product_name": "Whipped Cream",
+        "price": 3000,
+        "stock": 0,
+        "qty_sold": 0
+      },
+      "HGRD82": {
+        "product_name": "Regal",
+        "price": 5000,
+        "stock": 0,
+        "qty_sold": 0
+      },
+      "HGRA01": {
+        "product_name": "Extra Gula",
+        "price": 1000,
+        "stock": 0,
+        "qty_sold": 0
+      },
+      "HGRA02": {
+        "product_name": "Extra SKM",
+        "price": 2000,
+        "stock": 0,
+        "qty_sold": 0
+      },
+      "HGRA03": {
+        "product_name": "Extra Aren",
+        "price": 5000,
+        "stock": 0,
+        "qty_sold": 0
+      },
+      "HGRA04": {
+        "product_name": "Extra Espresso",
+        "price": 5000,
+        "stock": 0,
+        "qty_sold": 0
+      },
+      "HGRD83": {
+        "product_name": "Kopi Susu Original M",
+        "price": 12000,
+        "stock": 0,
+        "qty_sold": 0
+      },
+      "HGRD84": {
+        "product_name": "Kopi Susu Original XL",
+        "price": 16000,
+        "stock": 0,
+        "qty_sold": 0
+      }
+    }
+  },
+  "acio": {
+    "tenant_id": "TEN006",
+    "products": {
+      "ACIF01": {
+        "product_name": "Tareng",
+        "price": 8000,
+        "stock": 0,
+        "qty_sold": 0
+      },
+      "ACIF02": {
+        "product_name": "Cibay",
+        "price": 5000,
+        "stock": 0,
+        "qty_sold": 0
+      },
+      "ACIF03": {
+        "product_name": "Mix Tareng Cibay",
+        "price": 10000,
+        "stock": 0,
+        "qty_sold": 0
+      },
+      "ACIF04": {
+        "product_name": "Labuymee Ori",
+        "price": 15000,
+        "stock": 0,
+        "qty_sold": 0
+      },
+      "ACIF05": {
+        "product_name": "Labuymee Pangsit",
+        "price": 18000,
+        "stock": 0,
+        "qty_sold": 0
+      }
+    }
+  }
 }
