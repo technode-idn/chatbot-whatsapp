@@ -28,7 +28,7 @@ function formStock(tenant) {
     return formStock.join("");
 }
 
-export async function broadcastForm() {
+export async function broadcastMenu() {
     for(const tenant of tenants) {
         if(!tenant?.status_stock) {
             continue;
@@ -38,11 +38,7 @@ export async function broadcastForm() {
             continue;
         }
         
-        await response.send(
-            tenant["owner_phone"],
-            formStock(tenant),
-            "normal"
-        );
+        await response.send(tenant["owner_phone"], "Halo Pemilik Tenant!\n\nTolong Lakukan Pengisian Stok\n\n[1] Isi Ulang Stok", "normal");
 
         await delay(Math.floor(Math.random() * 5000) + 3000);
     }
@@ -50,4 +46,10 @@ export async function broadcastForm() {
     tenantSession["status"] = true;
 
     return;
+}
+
+export function generateFormStock(userId) {
+    const tenant = tenants.find(t => t["owner_phone"] === userId);
+
+    formStock(tenant);
 }

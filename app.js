@@ -18,7 +18,7 @@ import { generateFormMultipleOrder } from './chatbot-structure/system/ordering/g
 import { deleteOrder } from './chatbot-structure/system/ordering/deleteOrder.js';
 import { validationOrder } from './chatbot-structure/system/ordering/validationOrder.js';
 import { editingOrder as sendEditingOrderForm } from './chatbot-structure/system/ordering/editingOrder.js';
-import { broadcastForm } from './chatbot-structure/system/owner-tenant/broadcastForm.js';
+import { generateFormStock } from './chatbot-structure/system/owner-tenant/broadcastForm.js';
 import { displayStock, editStock, formStock, resetStock } from './chatbot-structure/system/owner-tenant/stock.js';
 import { extraction } from './chatbot-structure/system/owner-tenant/extraction.js';
 import { getResponse, initializeResponse } from './chatbot-structure/system/security/response.js';
@@ -121,9 +121,9 @@ function isPaymentDecision(text) {
 
 // Broadcasting Form Pengisian Stock Ke Setiap Owner Tenant (Broadcasting Form)
 // ============================================================================
-// nodeCron.schedule('0 7 * * 1-5', async() => {
-//     await broadcastMenu(client);
-// });
+nodeCron.schedule('0 7 * * 1-5', async() => {
+    await broadcastMenu();
+});
 
 // Broadcasting Laporan Penjualan (Sales Report Broadcasting)
 // ==========================================================
@@ -195,7 +195,7 @@ client.on('message', async message => {
     if(allNumberOwnerTenant.includes(userId)) {
         if(tenantSession["status"]) {
             if(text === "1") {
-                await broadcastForm(client);
+                await generateFormStock(userId);
             } else if(text === "2") {
                 const responseDisplay = await displayStock(userId);
                 await response.send(userId, responseDisplay);
