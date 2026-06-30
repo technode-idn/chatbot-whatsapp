@@ -67,29 +67,3 @@ export function sendOrderMessage(orderData = {}) {
 
     return orderMessage.join("");
 }
-
-export function validationOrderMessage(orderId, orderData = {}) {
-    const validationMessage = [
-        "MOHON KONFIRMASI PESANAN\n",
-        "========================\n",
-        `Order ID: ${orderId}\n\n`
-    ];
-    const productItems = getProductItems(orderData);
-
-    if(productItems.length > 1) {
-        for(const item of productItems) {
-            validationMessage.push(`Status Produk ${item.number}: \n`);
-        }
-    } else {
-        validationMessage.push("Status Produk: \n");
-    }
-
-    validationMessage.push(
-        "Toko Penerima: \n" +
-        "Total Harga: \n\n" +
-        "Jika Tersedia\n| Status Produk -> OK\n| Total Harga -> Isi\n" +
-        "Jika Tidak Tersedia\n| Status Produk -> X\n| Total Harga -> -"
-    );
-
-    return validationMessage.join("");
-}

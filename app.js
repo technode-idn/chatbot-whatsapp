@@ -11,18 +11,18 @@ import { extractionOrder } from './chatbot-structure/system/ordering/extractionO
 import { sendProofToGroup } from './chatbot-structure/system/broadcasting/sendProof.js';
 import { payment } from './chatbot-structure/system/payment.js';
 import { ongkir } from './chatbot-structure/system/ongkir.js';
-import { paymentVerificationSession, pendingProof, sessions, paymentStatus, groupSession, deliverySession, multipleFormSession, editingOrder as editingOrderSession, pendingOrders, userMode, allNumberOwnerTenant, tenantSession } from './chatbot-structure/settings/globalVariables.js';
+import { paymentVerificationSession, pendingProof, sessions, paymentStatus, groupSession, deliverySession, multipleFormSession, editingOrder as editingOrderSession, pendingOrders, userMode, allNumberOwnerTenant, formTenantSession } from './chatbot-structure/settings/globalVariables.js';
 import { verificationPayment } from './chatbot-structure/system/verification.js';
 import { handleDeliveryResponse, inputDelivery } from './chatbot-structure/system/broadcasting/sendDelivery.js';
 import { generateFormMultipleOrder } from './chatbot-structure/system/ordering/generateFormMultipleOrder.js';
 import { deleteOrder } from './chatbot-structure/system/ordering/deleteOrder.js';
 import { validationOrder } from './chatbot-structure/system/ordering/validationOrder.js';
 import { editingOrder as sendEditingOrderForm } from './chatbot-structure/system/ordering/editingOrder.js';
-import { broadcastMenu, generateFormStock } from './chatbot-structure/system/owner-tenant/broadcastForm.js';
+import { broadcastMenu, generateFormStock, validationFormStock } from './chatbot-structure/system/owner-tenant/broadcastForm.js';
 import { displayStock, editStock, resetStock } from './chatbot-structure/system/owner-tenant/stock.js';
-import { extraction } from './chatbot-structure/system/owner-tenant/extraction.js';
 import { getResponse, initializeResponse } from './chatbot-structure/system/security/response.js';
 import { generalSalesReport } from './chatbot-structure/system/broadcasting/generalSalesReport.js';
+import { extraction } from './chatbot-structure/system/owner-tenant/extraction.js';
 
 // Membuat Settingan Whatsapp Web
 // ==============================
@@ -53,6 +53,7 @@ const response = getResponse();
 // Menyimpan Session Users
 // =======================
 const welcomedUsers = new Set();
+const welcomedTenant = new Set();
 
 function isAvailabilityResponse(text) {
     const hasOrderId = /^\s*order id\s*:/im.test(text);
@@ -126,15 +127,21 @@ function isPaymentDecision(text) {
 
 // Broadcasting Form Pengisian Stock Ke Setiap Owner Tenant (Broadcasting Form)
 // ============================================================================
-nodeCron.schedule('0 7 * * 1-5', async() => {
-    await broadcastMenu();
-});
+let statusBroadcast = true;
+
+if(statusBroadcast) {
+    nodeCron.schedule('0 7 * * 1', async() => {
+        await broadcastMenu();
+    });
+
+    statusBroadcast = false;
+}
 
 // Broadcasting Laporan Penjualan (Sales Report Broadcasting)
 // ==========================================================
-nodeCron.schedule('31 13 * * 1-5', async() => {
+nodeCron.schedule('0 16 * * 1-5', async() => {
     await generalSalesReport(client);
-    await resetStock();
+    await resetStock(false);
 });
 
 // Membaca Pesan Masuk
@@ -146,7 +153,7 @@ client.on('message', async message => {
         '129454609268764@lid', // Ayah
         '77855006433494@lid', // Diaz
         '58493310615674@lid', // Azmi
-        '98599765577810@lid',
+        '98599765577810@lid', // Aliya
         '120363407187484870@g.us' // Group
     ];
 
@@ -199,24 +206,42 @@ client.on('message', async message => {
     // Tenant (Tenant Session)
     // =======================
     if(allNumberOwnerTenant.includes(userId)) {
-        if(text === "1") {
-            await resetStock(true);
-            await generateFormStock(userId);
-        } else if(text === "2") {
-            const responseDisplay = await displayStock(userId);
-            await response.send(userId, responseDisplay);
-        } else if(text === "3") {
-            await response.send(userId, "Silahkan perbarui stoknya.\n\nID Produk: \nJumlah Stok: \nStatus: \n\n_Status diisi dengan tambah/kurang/reset_");
-        } else if(text === "4") {
-            await response.send(userId, "Baik, stok sisa kemarin digunakan.");
-        } else if(text.toLowerCase().includes("pengisian") || text.toLowerCase().includes("id produk")) {
-            const responseStock = await extraction(text);
+        if(formTenantSession["status"]) {
+            const responseStock = await validationFormStock(text);
             await response.send(userId, responseStock);
-        } else if(tenantSession["status"]) {
-            await response.send(userId, "Halo Pemilik Tenant!\n\nAda yang bisa kami bantu.\n\n[1] Isi Ulang Stok [2] Lihat Stok\n[3] Update/Restok Produk\n\n_Gunakan fitur dibawah hanya untuk update stok harian_\n[4] Gunakan Stok Sisa Kemarin");
+            return;
         }
 
-        return;
+        if(!welcomedTenant.has(userId)) {
+            welcomedTenant.add(userId);
+
+            await response.send(userId, "🏪 Halo Pemilik Tenant!\n\nAda yang bisa kami bantu?\n[1] Isi Ulang Stok [2] Lihat Stok\n[3] Update/Restok Produk\n\n_Gunakan fitur dibawah jika hanya tidak ingin isi ulang stok harian_\n[4] Gunakan Stok Sisa Kemarin");
+
+            return;
+        } 
+
+        switch(text) {
+            case "1":
+                await resetStock(true);
+                await generateFormStock(userId);
+                return;
+            case "2":
+                const responseDisplay = await displayStock(userId);
+                await response.send(userId, responseDisplay);
+                return;
+            case "3":
+                await response.send(userId, "*📝 SILAKAN PERBARUI STOK*\n=============================\nID Produk: \nJumlah Stok: \nStatus: \n\n_Status diisi dengan tambah/kurang/reset secara text_");
+                return;
+            case "PERBARUI":
+                const responseStock = await extraction(text);
+                await response.send(userId, responseStock);
+                return;
+            case "4":
+                await response.send(userId, "Baik, stok sisa kemarin digunakan.");
+                return;
+            default:
+                await response.send(userId, "Anda memilih pilihan diluar menu.");
+        }
     }
 
     // Follow-Up Dari Group Tenant (Group Session)
@@ -329,7 +354,7 @@ client.on('message', async message => {
     // =============================================================
     if(userMode[userId] === "form") {
         if(text == "1") {
-            await response.send(userId, "Baik kak, supaya kami bisa proses pesanannya, mohon info ya.\n\n📌Nama Pemesan: \n📌ID Produk: \n📌Jumlah Pesanan: \n📌Alamat Lengkap Pengantaran: contoh Asrama Felicia / Stasiun Bogor / Jl. Lodaya II\n📌Nomor Telepon Aktif: \n\nTerima Kasih🙏😊\n\n_*Jika ingin kembali, ketik keluar_"
+            await response.send(userId, "Baik kak, supaya kami bisa proses pesanannya, mohon info ya.\n\n📌Nama Pemesan: \n📌ID Produk: \n📌Jumlah Pesanan: \n📌Nomor Telepon Aktif: \n\n🏠 *TUJUAN PENGANTARAN*\n=============================\n_Tolong isi alamat pengantaran secara lengkap, jika berlokasi diluar SV IPB_\n\n- Jalan/Perumahan/Tempat + Nomor\n- Kelurahan/Desa\n- Kecamatan\n- Kota/Kabupaten\n\n*Cth: Jl. Lodaya II N0.15, Babakan, Bogor Tengah, Kota Bogor*\n\nIsi alamat Anda di bawah 👇\n📌Alamat Lengkap Pengantaran: \n\nTerima Kasih🙏😊\n\n_*Jika ingin kembali, ketik keluar_"
             );
 
             sessions[userId] = true;
@@ -441,7 +466,7 @@ client.on('message', async message => {
             await response.sendMedia(
                 userId, 
                 qris_photo,
-                `Total harga yang harus dibayar sejumlah Rp ${totalPayment}\nSudah ditambah dengan ongkir ${shippingCost} ya kak 😊🙏🏻\nMohon konfirmasi dan screenshot jika pembayaran sudah dilakukan 🙏🏻`
+                `Total harga yang harus dibayar sejumlah *Rp ${totalPayment}*\n\nSudah ditambah dengan *ongkir ${shippingCost}* ya kak 🙏🏻\nMohon konfirmasi dan screenshot jika pembayaran sudah dilakukan.`
             );
 
             pendingProof[userId] = orderId;
@@ -473,7 +498,7 @@ client.on('message', async message => {
         case "1":
             userMode[userId] = "form";
 
-            await response.send(userId, "Berapa banyak yang ingin Anda pesan?\n[1] Single Order\n[2] Multiple Order");
+            await response.send(userId, "📝 *JENIS PEMESANAN ANDA*\n===========================\n[1] Single Order\n[2] Multiple Order");
             
             return;
         case "2":

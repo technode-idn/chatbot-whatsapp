@@ -5,157 +5,157 @@
       "POPA02": {
         "product_name": "Add Nasi Original",
         "price": 5000,
-        "stock": 10,
+        "stock": 0,
         "qty_sold": 0
       },
       "POPD01": {
         "product_name": "Americano",
         "price": 10000,
         "stock": 0,
-        "qty_sold": 15
+        "qty_sold": 0
       },
       "POPD02": {
         "product_name": "Kopi susu",
         "price": 13000,
         "stock": 0,
-        "qty_sold": 10
+        "qty_sold": 0
       },
       "POPD03": {
         "product_name": "Kopi susu gula aren",
         "price": 15000,
         "stock": 0,
-        "qty_sold": 10
+        "qty_sold": 0
       },
       "POPD04": {
         "product_name": "Milk tea cup",
         "price": 8000,
-        "stock": 10,
+        "stock": 0,
         "qty_sold": 0
       },
       "POPF01": {
         "product_name": "Nasi daun jeruk popchick matah",
         "price": 17000,
-        "stock": 10,
+        "stock": 0,
         "qty_sold": 0
       },
       "POPF02": {
         "product_name": "Nasi daun jeruk popchick original",
         "price": 15000,
-        "stock": 10,
+        "stock": 0,
         "qty_sold": 0
       },
       "POPF03": {
         "product_name": "Nasi popchick asam manis",
         "price": 15000,
-        "stock": 10,
+        "stock": 0,
         "qty_sold": 0
       },
       "POPF04": {
         "product_name": "Nasi popchick blackpepper",
         "price": 15000,
-        "stock": 10,
+        "stock": 0,
         "qty_sold": 0
       },
       "POPF05": {
         "product_name": "Nasi popchick hot spicy",
         "price": 15000,
-        "stock": 10,
+        "stock": 0,
         "qty_sold": 0
       },
       "POPF06": {
         "product_name": "Nasi popchick mentai",
         "price": 20000,
-        "stock": 10,
+        "stock": 0,
         "qty_sold": 0
       },
       "POPF07": {
         "product_name": "Nasi popchick Original",
         "price": 13000,
-        "stock": 10,
+        "stock": 0,
         "qty_sold": 0
       },
       "POPF08": {
         "product_name": "Nasi popchick sambal matah",
         "price": 15000,
-        "stock": 10,
+        "stock": 0,
         "qty_sold": 0
       },
       "POPF09": {
         "product_name": "Nasi popchick soy garlic",
         "price": 15000,
-        "stock": 10,
+        "stock": 0,
         "qty_sold": 0
       },
       "POPF10": {
         "product_name": "Nasi popchick bbq",
         "price": 15000,
-        "stock": 10,
+        "stock": 0,
         "qty_sold": 0
       },
       "POPF11": {
         "product_name": "Ala Carte Popchick Asam Manis",
         "price": 15000,
-        "stock": 10,
+        "stock": 0,
         "qty_sold": 0
       },
       "POPF12": {
         "product_name": "Popchick hot spicy",
         "price": 15000,
-        "stock": 10,
+        "stock": 0,
         "qty_sold": 0
       },
       "POPF13": {
         "product_name": "Ala Carte Popchick Blackpepper",
         "price": 15000,
-        "stock": 10,
+        "stock": 0,
         "qty_sold": 0
       },
       "POPF14": {
         "product_name": "Ala Carte Popchick Mentai",
         "price": 20000,
-        "stock": 10,
+        "stock": 0,
         "qty_sold": 0
       },
       "POPF15": {
         "product_name": "Ala Carte Popchick Original",
         "price": 13000,
-        "stock": 10,
+        "stock": 0,
         "qty_sold": 0
       },
       "POPF16": {
         "product_name": "Ala Carte Popchick Matah",
         "price": 16000,
-        "stock": 10,
+        "stock": 0,
         "qty_sold": 0
       },
       "POPF17": {
         "product_name": "Ala Carte Popchick Soy Garlic",
         "price": 15000,
-        "stock": 10,
+        "stock": 0,
         "qty_sold": 0
       },
       "POPD05": {
         "product_name": "Spanish Latte",
         "price": 13000,
-        "stock": 10,
+        "stock": 0,
         "qty_sold": 0
       },
       "POPD06": {
         "product_name": "Teh manis",
         "price": 5000,
-        "stock": 10,
+        "stock": 0,
         "qty_sold": 0
       },
       "POPD07": {
         "product_name": "Teh tawar",
         "price": 5000,
-        "stock": 10,
+        "stock": 0,
         "qty_sold": 0
       },
       "POPD08": {
         "product_name": "Pinkit",
         "price": 8000,
-        "stock": 10,
+        "stock": 0,
         "qty_sold": 0
       }
     }

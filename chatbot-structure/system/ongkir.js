@@ -1,58 +1,9 @@
 import fs from 'fs/promises';
 import { campusZone } from "../settings/globalVariables.js";
 import { calculateShipping, hasMapLocation } from "./shippingCalculator.js";
+import { rawDataUsers } from '../settings/loadFiles.js';
 
-const DATA_USERS_PATH = './chatbot-structure/data/data_form_users.json';
-
-async function loadDataUsers() {
-    const rawDataUsers = await fs.readFile(DATA_USERS_PATH, 'utf8');
-
-    return rawDataUsers.trim()
-        ? JSON.parse(rawDataUsers)
-        : [];
-}
-
-function getAddress(dataUser) {
-    return (
-        dataUser.address ||
-        dataUser.alamat_lengkap_pengantaran ||
-        dataUser["Alamat lengkap pengantaran"] ||
-        dataUser["Alamat Lengkap Pengantaran"] ||
-        ''
-    );
-}
-
-export async function ongkir(userId) {
-    const dataUsers = await loadDataUsers();
-    let address = '';
-
-    for(let index = dataUsers.length - 1; index >= 0; index--) {
-        const dataUser = dataUsers[index];
-
-        if(dataUser["user_id"] == userId) {
-            address = getAddress(dataUser);
-            break;
-        }
-    }
-
-    if(!address) {
-        return 0;
-    }
-
-    const location = hasMapLocation(address)
-        ? null
-        : getCampusShipping(address);
-
-    if(location) {
-        return location;
-    }
-
-    const result = await calculateShipping(address);
-
-    return result.success
-        ? result.shipping
-        : 0;
-}
+const users = rawDataUsers.trim() ? JSON.parse(rawDataUsers) : [];
 
 function getCampusShipping(address) {
     const lowerAddress = address.toLowerCase();
@@ -70,4 +21,31 @@ function getCampusShipping(address) {
     }
 
     return null;
+}
+
+export async function ongkir(userId) {
+    let address = '';
+
+    for(let index = users.length - 1; index >= 0; index--) {
+        const dataUser = users[index];
+
+        if(dataUser["user_id"] == userId) {
+            address = dataUser["address"];
+            break;
+        }
+    }
+
+    if(!address) {
+        return 0;
+    }
+
+    const location = getCampusShipping(address)
+
+    if(location) {
+        return location;
+    }
+
+    const result = await calculateShipping(address);
+
+    return result.success ? result.shipping : 0;
 }

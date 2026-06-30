@@ -24,6 +24,8 @@ async function persistStockData() {
         DATA_TENANT_PATH,
         JSON.stringify(tenants, null, 4)
     );
+
+    return;
 }
 
 export async function addStock(dataStock) {
@@ -94,7 +96,7 @@ export async function editStock(dataEditStock) {
     return "ID Produk tidak ditemukan.";
 }
 
-export async function resetStock(fill = false) {
+export async function resetStock(fill) {
     Object.values(database_product).forEach(value => {
         for(const product of Object.values(value["products"])) {
             product["qty_sold"] = 0;
@@ -104,8 +106,10 @@ export async function resetStock(fill = false) {
         }
     });
 
-    for(const tenant of tenants) {
-        tenant["status_stock"] = "pending";
+    if(!fill) {
+        for(const tenant of tenants) {
+            tenant["status_stock"] = "pending";
+        }
     }
 
     await persistStockData();
@@ -114,7 +118,7 @@ export async function resetStock(fill = false) {
 }
 
 export async function displayStock(userId) {
-    const text = ["Berikut adalah rincian stok saat ini:\n"];
+    const text = ["📦 *RINCIAN STOK SAAT INI*\n", "==========================="];
 
     const tenant = tenants.find(t => t["owner_phone"] === userId);
 
@@ -124,8 +128,11 @@ export async function displayStock(userId) {
         return 'Data produk tenant tidak ditemukan.';
     }
 
+    let num = 1;
+
     for(const product of Object.values(database_product[tenantKey]["products"])) {
-        text.push(`${product["product_name"]}: ${product["stock"]}\n`);
+        text.push(`[${num}] ${product["product_name"]}: ${product["stock"]}\n`);
+        num += 1;
     }
 
     return text.join("");

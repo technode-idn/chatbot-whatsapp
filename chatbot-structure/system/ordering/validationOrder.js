@@ -102,8 +102,8 @@ function buildUnavailableMessage(unavailableItems) {
     const text = ['Mohon Maaf:\n'];
 
     for(const item of unavailableItems) {
-        const label = item.label ? ` ${item.label}` : '';
-        text.push(`Produk${label} (${item.productId}) sedang tidak tersedia.\n`);
+        const label = item.label ? `${item.label}` : '';
+        text.push(`❌ Produk *${item.productId}* sedang tidak tersedia.\n`);
     }
 
     text.push('\nApakah kakak ingin mengganti produk?\n[1] Ya\n[2] Tidak');
@@ -238,7 +238,7 @@ export async function validationOrder(orderData, userId, editingStatus, client) 
 
     await response.send(
         userId,
-        'Produk tersedia.\n\nUntuk informasi pembayarannya, kakak bisa pilih:\n\n[1] Cash (bayar di tempat)\n[2] QRIS\n\nSilahkan diinformasikan mau pakai metode yang mana ya kak?'
+        '✅ *PRODUK TERSEDIA*\n\nUntuk informasi pembayarannya, kakak bisa pilih 🙏\n\n[1] Cash (bayar di tempat)\n[2] QRIS\n\nSilahkan diinformasikan mau pakai metode yang mana ya kak?'
     );
 
     return {

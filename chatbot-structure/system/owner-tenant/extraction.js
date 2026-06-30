@@ -14,6 +14,7 @@ export async function extraction(text) {
             const normalizedKey = key
                 .toLowerCase()
                 .trim()
+                .replace(/^\[\d+\]\s*/, "")
                 .replace(/\s+/g, '_');
     
             if(normalizedKey) {
@@ -25,9 +26,7 @@ export async function extraction(text) {
             return 'Format yang dikirim tidak sesuai, silahkan isi ulang kembali';
         }
     
-        const responseStock = text.toLowerCase().includes("pengisian")
-            ? await addStock(data)
-            : await editStock(data);
+        const responseStock = text.toLowerCase().includes("pengisian") ? await addStock(data) : await editStock(data);
     
         return responseStock;
     } catch(error) {

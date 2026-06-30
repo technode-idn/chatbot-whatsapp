@@ -40,7 +40,7 @@ export async function inputDelivery(orderId, client) {
 
     await response.send(
         GROUP_ID,
-        `MOHON KONFIRMASI PENGIRIMAN\n==========================\nOrder ID: ${orderId}\n\nID Pengirim: `,
+        `🛵 *KONFIRMASI PENGIRIMAN*\n==========================\nOrder ID: ${orderId}\n\nNIM Pengirim: `,
         "normal"
     );
 
