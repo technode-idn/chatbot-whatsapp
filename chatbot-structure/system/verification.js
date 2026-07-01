@@ -96,7 +96,7 @@ export async function verificationPayment(text, client, fallbackOrderId = null) 
         .map(line => line.trim())
         .find(Boolean);
     const paymentVerificationStatus = readPaymentStatus(
-        data["status"] || data["status_pembayaran"] || (fallbackOrderId ? text : firstLineStatus)
+        data["status"] || data["pembayaran_valid"] || (fallbackOrderId ? text : firstLineStatus)
     );
 
     if(!orderId) {

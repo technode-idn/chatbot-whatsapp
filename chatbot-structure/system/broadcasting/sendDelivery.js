@@ -2,6 +2,7 @@ import fs from 'fs/promises';
 import { deliverySession, groupSession } from "../../settings/globalVariables.js";
 import { DATA_DELIVERY_PATH, DATA_USERS_PATH } from '../../settings/loadFiles.js';
 import { getResponse } from '../security/response.js';
+import { completeOrder } from '../ordering/validationOrder.js';
 
 const GROUP_ID = '120363407187484870@g.us';
 
@@ -91,6 +92,8 @@ export async function handleDeliveryResponse(text, client, fallbackOrderId = nul
 
     delete deliverySession[GROUP_ID];
     delete groupSession[GROUP_ID];
+
+    await completeOrder(orderId);
 
     return {
         success: true,

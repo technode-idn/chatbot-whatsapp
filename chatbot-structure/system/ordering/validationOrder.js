@@ -99,14 +99,13 @@ function getProductPrice(product) {
 }
 
 function buildUnavailableMessage(unavailableItems) {
-    const text = ['Mohon Maaf:\n'];
+    const text = [];
 
     for(const item of unavailableItems) {
-        const label = item.label ? `${item.label}` : '';
-        text.push(`❌ Produk *${item.productId}* sedang tidak tersedia.\n`);
+        text.push(`❌ Produk *${item.productName}* sedang tidak tersedia.\n`);
     }
 
-    text.push('\nApakah kakak ingin mengganti produk?\n[1] Ya\n[2] Tidak');
+    text.push('\nIngin mengganti produk:\n[1] Ya\n[2] Tidak');
 
     return text.join('');
 }
@@ -123,22 +122,182 @@ async function persistData() {
     );
 }
 
-export async function validationOrder(orderData, userId, editingStatus, client) {
-    const response = getResponse();
-    const orderId = editingStatus
-        ? (orderData["order_id"] || editingOrder[userId]?.["order_id"])
-        : "ORD-" + crypto.randomBytes(5).toString("hex").toUpperCase();
+async function reserveStock({orderId, userId, orderData, orderItems}) {
 
-    if(!orderId) {
+    let pendingOrder = [orderId];
+
+    if (!pendingOrder) {
+
+        pendingOrder = {
+
+            order_id: orderId,
+
+            customer: userId,
+
+            status: "PENDING_PAYMENT",
+
+            created_at: new Date().toISOString(),
+
+            customerInfo: {
+
+                name: orderData["nama_pemesan"],
+
+                phone: orderData["nomor_telepon_aktif"],
+
+                address: orderData["alamat_lengkap_pengantaran"]
+
+            },
+
+            data: orderData,
+
+            items: []
+
+        };
+
+    } else {
+
+        pendingOrder.customer = userId;
+
+        pendingOrder.status = "PENDING_PAYMENT";
+
+        pendingOrder.data = orderData;
+
+        pendingOrder.customerInfo = {
+
+            name: orderData["nama_pemesan"],
+
+            phone: orderData["nomor_telepon_aktif"],
+
+            address: orderData["alamat_lengkap_pengantaran"]
+
+        };
+
+    }
+
+    const unavailableItems = [];
+    let reserved = false;
+
+    for (const item of orderItems) {
+
+        // produk sudah pernah berhasil di-reserve
+        if (
+            pendingOrder.items.some(
+                reservedItem =>
+                    reservedItem.productKey === item.productKey
+            )
+        ) {
+            continue;
+        }
+
+        const productEntry = findProduct(item.productId);
+
+        const product = productEntry?.product;
+
+        if (!product) {
+
+            unavailableItems.push({
+                ...item,
+                productName: item.productId
+            });
+
+            continue;
+        }
+
+        const stock = getProductStock(product);
+
+        if (stock < item.quantity) {
+
+            unavailableItems.push({
+
+                ...item,
+
+                productName:
+
+                    product.product_name ||
+
+                    product.name ||
+
+                    item.productId
+
+            });
+
+            continue;
+        }
+
+        // reserve stok
+        setProductStock(
+            product,
+            stock - item.quantity
+        );
+
+        pendingOrder.items.push({
+
+            productKey: item.productKey,
+
+            quantityKey: item.quantityKey,
+
+            productId: item.productId,
+
+            productName:
+
+                product.product_name ||
+
+                product.name ||
+
+                item.productId,
+
+            tenantName:
+
+                product.tenant_name ||
+
+                productEntry?.tenantName ||
+
+                null,
+
+            quantity: item.quantity,
+
+            unitPrice: getProductPrice(product),
+
+            reservedAt: new Date().toISOString()
+
+        });
+
+        reserved = true;
+
+    }
+
+    pendingOrders[orderId] = pendingOrder;
+
+    if (reserved) {
+        await persistData();
+    }
+
+    return {
+
+        success: unavailableItems.length === 0,
+
+        unavailableItems
+
+    };
+
+}
+
+export async function validationOrder(orderData, userId, editingStatus) {
+    const response = getResponse();
+
+    const orderId = editingStatus ? (orderData.order_id || editingOrder[userId]?.order_id) : `ORD-${crypto.randomBytes(5).toString("hex").toUpperCase()}`;
+
+    if (!orderId) {
         await response.send(
             userId,
-            'Order ID tidak ditemukan. Mohon kirim ulang form penggantinya.'
+            "Order ID tidak ditemukan. Mohon kirim ulang form penggantinya."
         );
 
         return { success: false };
     }
 
     const existingPendingOrder = pendingOrders[orderId];
+
     const orderDataFinal = {
         ...(editingStatus ? existingPendingOrder?.data : {}),
         ...orderData,
@@ -147,79 +306,40 @@ export async function validationOrder(orderData, userId, editingStatus, client) 
 
     const orderItems = getOrderItems(orderDataFinal);
 
-    if(!orderItems.length) {
+    if (!orderItems.length) {
         delete pendingOrders[orderId];
         delete editingOrder[userId];
 
         await response.send(
             userId,
-            'Tidak ada produk yang bisa diproses di pesanan ini.'
+            "Tidak ada produk yang bisa diproses."
         );
 
         return { success: false };
     }
 
-    const pendingOrder = pendingOrders[orderId] || {};
-    pendingOrder.customer = userId;
-    pendingOrder.order_id = orderId;
-    pendingOrder.data = orderDataFinal;
-    pendingOrder.processed_product_keys = pendingOrder.processed_product_keys || [];
-    pendingOrders[orderId] = pendingOrder;
+    const reserveResult = await reserveStock({
+        orderId,
+        userId,
+        orderData: orderDataFinal,
+        orderItems,
+        editingStatus
+    });
 
-    const unavailableItems = [];
-    let hasNewAvailableProduct = false;
+    if (!reserveResult.success) {
 
-    for(const item of orderItems) {
-        if(pendingOrder.processed_product_keys.includes(item.productKey)) {
-            continue;
-        }
-
-        const productEntry = findProduct(item.productId);
-        const product = productEntry?.product;
-        const stock = getProductStock(product);
-
-        if(!product || stock < item.quantity) {
-            unavailableItems.push(item);
-            continue;
-        }
-
-        const unitPrice = getProductPrice(product);
-
-        users.push({
-            order_id: orderId,
-            user_id: userId,
-            product_id: item.productId,
-            created_at: new Date().toISOString(),
-            customer_name: orderDataFinal["nama_pemesan"],
-            number: orderDataFinal["nomor_telepon_aktif"],
-            address: orderDataFinal["alamat_lengkap_pengantaran"],
-            tenant_name: product["tenant_name"] || productEntry?.tenantName,
-            total_product: item.quantity,
-            product_unit_price: unitPrice,
-            total_price: unitPrice * item.quantity
-        });
-
-        setProductStock(product, stock - item.quantity);
-        product["qty_sold"] = (Number(product["qty_sold"]) || 0) + item.quantity;
-        pendingOrder.processed_product_keys.push(item.productKey);
-        hasNewAvailableProduct = true;
-    }
-
-    if(hasNewAvailableProduct) {
-        await persistData();
-    }
-
-    if(unavailableItems.length > 0) {
         editingOrder[userId] = {
             status: true,
             order_id: orderId,
             data: orderDataFinal,
-            all_data_available: unavailableItems.map(item => item.productKey)
+            all_data_available: reserveResult.unavailableItems.map(
+                item => item.productKey
+            )
         };
 
         await response.send(
             userId,
-            buildUnavailableMessage(unavailableItems)
+            buildUnavailableMessage(reserveResult.unavailableItems)
         );
 
         return {
@@ -238,11 +358,124 @@ export async function validationOrder(orderData, userId, editingStatus, client) 
 
     await response.send(
         userId,
-        '✅ *PRODUK TERSEDIA*\n\nUntuk informasi pembayarannya, kakak bisa pilih 🙏\n\n[1] Cash (bayar di tempat)\n[2] QRIS\n\nSilahkan diinformasikan mau pakai metode yang mana ya kak?'
+        "✅ *PRODUK TERSEDIA*\n\nUntuk informasi pembayarannya, kakak bisa pilih 🙏\n\n[1] Cash (bayar di tempat)\n[2] QRIS\n\nSilahkan diinformasikan mau pakai metode yang mana ya kak?"
     );
 
     return {
         success: true,
         order_id: orderId
     };
+}
+
+export async function completeOrder(orderId) {
+
+    const pendingOrder = pendingOrders[orderId];
+
+    if (!pendingOrder) {
+        return {
+            success: false,
+            message: "Order tidak ditemukan."
+        };
+    }
+
+    const completedAt = new Date().toISOString();
+
+    for (const item of pendingOrder.items) {
+
+        users.push({
+
+            order_id: pendingOrder.order_id,
+
+            user_id: pendingOrder.customer,
+
+            created_at: completedAt,
+
+            customer_name: pendingOrder.customerInfo.name,
+
+            number: pendingOrder.customerInfo.phone,
+
+            address: pendingOrder.customerInfo.address,
+
+            tenant_name: item.tenantName,
+
+            product_id: item.productId,
+
+            total_product: item.quantity,
+
+            product_unit_price: item.unitPrice,
+
+            total_price: item.unitPrice * item.quantity
+
+        });
+
+        const productEntry = findProduct(item.productId);
+
+        if (productEntry?.product) {
+
+            productEntry.product.qty_sold =
+                (Number(productEntry.product.qty_sold) || 0)
+                + item.quantity;
+
+        }
+
+    }
+
+    pendingOrder.status = "COMPLETED";
+    pendingOrder.completed_at = completedAt;
+
+    await persistData();
+
+    delete pendingOrders[orderId];
+
+    return {
+        success: true,
+        order_id: orderId
+    };
+
+}
+
+export async function cancelOrder(orderId) {
+
+    const pendingOrder = pendingOrders[orderId];
+
+    if (!pendingOrder) {
+        return {
+            success: false,
+            message: "Order tidak ditemukan."
+        };
+    }
+
+    for (const item of pendingOrder.items) {
+
+        const productEntry = findProduct(item.productId);
+
+        if (!productEntry?.product) {
+            continue;
+        }
+
+        const product = productEntry.product;
+
+        const currentStock = getProductStock(product);
+
+        setProductStock(
+            product,
+            currentStock + item.quantity
+        );
+
+    }
+
+    pendingOrder.status = "CANCELLED";
+    pendingOrder.cancelled_at = new Date().toISOString();
+
+    await persistData();
+
+    delete paymentStatus[pendingOrder.customer];
+    delete editingOrder[pendingOrder.customer];
+    delete pendingOrders[orderId];
+
+    return {
+        success: true,
+        order_id: orderId
+    };
+
 }
