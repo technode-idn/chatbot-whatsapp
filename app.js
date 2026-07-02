@@ -11,16 +11,18 @@ import { extractionOrder } from './chatbot-structure/system/ordering/extractionO
 import { sendProofToGroup } from './chatbot-structure/system/broadcasting/sendProof.js';
 import { payment } from './chatbot-structure/system/payment.js';
 import { ongkir } from './chatbot-structure/system/ongkir.js';
-import { paymentVerificationSession, pendingProof, sessions, paymentStatus, groupSession, deliverySession, multipleFormSession, editingOrder as editingOrderSession, pendingOrders, userMode, allNumberOwnerTenant, formTenantSession } from './chatbot-structure/settings/globalVariables.js';
+import { paymentVerificationSession, pendingProof, sessions, paymentStatus, orderConfirmationSession, groupSession, deliverySession, multipleFormSession, editingOrder as editingOrderSession, pendingOrders, userMode, allNumberOwnerTenant, formTenantSession } from './chatbot-structure/settings/globalVariables.js';
 import { verificationPayment } from './chatbot-structure/system/verification.js';
 import { handleDeliveryResponse, inputDelivery } from './chatbot-structure/system/broadcasting/sendDelivery.js';
 import { generateFormMultipleOrder } from './chatbot-structure/system/ordering/generateFormMultipleOrder.js';
 import { deleteOrder } from './chatbot-structure/system/ordering/deleteOrder.js';
 import { cancelOrder, validationOrder } from './chatbot-structure/system/ordering/validationOrder.js';
 import { editingOrder as sendEditingOrderForm } from './chatbot-structure/system/ordering/editingOrder.js';
+import { handleOrderConfirmation } from './chatbot-structure/system/ordering/editOrder.js';
 import { broadcastMenu, generateFormStock, validationFormStock } from './chatbot-structure/system/owner-tenant/broadcastForm.js';
 import { displayStock, editStock, resetStock } from './chatbot-structure/system/owner-tenant/stock.js';
 import { getResponse, initializeResponse } from './chatbot-structure/system/security/response.js';
+import { getActiveCustomerIds, restoreRuntimeSessions, saveRuntimeSessions } from './chatbot-structure/system/security/runtimeSession.js';
 import { generalSalesReport } from './chatbot-structure/system/broadcasting/generalSalesReport.js';
 import { extraction } from './chatbot-structure/system/owner-tenant/extraction.js';
 
@@ -49,6 +51,41 @@ initializeResponse(client, logger);
 // Mengambil Instance Response
 // ===========================
 const response = getResponse();
+
+const restoredSession = await monitor.guardians.session.load();
+restoreRuntimeSessions(restoredSession);
+
+let recoveryFollowUpSent = false;
+
+async function saveSessionBeforeExit() {
+    await saveRuntimeSessions(monitor.guardians.session);
+}
+
+process.once("SIGINT", async () => {
+    await saveSessionBeforeExit();
+    process.exit(0);
+});
+
+process.once("SIGTERM", async () => {
+    await saveSessionBeforeExit();
+    process.exit(0);
+});
+
+client.on("ready", async () => {
+    if(recoveryFollowUpSent) {
+        return;
+    }
+
+    recoveryFollowUpSent = true;
+
+    for(const customerId of getActiveCustomerIds()) {
+        await response.send(
+            customerId,
+            "Mohon maaf, sepertinya sempat ada gangguan sistem. Silahkan lanjutkan kembali aktivitas anda.",
+            "high"
+        );
+    }
+});
 
 // Menyimpan Session Users
 // =======================
@@ -147,6 +184,7 @@ nodeCron.schedule('0 16 * * 1-5', async() => {
 // Membaca Pesan Masuk
 // ===================
 client.on('message', async message => {
+    try {
     const allowedNumbers = [
         '76403240386784@lid', // Fikri
         '249344376729705@lid', // Kakak
@@ -267,6 +305,7 @@ client.on('message', async message => {
         delete sessions[userId];
         delete multipleFormSession[userId];
         delete editingOrderSession[userId];
+        delete orderConfirmationSession[userId];
         delete paymentStatus[userId];
         delete pendingProof[userId];
 
@@ -419,6 +458,13 @@ client.on('message', async message => {
         return;
     }
 
+    // Konfirmasi/Edit Pesanan Setelah Produk Tersedia
+    // ===============================================
+    if(orderConfirmationSession[userId]?.status) {
+        await handleOrderConfirmation(text, userId);
+        return;
+    }
+
     // Mengganti/Edit, Jika Suatu Produk Tidak Tersedia (Editing Order Session)
     // ========================================================================
     if(editingOrderSession[userId]?.status) {
@@ -436,8 +482,6 @@ client.on('message', async message => {
                 await response.send(userId, 'Pesanan dibatalkan karena tidak ada produk yang bisa diproses.');
                 return;
             }
-
-            await cancelOrder(editSession["order_id"]);
 
             await validationOrder(remainingOrder.data, userId, true, client);
             delete editingOrderSession[userId];
@@ -536,6 +580,9 @@ client.on('message', async message => {
             return;
         default:
             await response.send(userId, "Mohon maaf, sepertinya kakak memilih diluar pilihan yang ada.\n\nSilahkan pilih ulang menu kembali.");
+    }
+    } finally {
+        await saveRuntimeSessions(monitor.guardians.session);
     }
 });
 

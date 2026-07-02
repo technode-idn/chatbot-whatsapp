@@ -1,7 +1,8 @@
 import fs from 'fs/promises';
 import crypto from 'crypto';
 import { DATABASE_PRODUCT_PATH, DATA_USERS_PATH, rawDatabaseProduct, rawDataUsers } from "../../settings/loadFiles.js";
-import { editingOrder, paymentStatus, pendingOrders } from "../../settings/globalVariables.js";
+import { editingOrder, orderConfirmationSession, paymentStatus, pendingOrders } from "../../settings/globalVariables.js";
+import { askOrderConfirmation } from "./editOrder.js";
 import { getResponse } from '../security/response.js';
 
 const database_product = JSON.parse(rawDatabaseProduct);
@@ -122,9 +123,27 @@ async function persistData() {
     );
 }
 
-async function reserveStock({orderId, userId, orderData, orderItems}) {
+function releaseReservedItems(items = []) {
+    for (const item of items) {
+        const productEntry = findProduct(item.productId);
 
-    let pendingOrder = [orderId];
+        if (!productEntry?.product) {
+            continue;
+        }
+
+        const product = productEntry.product;
+        const currentStock = getProductStock(product);
+
+        setProductStock(
+            product,
+            currentStock + item.quantity
+        );
+    }
+}
+
+async function reserveStock({orderId, userId, orderData, orderItems, editingStatus}) {
+
+    let pendingOrder = pendingOrders[orderId];
 
     if (!pendingOrder) {
 
@@ -155,6 +174,10 @@ async function reserveStock({orderId, userId, orderData, orderItems}) {
         };
 
     } else {
+        if(editingStatus && pendingOrder.items?.length) {
+            releaseReservedItems(pendingOrder.items);
+            pendingOrder.items = [];
+        }
 
         pendingOrder.customer = userId;
 
@@ -181,7 +204,7 @@ async function reserveStock({orderId, userId, orderData, orderItems}) {
 
         // produk sudah pernah berhasil di-reserve
         if (
-            pendingOrder.items.some(
+            (pendingOrder.items || []).some(
                 reservedItem =>
                     reservedItem.productKey === item.productKey
             )
@@ -351,15 +374,7 @@ export async function validationOrder(orderData, userId, editingStatus) {
 
     delete editingOrder[userId];
 
-    paymentStatus[userId] = {
-        status: true,
-        order_id: orderId
-    };
-
-    await response.send(
-        userId,
-        "✅ *PRODUK TERSEDIA*\n\nUntuk informasi pembayarannya, kakak bisa pilih 🙏\n\n[1] Cash (bayar di tempat)\n[2] QRIS\n\nSilahkan diinformasikan mau pakai metode yang mana ya kak?"
-    );
+    await askOrderConfirmation(userId, orderId);
 
     return {
         success: true,
@@ -445,7 +460,9 @@ export async function cancelOrder(orderId) {
         };
     }
 
-    for (const item of pendingOrder.items) {
+    const items = pendingOrder.items || [];
+
+    for (const item of items) {
 
         const productEntry = findProduct(item.productId);
 
@@ -471,6 +488,7 @@ export async function cancelOrder(orderId) {
 
     delete paymentStatus[pendingOrder.customer];
     delete editingOrder[pendingOrder.customer];
+    delete orderConfirmationSession[pendingOrder.customer];
     delete pendingOrders[orderId];
 
     return {

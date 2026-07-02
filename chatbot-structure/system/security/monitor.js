@@ -50,6 +50,8 @@ class SystemMonitor {
 
         this.guardians.response.start();
 
+        this.guardians.session.start();
+
         // Menjalankan seluruh monitoring
         this.startInternetMonitor();
 

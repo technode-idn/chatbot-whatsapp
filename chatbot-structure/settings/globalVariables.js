@@ -3,6 +3,7 @@ export const pendingProof = {};
 export const paymentVerificationSession = {};
 export const sessions = {};
 export const paymentStatus = {};
+export const orderConfirmationSession = {};
 export const groupSession = {};
 export const deliverySession = {};
 export const multipleFormSession = {};

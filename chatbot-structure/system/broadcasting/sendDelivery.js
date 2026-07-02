@@ -45,6 +45,8 @@ export async function inputDelivery(orderId, client) {
         "normal"
     );
 
+    await completeOrder(orderId);
+
     deliverySession[GROUP_ID] = orderId;
     groupSession[GROUP_ID] = true;
 }
@@ -90,10 +92,13 @@ export async function handleDeliveryResponse(text, client, fallbackOrderId = nul
         `Informasi Pengiriman:\n\nNama Pengirim: ${deliveryName}\nNomor Pengirim: ${deliveryPhone}`
     );
 
+    await response.send(
+        customerId,
+        "Terima kasih sudah berbelanja di KlikBi-Go kakak 🙏\n\nKami minta dukungannya agar bisnis ini bisa terus berkembang dengan follow akun instagram KlikBi\nhttps://www.instagram.com/klikbisvipb?igsh=MWM5NGUwcnN1bTNvaQ==\n\nSemoga kita dapat bertemu kembali di pemesanan berikutnya 😊"
+    );
+
     delete deliverySession[GROUP_ID];
     delete groupSession[GROUP_ID];
-
-    await completeOrder(orderId);
 
     return {
         success: true,

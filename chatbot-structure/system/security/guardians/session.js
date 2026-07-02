@@ -25,6 +25,13 @@ class SessionGuardian {
     async save(sessionData) {
 
         try {
+            const directory = config.session.file.split(/[\\/]/).slice(0, -1).join("/");
+
+            if(directory) {
+                await fs.mkdir(directory, {
+                    recursive: true
+                });
+            }
 
             await fs.writeFile(
 
@@ -41,7 +48,7 @@ class SessionGuardian {
             this.status.lastSave = new Date();
 
             this.status.sessionCount =
-                Object.keys(sessionData).length;
+                Object.keys(sessionData?.data || sessionData || {}).length;
 
         }
 
@@ -67,7 +74,7 @@ class SessionGuardian {
                 JSON.parse(data);
 
             this.status.sessionCount =
-                Object.keys(session).length;
+                Object.keys(session?.data || session || {}).length;
 
             return session;
 
