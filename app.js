@@ -187,16 +187,6 @@ nodeCron.schedule('19 15 * * 1-5', async() => {
 // ===================
 client.on('message', async message => {
     try {
-    const allowedNumbers = [
-        '76403240386784@lid', // Fikri
-        '249344376729705@lid', // Kakak
-        '129454609268764@lid', // Ayah
-        '77855006433494@lid', // Diaz
-        '58493310615674@lid', // Azmi
-        '98599765577810@lid', // Aliya
-        '120363407187484870@g.us' // Group
-    ]; // [X]
-
     // Melacak Siapa Pengirim & Isi Pesannya
     // ======================================
     logger.info(`FROM: ${message.from}`);
@@ -213,12 +203,6 @@ client.on('message', async message => {
     // Ekstraksi Pesan
     // ===============
     const text = message.body.trim();
-
-    // Memeriksa Apakah Nomor Pengirim Terdapat Di Dalam Daftar
-    // ========================================================
-    if(!allowedNumbers.includes(userId) && !allNumberOwnerTenant.includes(userId)) {
-        return;
-    } // [X]
 
     // Memeriksa Apakah Pengirim Adalah Dirinya Sendiri
     // ================================================
