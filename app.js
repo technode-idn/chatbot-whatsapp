@@ -25,6 +25,7 @@ import { getResponse, initializeResponse } from './chatbot-structure/system/secu
 import { getActiveCustomerIds, restoreRuntimeSessions, saveRuntimeSessions } from './chatbot-structure/system/security/runtimeSession.js';
 import { generalSalesReport } from './chatbot-structure/system/broadcasting/generalSalesReport.js';
 import { extraction } from './chatbot-structure/system/owner-tenant/extraction.js';
+import { welcomedUsers } from './chatbot-structure/settings/runtimeUsers.js';
 
 // Membuat Settingan Whatsapp Web
 // ==============================
@@ -89,8 +90,8 @@ client.on("ready", async () => {
 
 // Menyimpan Session Users
 // =======================
-const welcomedUsers = new Set();
 const welcomedTenant = new Set();
+const TENANT_MENU_MESSAGE = "🏪 Halo Pemilik Tenant!\n\nAda yang bisa kami bantu?\n[1] Isi Ulang Stok\n[2] Lihat Stok\n[3] Update/Restok Produk\n\n_Gunakan fitur dibawah jika hanya tidak ingin isi ulang stok harian_\n[4] Gunakan Stok Sisa Kemarin";
 
 function isAvailabilityResponse(text) {
     const hasOrderId = /^\s*order id\s*:/im.test(text);
@@ -115,6 +116,7 @@ function isPaymentResponse(text) {
 function isDeliveryResponse(text) {
     const hasOrderId = /^\s*order id\s*(?::|->)/im.test(text);
     const hasDeliveryField = /^\s*id pengirim\s*(?::|->)/im.test(text)
+        || /^\s*nim pengirim\s*(?::|->)/im.test(text)
         || /^\s*nama pengirim\s*(?::|->)/im.test(text)
         || /^\s*nomor pengirim\s*(?::|->)/im.test(text);
 
@@ -167,7 +169,7 @@ function isPaymentDecision(text) {
 let statusBroadcast = true;
 
 if(statusBroadcast) {
-    nodeCron.schedule('0 7 * * 1', async() => {
+    nodeCron.schedule('27 15 * * 1-5', async() => {
         await broadcastMenu();
     });
 
@@ -176,7 +178,7 @@ if(statusBroadcast) {
 
 // Broadcasting Laporan Penjualan (Sales Report Broadcasting)
 // ==========================================================
-nodeCron.schedule('0 16 * * 1-5', async() => {
+nodeCron.schedule('19 15 * * 1-5', async() => {
     await generalSalesReport(client);
     await resetStock(false);
 });
@@ -252,6 +254,99 @@ client.on('message', async message => {
         return;
     }
 
+    // Follow-Up Dari Group Tenant (Group Session)
+    // ===========================================
+    if(isGroupMessage) {
+        if(!groupSession[userId]) {
+            return;
+        }
+
+        if(paymentVerificationSession[userId] && isPaymentDecision(text)) {
+            await verificationPayment(text, client, paymentVerificationSession[userId]);
+
+            return;
+        }
+
+        if(isPaymentResponse(text)) {
+            await verificationPayment(message.body, client);
+
+            return;
+        }
+
+        if(deliverySession[userId] && isDeliveryResponse(text)) {
+            await handleDeliveryResponse(text, client, deliverySession[userId]);
+
+            return;
+        }
+
+        return;
+    }
+
+    // Tenant (Tenant Session)
+    // =======================
+    if(allNumberOwnerTenant.includes(userId)) {
+        if(text.toLocaleLowerCase() === "keluar" || text.toLocaleLowerCase() === "kembali") {
+            delete formTenantSession[userId];
+            delete userMode[userId];
+
+            welcomedTenant.add(userId);
+
+            await response.send(userId, TENANT_MENU_MESSAGE);
+            return;
+        }
+
+        if(formTenantSession[userId]) {
+            const responseStock = await validationFormStock(text, userId);
+            await response.send(userId, responseStock);
+            return;
+        }
+
+        if(userMode[userId] === "tenant-update-stock") {
+            const responseStock = await extraction(text, "edit");
+
+            if(responseStock === "Stok Berhasil Diperbarui") {
+                delete userMode[userId];
+            }
+
+            await response.send(userId, responseStock);
+            return;
+        }
+
+        if(!welcomedTenant.has(userId)) {
+            welcomedTenant.add(userId);
+
+            await response.send(userId, TENANT_MENU_MESSAGE);
+
+            return;
+        } 
+
+        switch(text) {
+            case "1":
+                await resetStock(true);
+                await generateFormStock(userId);
+                return;
+            case "2":
+                const responseDisplay = await displayStock(userId);
+                await response.send(userId, responseDisplay);
+                return;
+            case "3":
+                await response.send(userId, "*📝 SILAKAN PERBARUI STOK*\n=============================\nID Produk: \nJumlah Stok: \nStatus: \n\n_Status diisi dengan tambah/kurang/reset secara text_");
+                userMode[userId] = "tenant-update-stock";
+                return;
+            case "PERBARUI":
+                const responseStock = await extraction(text, "edit");
+                await response.send(userId, responseStock);
+                return;
+            case "4":
+                await response.send(userId, "Baik, stok sisa kemarin digunakan.");
+                return;
+            default:
+                await response.send(userId, "Anda memilih pilihan diluar menu.");
+        }
+
+        return;
+    }
+
     // Memeriksa & Menyimpan Data Pengirim, Jika Pertama Kalinya Berkunjung
     // ====================================================================
     if(!welcomedUsers.has(userId)) {
@@ -315,75 +410,6 @@ client.on('message', async message => {
         return;
     }
 
-    // Tenant (Tenant Session)
-    // =======================
-    if(allNumberOwnerTenant.includes(userId)) {
-        if(formTenantSession["status"]) {
-            const responseStock = await validationFormStock(text);
-            await response.send(userId, responseStock);
-            return;
-        }
-
-        if(!welcomedTenant.has(userId)) {
-            welcomedTenant.add(userId);
-
-            await response.send(userId, "🏪 Halo Pemilik Tenant!\n\nAda yang bisa kami bantu?\n[1] Isi Ulang Stok [2] Lihat Stok\n[3] Update/Restok Produk\n\n_Gunakan fitur dibawah jika hanya tidak ingin isi ulang stok harian_\n[4] Gunakan Stok Sisa Kemarin");
-
-            return;
-        } 
-
-        switch(text) {
-            case "1":
-                await resetStock(true);
-                await generateFormStock(userId);
-                return;
-            case "2":
-                const responseDisplay = await displayStock(userId);
-                await response.send(userId, responseDisplay);
-                return;
-            case "3":
-                await response.send(userId, "*📝 SILAKAN PERBARUI STOK*\n=============================\nID Produk: \nJumlah Stok: \nStatus: \n\n_Status diisi dengan tambah/kurang/reset secara text_");
-                return;
-            case "PERBARUI":
-                const responseStock = await extraction(text);
-                await response.send(userId, responseStock);
-                return;
-            case "4":
-                await response.send(userId, "Baik, stok sisa kemarin digunakan.");
-                return;
-            default:
-                await response.send(userId, "Anda memilih pilihan diluar menu.");
-        }
-    }
-
-    // Follow-Up Dari Group Tenant (Group Session)
-    // ===========================================
-    if(isGroupMessage) {
-        if(!groupSession[userId]) {
-            return;
-        }
-
-        if(paymentVerificationSession[userId] && isPaymentDecision(text)) {
-            await verificationPayment(text, client, paymentVerificationSession[userId]);
-
-            return;
-        }
-
-        if(isPaymentResponse(text)) {
-            await verificationPayment(message.body, client);
-
-            return;
-        }
-
-        if(deliverySession[userId] && isDeliveryResponse(text)) {
-            await handleDeliveryResponse(text, client, deliverySession[userId]);
-
-            return;
-        }
-
-        return;
-    }
-
     // Peralihan chatbot -> admin manusia (Human Admin Session)
     // ========================================================
     if(userMode[userId] === "human-admin") {
@@ -403,7 +429,7 @@ client.on('message', async message => {
     // Menjalankan Sistem Pendataan Formulir, Jika Pengirim Memilih Menu 2 (Ordering Session)
     // ======================================================================================
     if(sessions[userId]) {
-        if(!text.toLocaleLowerCase.includes("pesanannya")) {
+        if(!/nama\s*pemesan|id\s*produk|alamat\s*lengkap\s*pengantaran/i.test(text)) {
             return response.send(userId, "Mohon untuk mengisi formulir pesanan kakak.");
         }
 
@@ -505,7 +531,7 @@ client.on('message', async message => {
             return;
         }
 
-        const responseOngkir = await ongkir(userId);
+        const responseOngkir = await ongkir(userId, orderId);
         const shippingCost = Number(responseOngkir) || 0;
         const totalPrice = Number(responsePayment["total_price"]) || 0;
         const totalPayment = totalPrice + shippingCost;

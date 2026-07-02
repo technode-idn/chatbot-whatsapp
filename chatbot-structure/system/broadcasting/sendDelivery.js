@@ -57,6 +57,7 @@ export async function handleDeliveryResponse(text, client, fallbackOrderId = nul
     const users = await loadJsonFile(DATA_USERS_PATH);
     const deliveries = await loadJsonFile(DATA_DELIVERY_PATH);
     const orderId = data["order_id"] || fallbackOrderId;
+    const deliveryId = data["id_pengirim"] || data["nim_pengirim"];
     let customerId = null;
 
     for(const user of users) {
@@ -74,13 +75,13 @@ export async function handleDeliveryResponse(text, client, fallbackOrderId = nul
     }
 
     const deliveryPerson = deliveries.find(delivery => (
-        String(delivery["id_delivery"]) === String(data["id_pengirim"])
+        String(delivery["id_delivery"]) === String(deliveryId)
     ));
 
     if(!deliveryPerson) {
         return {
             success: false,
-            message: 'Data pengirim tidak ditemukan. Pastikan ID Pengirim sesuai database delivery.'
+            message: 'Data pengirim tidak ditemukan. Pastikan NIM/ID Pengirim sesuai database delivery.'
         };
     }
 

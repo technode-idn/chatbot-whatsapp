@@ -80,13 +80,19 @@ class ResponseQueue {
 
     }
 
-    removeDuplicate(chatId){
+    removeDuplicate(task){
 
         Object.values(this.queues).forEach(queue=>{
 
             for(let i = queue.length - 1; i >= 0; i--){
 
-                if(queue[i].chatId === chatId){
+                const queuedTask = queue[i];
+                const sameTarget = queuedTask.chatId === task.chatId;
+                const sameType = queuedTask.type === task.type;
+                const sameText = queuedTask.message === task.message;
+                const sameCaption = queuedTask.caption === task.caption;
+
+                if(sameTarget && sameType && sameText && sameCaption){
 
                     queue.splice(i,1);
 
@@ -101,7 +107,7 @@ class ResponseQueue {
     enqueue(task){
 
         // Hapus task lama milik chat yang sama
-        this.removeDuplicate(task.chatId);
+        this.removeDuplicate(task);
 
         this.queues[task.priority].push(task);
 
