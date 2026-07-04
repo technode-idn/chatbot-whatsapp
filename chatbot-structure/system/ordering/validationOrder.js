@@ -5,8 +5,19 @@ import { editingOrder, orderConfirmationSession, paymentStatus, pendingOrders } 
 import { askOrderConfirmation } from "./editOrder.js";
 import { getResponse } from '../security/response.js';
 
-const database_product = JSON.parse(rawDatabaseProduct);
-const users = rawDataUsers.trim() ? JSON.parse(rawDataUsers) : [];
+let database_product = JSON.parse(rawDatabaseProduct);
+let users = rawDataUsers.trim() ? JSON.parse(rawDataUsers) : [];
+
+async function loadJsonFile(path) {
+    const rawData = await fs.readFile(path, 'utf8');
+
+    return rawData.trim() ? JSON.parse(rawData) : [];
+}
+
+async function refreshData() {
+    database_product = await loadJsonFile(DATABASE_PRODUCT_PATH);
+    users = await loadJsonFile(DATA_USERS_PATH);
+}
 
 function parsePrice(value) {
     const digits = String(value || '').replace(/[^\d]/g, '');
@@ -308,6 +319,8 @@ async function reserveStock({orderId, userId, orderData, orderItems, editingStat
 export async function validationOrder(orderData, userId, editingStatus) {
     const response = getResponse();
 
+    await refreshData();
+
     const orderId = editingStatus ? (orderData.order_id || editingOrder[userId]?.order_id) : `ORD-${crypto.randomBytes(5).toString("hex").toUpperCase()}`;
 
     if (!orderId) {
@@ -384,6 +397,8 @@ export async function validationOrder(orderData, userId, editingStatus) {
 
 export async function completeOrder(orderId) {
 
+    await refreshData();
+
     const pendingOrder = pendingOrders[orderId];
 
     if (!pendingOrder) {
@@ -450,6 +465,8 @@ export async function completeOrder(orderId) {
 }
 
 export async function cancelOrder(orderId) {
+
+    await refreshData();
 
     const pendingOrder = pendingOrders[orderId];
 

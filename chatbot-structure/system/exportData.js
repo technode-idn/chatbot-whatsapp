@@ -1,9 +1,11 @@
 import XLSX from 'xlsx';
-import { rawDataUsers } from '../settings/loadFiles.js';
+import fs from 'fs/promises';
+import { DATA_USERS_PATH } from '../settings/loadFiles.js';
 
 export async function exportData() {
     try {
-        const users = JSON.parse(rawDataUsers);
+        const rawDataUsers = await fs.readFile(DATA_USERS_PATH, 'utf8');
+        const users = rawDataUsers.trim() ? JSON.parse(rawDataUsers) : [];
 
         const worksheet = XLSX.utils.json_to_sheet(users);
 

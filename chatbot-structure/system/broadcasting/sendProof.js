@@ -1,35 +1,90 @@
 import { groupSession, paymentVerificationSession } from "../../settings/globalVariables.js";
-import { sendOrderMessage } from "../ordering/textOrder.js";
+import fs from 'fs/promises';
+import { DATABASE_PRODUCT_PATH } from "../../settings/loadFiles.js";
 import { getResponse } from "../security/response.js";
 
-const GROUP_ID = '120363407187484870@g.us';
+const GROUP_ID = '120363405226602187@g.us';
 
-export async function sendProofToGroup(proof, orderId, orderData, client) {
-    const text = orderData ? ["📌*KONFIRMASI PEMBAYARAN*\n\n", `Order ID: ${orderId}\n`, "=============================\n", `Nama: ${orderData["nama_pemesan"]}\n`, `Alamat Pengantaran: ${orderData["alamat_lengkap_pengantaran"]}\n`, `Nomor: ${orderData["nomor_telepon_aktif"]}\n`, "=============================\n\n", "*PRODUK*\n"] : "Data pesanan tidak ditemukan.";
+function productNumberFromKey(key) {
+    const number = key.match(/_(\d+)$/)?.[1];
 
-    const response = getResponse();
+    return number ? Number(number) : 0;
+}
+
+function quantityKeyFromProductKey(productKey) {
+    const number = productKey.match(/_(\d+)$/)?.[1];
+
+    return number ? `jumlah_pesanan_${number}` : "jumlah_pesanan";
+}
+
+function getProductKeys(orderData = {}) {
+    return Object.keys(orderData)
+        .filter(key => key === "id_produk" || /^id_produk_\d+$/.test(key))
+        .sort((a, b) => productNumberFromKey(a) - productNumberFromKey(b));
+}
+
+async function loadJsonFile(path) {
+    const rawData = await fs.readFile(path, 'utf8');
+
+    return rawData.trim() ? JSON.parse(rawData) : {};
+}
+
+function getProductName(productId, databaseProduct) {
+    const normalizedProductId = String(productId || '').trim().toUpperCase();
+
+    for(const tenant of Object.values(databaseProduct)) {
+        const product = tenant?.products?.[normalizedProductId];
+
+        if(product?.product_name) {
+            return product.product_name;
+        }
+    }
+
+    return productId || "-";
+}
+
+async function buildProofCaption(orderId, orderData) {
+    if(!orderData) {
+        return "Data pesanan tidak ditemukan.";
+    }
+
+    const databaseProduct = await loadJsonFile(DATABASE_PRODUCT_PATH);
+
+    const text = [
+        "*KONFIRMASI PEMBAYARAN*",
+        "",
+        `Order ID: ${orderId}`,
+        "=============================",
+        `Nama: ${orderData["nama_pemesan"] || "-"}`,
+        `Alamat Pengantaran: ${orderData["alamat_lengkap_pengantaran"] || "-"}`,
+        `Nomor: ${orderData["nomor_telepon_aktif"] || "-"}`,
+        "=============================",
+        "",
+        "*PRODUK*"
+    ];
 
     let num = 1;
 
-    for(const data of Object.keys(orderData)) {
-        const number = /_\d+$/.test(data) ? Number(data.match(/_(\d+)$/)?.[1]) : null;
+    for(const productKey of getProductKeys(orderData)) {
+        const quantityKey = quantityKeyFromProductKey(productKey);
+        const productName = getProductName(orderData[productKey], databaseProduct);
 
-        const id_product = number ? `id_produk_${number}` : "id_produk";
-        const order_total = number ? `jumlah_pesanan_${number}` : "jumlah_pesanan";
-
-        text.push(`[${num}] ${orderData[id_product]} * ${orderData[order_total]}`);
-
+        text.push(`[${num}] ${productName} * ${orderData[quantityKey] || 1}`);
         num += 1;
     }
 
-    num = 1;
+    text.push("", "Pembayaran Valid:", "", "*_Berikan OK atau X_*");
 
-    text.push("Pembayaran Valid: \n\n*_Berikan ✅ atau ❌_*");
+    return text.join("\n");
+}
+
+export async function sendProofToGroup(proof, orderId, orderData, client) {
+    const response = getResponse();
 
     await response.sendMedia(
         GROUP_ID,
         proof,
-        text,
+        await buildProofCaption(orderId, orderData),
         "normal"
     );
 

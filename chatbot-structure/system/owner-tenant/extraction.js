@@ -1,6 +1,24 @@
 import { addStock, editStock } from "./stock.js";
 
-export async function extraction(text) {
+function normalizeKey(value) {
+    return String(value || '')
+        .toLowerCase()
+        .trim()
+        .replace(/^\[\d+\]\s*/, "")
+        .replace(/^[^a-z0-9]+/i, '')
+        .replace(/[^a-z0-9]+$/i, '')
+        .replace(/[^a-z0-9]+/g, '_')
+        .replace(/^_+|_+$/g, '');
+}
+
+function cleanValue(value) {
+    return String(value || '')
+        .trim()
+        .replace(/^\*+|\*+$/g, '')
+        .trim();
+}
+
+export async function extraction(text, mode = null) {
     try {
         const data = {};
         const lines = text.split('\n').map(item => item.trim());
@@ -11,14 +29,10 @@ export async function extraction(text) {
             }
     
             const [key, ...valueParts] = line.split(':');
-            const normalizedKey = key
-                .toLowerCase()
-                .trim()
-                .replace(/^\[\d+\]\s*/, "")
-                .replace(/\s+/g, '_');
+            const normalizedKey = normalizeKey(key);
     
             if(normalizedKey) {
-                data[normalizedKey] = valueParts.join(':').trim();
+                data[normalizedKey] = cleanValue(valueParts.join(':'));
             }
         }
     
@@ -26,7 +40,9 @@ export async function extraction(text) {
             return 'Format yang dikirim tidak sesuai, silahkan isi ulang kembali';
         }
     
-        const responseStock = text.toLowerCase().includes("pengisian") ? await addStock(data) : await editStock(data);
+        const responseStock = mode === "add" || text.toLowerCase().includes("pengisian")
+            ? await addStock(data)
+            : await editStock(data);
     
         return responseStock;
     } catch(error) {

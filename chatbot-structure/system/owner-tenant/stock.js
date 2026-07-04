@@ -1,17 +1,35 @@
 import fs from 'fs/promises';
 import { DATABASE_PRODUCT_PATH, DATA_TENANT_PATH, rawDatabaseProduct, rawDataTenant } from "../../settings/loadFiles.js";
 
-const database_product = JSON.parse(rawDatabaseProduct);
-const tenants = JSON.parse(rawDataTenant);
+let database_product = JSON.parse(rawDatabaseProduct);
+let tenants = JSON.parse(rawDataTenant);
 
 function normalizeKey(value) {
-    return String(value || '').toLowerCase().trim().replace(/\s+/g, '_');
+    return String(value || '')
+        .toLowerCase()
+        .trim()
+        .replace(/^\[\d+\]\s*/, "")
+        .replace(/^[^a-z0-9]+/i, '')
+        .replace(/[^a-z0-9]+$/i, '')
+        .replace(/[^a-z0-9]+/g, '_')
+        .replace(/^_+|_+$/g, '');
 }
 
 function parseStock(value) {
     const stock = Number(String(value || '').replace(/[^\d-]/g, ''));
 
     return Number.isFinite(stock) ? stock : 0;
+}
+
+async function loadJsonFile(path) {
+    const rawData = await fs.readFile(path, 'utf8');
+
+    return rawData.trim() ? JSON.parse(rawData) : [];
+}
+
+async function refreshStockData() {
+    database_product = await loadJsonFile(DATABASE_PRODUCT_PATH);
+    tenants = await loadJsonFile(DATA_TENANT_PATH);
 }
 
 async function persistStockData() {
@@ -29,6 +47,8 @@ async function persistStockData() {
 }
 
 export async function addStock(dataStock) {
+    await refreshStockData();
+
     const tenantKey = Object.keys(database_product).find(key => key === dataStock["tenant"]);
 
     if(!tenantKey) {
@@ -66,6 +86,8 @@ export async function addStock(dataStock) {
 }
 
 export async function editStock(dataEditStock) {
+    await refreshStockData();
+
     const productKey = Object.keys(database_product);
     const stockChange = parseStock(dataEditStock["jumlah_stok"]);
     const editedProductId = String(dataEditStock["id_produk"] || '').trim().toUpperCase();
@@ -97,6 +119,8 @@ export async function editStock(dataEditStock) {
 }
 
 export async function resetStock(fill) {
+    await refreshStockData();
+
     Object.values(database_product).forEach(value => {
         for(const product of Object.values(value["products"])) {
             product["qty_sold"] = 0;
@@ -118,9 +142,15 @@ export async function resetStock(fill) {
 }
 
 export async function displayStock(userId) {
-    const text = ["📦 *RINCIAN STOK SAAT INI*\n", "==========================="];
+    await refreshStockData();
+
+    const text = ["📦 *RINCIAN STOK SAAT INI*\n", "===========================\n"];
 
     const tenant = tenants.find(t => t["owner_phone"] === userId);
+
+    if(!tenant) {
+        return 'Data tenant tidak ditemukan.';
+    }
 
     const tenantKey = Object.keys(database_product).find(key => key === tenant["store"]);
 
@@ -131,7 +161,7 @@ export async function displayStock(userId) {
     let num = 1;
 
     for(const product of Object.values(database_product[tenantKey]["products"])) {
-        text.push(`[${num}] ${product["product_name"]}: ${product["stock"]}\n`);
+        text.push(`\n[${num}] ${product["product_name"]}: ${product["stock"]}\n`);
         num += 1;
     }
 

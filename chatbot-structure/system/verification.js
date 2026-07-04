@@ -115,6 +115,10 @@ export async function verificationPayment(text, client, fallbackOrderId = null) 
         }
     }
 
+    if(!customerId && pendingOrders[orderId]?.customer) {
+        customerId = pendingOrders[orderId].customer;
+    }
+
     if(!customerId) {
         return {
             success: false,
