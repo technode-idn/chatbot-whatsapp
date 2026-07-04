@@ -14,3 +14,17 @@
    - Hubungi admin manusia
 4. Owner Tenant
    - 
+
+   const allowedNumbers = [
+        '76403240386784@lid', // Fikri
+        '249344376729705@lid', // Kakak
+        '129454609268764@lid', // Ayah
+        '77855006433494@lid', // Diaz
+        '58493310615674@lid', // Azmi
+        '98599765577810@lid', // Aliya
+        '120363407187484870@g.us' // Group
+   ]; // [X]
+
+   if(!allowedNumbers.includes(userId) && !allNumberOwnerTenant.includes(userId)) {
+        return;
+   } // [X]
