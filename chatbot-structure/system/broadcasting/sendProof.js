@@ -51,7 +51,7 @@ async function buildProofCaption(orderId, orderData) {
     const databaseProduct = await loadJsonFile(DATABASE_PRODUCT_PATH);
 
     const text = [
-        "*KONFIRMASI PEMBAYARAN*",
+        "📌 *KONFIRMASI PEMBAYARAN*",
         "",
         `Order ID: ${orderId}`,
         "=============================",
@@ -60,7 +60,7 @@ async function buildProofCaption(orderId, orderData) {
         `Nomor: ${orderData["nomor_telepon_aktif"] || "-"}`,
         "=============================",
         "",
-        "*PRODUK*"
+        "📦 *PRODUK*"
     ];
 
     let num = 1;

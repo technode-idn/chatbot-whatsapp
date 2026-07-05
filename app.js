@@ -1,4 +1,5 @@
 import pkg from 'whatsapp-web.js';
+import fs from 'fs/promises';
 import nodeCron from 'node-cron';
 const { Client, LocalAuth, MessageMedia } = pkg;
 import qrcode from "qrcode-terminal";
@@ -169,7 +170,7 @@ function isPaymentDecision(text) {
 let statusBroadcast = true;
 
 if(statusBroadcast) {
-    nodeCron.schedule('27 15 * * 1-5', async() => {
+    nodeCron.schedule('0 7 * * 1-5', async() => {
         await broadcastMenu();
     });
 
@@ -178,7 +179,7 @@ if(statusBroadcast) {
 
 // Broadcasting Laporan Penjualan (Sales Report Broadcasting)
 // ==========================================================
-nodeCron.schedule('19 15 * * 1-5', async() => {
+nodeCron.schedule('0 16 * * 1-5', async() => {
     await generalSalesReport(client);
     await resetStock(false);
 });
@@ -314,7 +315,7 @@ client.on('message', async message => {
                 await response.send(userId, responseDisplay);
                 return;
             case "3":
-                await response.send(userId, "*📝 SILAKAN PERBARUI STOK*\n=============================\nID Produk: \nJumlah Stok: \nStatus: \n\n_Status diisi dengan tambah/kurang/reset secara text_");
+                await response.send(userId, "📝 *SILAKAN PERBARUI STOK*\n=============================\nID Produk: \nJumlah Stok: \nStatus: \n\n_Status diisi dengan tambah/kurang/reset secara text_");
                 userMode[userId] = "tenant-update-stock";
                 return;
             case "PERBARUI":
@@ -333,10 +334,10 @@ client.on('message', async message => {
 
     // Memeriksa & Menyimpan Data Pengirim, Jika Pertama Kalinya Berkunjung
     // ====================================================================
-    if(!welcomedUsers.has(userId)) {
+    if(!welcomedUsers.has(userId) && !userId.endsWith('@g.us') && !allNumberOwnerTenant.includes(userId)) {
         welcomedUsers.add(userId);
 
-        await response.send(userId, "Halo kak👋\n\nTerima kasih sudah menghubungi Klikbi Go🍽️🚚\n\nSaya admin KlikBiGo, ada yang bisa kami bantu? 😊\n[1] Pesan Produk\n[2] FAQ\n[3] Hubungi Admin"
+        await response.send(userId, "Halo kak👋\n\nTerima kasih sudah menghubungi Klikbi Go🍽️🚚\n\nSaya admin KlikBiGo, ada yang bisa kami bantu?\n[1] Pesan Produk\n[2] FAQ\n[3] Hubungi Admin"
         );
 
         return;
@@ -378,7 +379,7 @@ client.on('message', async message => {
 
     // Handling Berpindah Menu
     // =======================
-    if(text.toLocaleLowerCase() === "keluar" || text.toLocaleLowerCase() === "kembali") {
+    if(text.toLocaleLowerCase() === "menu") {
         delete sessions[userId];
         delete userMode[userId];
         delete sessions[userId];
@@ -388,10 +389,49 @@ client.on('message', async message => {
         delete paymentStatus[userId];
         delete pendingProof[userId];
 
-        await response.send(userId, "Halo kak👋\n\nTerima kasih sudah menghubungi Klikbi Go🍽️🚚\n\nSaya admin KlikBiGo, ada yang bisa kami bantu? 😊\n[1] Pesan Produk\n[2] FAQ\n[3] Hubungi Admin"
+        await response.send(userId, "Halo kak👋\n\nTerima kasih sudah menghubungi Klikbi Go🍽️🚚\n\nSaya admin KlikBiGo, ada yang bisa kami bantu?\n[1] Pesan Produk\n[2] FAQ\n[3] Hubungi Admin"
         );
         
         return;
+    }
+
+    if(text.toLocaleLowerCase() === "keluar") {
+        delete sessions[userId];
+        delete userMode[userId];
+        delete sessions[userId];
+        delete multipleFormSession[userId];
+        delete editingOrderSession[userId];
+        delete orderConfirmationSession[userId];
+        delete paymentStatus[userId];
+        delete pendingProof[userId];
+
+        await response.send(userId, "Terima kasih sudah menghubungi kami, semoga kita bertemu kembali di lain waktu 🙏🏻"
+        );
+        
+        welcomedUsers.delete(userId);
+
+        const rawDataSessions = await fs.readFile("data/sessions.json", 'utf8');
+        const dataSessions = rawDataSessions ? JSON.parse(rawDataSessions) : [];
+
+        for(const dataSession of dataSessions.data.pendingOrders) {
+            const data = dataSessions["data"]["pendingOrders"][dataSession];
+
+            if(data["customer"] === userId) {
+                delete dataSessions["data"]["pendingOrders"][dataSession];
+            }
+        }
+
+        return;
+    }
+
+    // Handling Ganti Jenis Pesanan
+    // ============================
+    if(text.toLocaleLowerCase() === "ganti") {
+        await response.send(userId, "📝 *JENIS PEMESANAN ANDA*\n===========================\n[1] Single Order\n[2] Multiple Order\n\n*_*Jika ingin kembali ke menu, ketik 'menu'_*");
+
+        userMode[userId] = "form";
+        delete sessions[userId];
+        delete multipleFormSession[userId];
     }
 
     // Peralihan chatbot -> admin manusia (Human Admin Session)
@@ -417,7 +457,7 @@ client.on('message', async message => {
             return response.send(userId, "Mohon untuk mengisi formulir pesanan kakak.");
         }
 
-        const responseOrder = await extractionOrder(text, userId, false, client);        
+        const responseOrder = await extractionOrder(text, userId);        
 
         if(responseOrder) {
             await response.send(userId, responseOrder);
@@ -430,14 +470,14 @@ client.on('message', async message => {
     // =============================================================
     if(userMode[userId] === "form") {
         if(text == "1") {
-            await response.send(userId, "Baik kak, supaya kami bisa proses pesanannya, mohon info ya.\n\n📌Nama Pemesan: \n📌ID Produk: \n📌Jumlah Pesanan: \n📌Nomor Telepon Aktif: \n\n🏠 *TUJUAN PENGANTARAN*\n=============================\n_Tolong isi alamat pengantaran secara lengkap, jika berlokasi diluar SV IPB_\n\n- Jalan/Perumahan/Tempat + Nomor\n- Kelurahan/Desa\n- Kecamatan\n- Kota/Kabupaten\n\n*Cth: Jl. Lodaya II N0.15, Babakan, Bogor Tengah, Kota Bogor*\n\nIsi alamat Anda di bawah 👇\n📌Alamat Lengkap Pengantaran: \n\nTerima Kasih🙏😊\n\n*_*Jika ingin kembali, ketik 'keluar'_*"
+            await response.send(userId, "Baik kak, supaya kami bisa proses pesanannya, mohon info ya.\n\n📌Nama Pemesan: \n📌ID Produk: \n📌Jumlah Pesanan: \n📌Nomor Telepon Aktif: \n\n🏠 *TUJUAN PENGANTARAN*\n=============================\n_Tolong isi alamat pengantaran secara lengkap, jika berlokasi diluar SV IPB_\n\n- Perumahan/Tempat\n- Jalan + Nomor\n- Kelurahan/Desa\n- Kecamatan\n- Kota/Kabupaten\n- Gunakan koma sebagai pemisah\n\n*Cth: Kos Lodaya, Jl. Lodaya II No.15, Babakan, Bogor Tengah, Kota Bogor*\n\nIsi alamat Anda di bawah 👇\n📌Alamat Lengkap Pengantaran: \n\n*_*Jika tidak jadi memesan, ketik 'keluar'_*\n*_*Jika ingin ganti jenis pemesanan, ketik 'ganti'_*"
             );
 
             sessions[userId] = true;
 
             delete userMode[userId];
         } else if(text == "2") {
-            await response.send(userId, "Berapa produk yang ingin anda pesan?\n[1] 1\n[2] 2\n[3] 3\n[4] 4\n[5] 5");
+            await response.send(userId, "📝 Berapa produk yang ingin anda pesan?\n[1] 1\n[2] 2\n[3] 3\n[4] 4\n[5] 5\n\n*_*Jika ingin ganti jenis pemesanan, ketik 'ganti'_*");
 
             multipleFormSession[userId] = true;
 
@@ -453,7 +493,7 @@ client.on('message', async message => {
     // ========================================================
     if(multipleFormSession[userId]) {
         if(Number(text) > 5) {
-            await response.send(userId, "Mohon maaf, sepertinya jumlah produk yang ingin kakak pesan sudah diluar batas 🙏😊");
+            await response.send(userId, "Mohon maaf, sepertinya jumlah produk yang ingin kakak pesan sudah diluar batas.");
             return;
         }
 
@@ -495,6 +535,10 @@ client.on('message', async message => {
 
             await validationOrder(remainingOrder.data, userId, true, client);
             delete editingOrderSession[userId];
+        } else if(text == "3") {
+            await cancelOrder(editSession[userId]);
+
+            await response.send(userId, "Silahkan ketik 'keluar' untuk kembali ke menu awal.");
         } else {
             delete editingOrderSession[userId];
             await extractionOrder(text, userId, true, client);
@@ -541,12 +585,12 @@ client.on('message', async message => {
             await response.sendMedia(
                 userId, 
                 qris_photo,
-                `Total harga yang harus dibayar sejumlah *Rp ${totalPayment}*\n\nSudah ditambah dengan *ongkir ${shippingCost}* ya kak 🙏🏻\nMohon konfirmasi dan screenshot jika pembayaran sudah dilakukan.`
+                `Total harga yang harus dibayar sejumlah *Rp ${totalPayment}*\n\nSudah ditambah dengan *ongkir ${shippingCost}* ya kak 🙏🏻\n\nMohon konfirmasi dan screenshot jika pembayaran sudah dilakukan.`
             );
 
             pendingProof[userId] = orderId;
         } else {
-            await response.send(userId, 'Mohon pilih metode pembayaran:\n[1] Cash\n[2] QRIS');
+            await response.send(userId, 'Mohon pilih metode pembayaran yang ada.');
             return;
         }
 
@@ -573,23 +617,25 @@ client.on('message', async message => {
         case "1":
             userMode[userId] = "form";
 
-            await response.send(userId, "📝 *JENIS PEMESANAN ANDA*\n===========================\n[1] Single Order\n[2] Multiple Order");
+            await response.send(userId, "📝 *JENIS PEMESANAN ANDA*\n===========================\n[1] Single Order\n[2] Multiple Order\n\n*_*Jika ingin kembali ke menu, ketik 'menu'_*");
             
             return;
         case "2":
             userMode[userId] = "faq";
 
-            await response.send(userId, "🔍 *DAFTAR PERTANYAAN FAQ*\n=============================\n\n[1] KlikBi-Go Jual Apa Saja?\n\n[2] Bagaimana Cara Memesan?\n\n[3] Kapan Waktu Operasionalnya?\n\n[4] Apakah Pesanan Bisa Di Antar?\n\n[5] Metode Pembayarannya Apa Saja?\n\n*_Ketik 'keluar' untuk kembali ke menu awal_*");
+            await response.send(userId, "🔍 *DAFTAR PERTANYAAN FAQ*\n=============================\n\n[1] KlikBi-Go Jual Apa Saja?\n\n[2] Bagaimana Cara Memesan?\n\n[3] Kapan Waktu Operasionalnya?\n\n[4] Apakah Pesanan Bisa Di Antar?\n\n[5] Metode Pembayarannya Apa Saja?\n\n*_Ketik 'menu' untuk kembali ke menu awal_*");
 
             return;
         case "3":
             userMode[userId] = "human-admin";
 
-            await response.send(userId, "Terima kasih telah menghubungi, selanjutnya admin kami akan membantu kakak secara langsung 🙏🏻\n\nSilakan ajukan pertanyaan atau informasi yang ingin disampaikan.\n\n*_Ketik 'kembali' untuk kembali ke chatbot_*");
+            await response.send(userId, "Terima kasih telah menghubungi, selanjutnya admin kami akan membantu kakak secara langsung 🙏🏻\n\nSilakan ajukan pertanyaan atau informasi yang ingin disampaikan.\n\n*_Ketik 'menu' untuk kembali ke chatbot_*");
 
             return;
         default:
             await response.send(userId, "Mohon maaf, sepertinya kakak memilih diluar pilihan yang ada.\n\nSilahkan pilih ulang menu kembali.");
+
+            return;
     }
     } finally {
         await saveRuntimeSessions(monitor.guardians.session);

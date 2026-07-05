@@ -40,5 +40,10 @@
         "owner_phone": "177670532915314@lid",
         "qris": "./chatbot-structure/img/qris_tenant_7.jpg",
         "status_stock": "pending"
+    },
+    {
+        "tenant_id": "TEN007",
+        "store": "klikbi",
+        "qris": "./chatbot-structure/img/qris_tenant_8.jpg"
     }
 ]

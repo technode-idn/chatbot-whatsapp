@@ -22,7 +22,7 @@ async function calculateRouteDistanceInKm(origin, destination) {
         const coordinates = [`${origin.longitude},${origin.latitude}`, `${destination.longitude},${destination.latitude}`].join(';');
 
         const response = await axios.get(
-            `https://router.project-osrm.org/route/v1/driving/${coordinates}`,
+            `http://router.project-osrm.org/route/v1/driving/${coordinates}`,
             {
                 params: {
                     overview: 'false'
@@ -41,13 +41,11 @@ async function calculateRouteDistanceInKm(origin, destination) {
 
 function cleanAddress(address) {
     return String(address || '')
-        .replace(/\bRT\.?\s*\d+\s*\/\s*RW\.?\s*\d+\b/gi, ' ')
-        .replace(/\bRT\.?\s*\d+\b/gi, ' ')
-        .replace(/\bRW\.?\s*\d+\b/gi, ' ')
-        .replace(/\bKp\.?\b/gi, 'Kampung')
-        .replace(/\bKec\.?\b/gi, 'Kecamatan')
-        .replace(/\bKab\.?\b/gi, 'Kabupaten')
-        .replace(/\bNo\.?\s*/gi, 'Nomor ')
+        .replace(/\bkp\.?\b/gi, 'kampung')
+        .replace(/\bjl\.?\b/gi, 'jalan')
+        .replace(/\bno\.?\s*/gi, 'nomor')
+        .replace(/\bperum\.?\s*/gi, 'perumahan')
+        .replace(/\bst\.?\s*/gi, 'stasiun')
         .replace(/\s*,\s*/g, ', ')
         .replace(/\s+/g, ' ')
         .trim();
@@ -55,42 +53,73 @@ function cleanAddress(address) {
 
 function withoutPostalCode(address) {
     return String(address || '')
+        .replace(/\bjawa barat(?:\s+\d{5})?\b/gi, '')
         .replace(/\b\d{5}\b/g, '')
         .replace(/\s*,\s*/g, ', ')
+        .replace(/,\s*$/, '')
         .replace(/\s+/g, ' ')
         .trim();
 }
 
 function withoutStreetNumber(address) {
     return String(address || '')
-        .replace(/\b(?:Nomor|No\.?)\s*\d+[a-z]?\b/gi, '')
+        .replace(/\b(?:nomor|no\.?)\s*\d+[a-z]?\b/gi, '')
         .replace(/\s*,\s*/g, ', ')
         .replace(/\s+/g, ' ')
         .trim();
 }
 
+function withoutRtRw(address) {
+    return String(address || '')
+        .replace(/\brt\.?\s*\d+\s*\/\s*rw\.?\s*\d+\b/gi, '')
+        .replace(/\brt\.?\s*\d+\b/gi, '')
+        .replace(/\brw\.?\s*\d+\b/gi, '')
+        .replace(/\s*,\s*/g, ', ')
+        .replace(/\s+/g, '')
+        .trim();
+}
+
+function withoutPlaceName(address) {
+    return String(address || '')
+        .replace(/^.*?(?=\b(?:jl\.?|jalan)\b)/i, '')
+        .replace(/\s*,\s*/g, '')
+        .replace(/\s+/g, '')
+        .trim();
+}
+
+function withoutStreetName(address) {
+    const parts = String(address || '')
+        .split(',')
+        .map(part => part.trim());
+
+    if(parts.length >= 2) {
+        parts.splice(1, 1);
+    }
+
+    return parts.join(', ');
+}
+
 function buildAddressQueries(address) {
     const cleanedAddress = cleanAddress(address);
-    const noPostalCode = withoutPostalCode(cleanedAddress);
-    const noStreetNumber = withoutStreetNumber(noPostalCode);
-    const withIndonesia = value => /indonesia/i.test(value) ? value : `${value}, Indonesia`;
+    const noRtRw = withoutRtRw(cleanedAddress);
+    const noStreetNumber = withoutStreetNumber(noRtRw);
+    const finalCleanedAddress = withoutPostalCode(noStreetNumber);
+    const noStreetName = withoutStreetName(finalCleanedAddress);
+    const noPlaceName = withoutPlaceName(finalCleanedAddress);
 
     return [...new Set([
-        cleanedAddress,
-        noPostalCode,
-        noStreetNumber,
-        withIndonesia(cleanedAddress),
-        withIndonesia(noPostalCode),
-        withIndonesia(noStreetNumber)
+        noPlaceName,
+        noStreetName,
+        finalCleanedAddress
     ].filter(Boolean))];
 }
 
 async function findLocation(address) {
-    const queries = buildAddressQueries(address);
+    const queries = await buildAddressQueries(address);
 
     for(const query of queries) {
         const response = await axios.get(
-            'https://nominatim.openstreetmap.org/search',
+            'https://nominatim.openstreetmap.org/ui/search.html',
             {
                 headers: {
                     'User-Agent': NOMINATIM_USER_AGENT,

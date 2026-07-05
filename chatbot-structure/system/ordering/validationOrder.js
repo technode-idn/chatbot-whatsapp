@@ -1,12 +1,9 @@
 import fs from 'fs/promises';
 import crypto from 'crypto';
-import { DATABASE_PRODUCT_PATH, DATA_USERS_PATH, rawDatabaseProduct, rawDataUsers } from "../../settings/loadFiles.js";
+import { DATABASE_PRODUCT_PATH, DATA_USERS_PATH } from "../../settings/loadFiles.js";
 import { editingOrder, orderConfirmationSession, paymentStatus, pendingOrders } from "../../settings/globalVariables.js";
 import { askOrderConfirmation } from "./editOrder.js";
 import { getResponse } from '../security/response.js';
-
-let database_product = JSON.parse(rawDatabaseProduct);
-let users = rawDataUsers.trim() ? JSON.parse(rawDataUsers) : [];
 
 async function loadJsonFile(path) {
     const rawData = await fs.readFile(path, 'utf8');
@@ -15,8 +12,8 @@ async function loadJsonFile(path) {
 }
 
 async function refreshData() {
-    database_product = await loadJsonFile(DATABASE_PRODUCT_PATH);
-    users = await loadJsonFile(DATA_USERS_PATH);
+    const database_product = await loadJsonFile(DATABASE_PRODUCT_PATH);
+    const users = await loadJsonFile(DATA_USERS_PATH);
 }
 
 function parsePrice(value) {

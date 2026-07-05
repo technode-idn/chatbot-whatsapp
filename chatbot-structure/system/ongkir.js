@@ -11,9 +11,7 @@ async function loadDataUsers() {
 
 function getAddressFromPendingOrder(userId, orderId = null) {
     if(orderId && pendingOrders[orderId]?.customer === userId) {
-        return pendingOrders[orderId].customerInfo?.address
-            || pendingOrders[orderId].data?.["alamat_lengkap_pengantaran"]
-            || '';
+        return pendingOrders[orderId].customerInfo?.address || pendingOrders[orderId].data?.["alamat_lengkap_pengantaran"] || '';
     }
 
     const userPendingOrders = Object.values(pendingOrders)
@@ -22,16 +20,12 @@ function getAddressFromPendingOrder(userId, orderId = null) {
 
     const latestOrder = userPendingOrders[0];
 
-    return latestOrder?.customerInfo?.address
-        || latestOrder?.data?.["alamat_lengkap_pengantaran"]
-        || '';
+    return latestOrder?.customerInfo?.address || latestOrder?.data?.["alamat_lengkap_pengantaran"] || '';
 }
 
 function getCampusShipping(address) {
     const lowerAddress = address.toLowerCase();
-    const tokens = lowerAddress
-        .split(/[^a-z0-9]+/)
-        .filter(Boolean);
+    const tokens = lowerAddress.split(/[^a-z0-9]+/).filter(Boolean);
 
     for(const price in campusZone) {
 
@@ -42,10 +36,6 @@ function getCampusShipping(address) {
 
             if(!normalizedKeyword) {
                 continue;
-            }
-
-            if(normalizedKeyword.includes(' ') && lowerAddress.includes(normalizedKeyword)) {
-                return Number(price);
             }
 
             if(tokens.includes(normalizedKeyword)) {
@@ -76,13 +66,13 @@ export async function ongkir(userId, orderId = null) {
         return 0;
     }
 
-    const location = getCampusShipping(address)
+    const location = getCampusShipping(address);
 
     if(location) {
         return location;
     }
 
-    const result = await calculateShipping(address);
+    const result = await calculateShipping(address.toLowerCase());
 
     return result.success ? result.shipping : 0;
 }

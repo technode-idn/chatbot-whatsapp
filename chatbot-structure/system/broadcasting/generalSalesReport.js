@@ -16,35 +16,43 @@ function formatRupiah(value) {
 
 export async function generalSalesReport(client) {
     const response = getResponse();
+
     const databaseProduct = await loadDatabaseProduct();
+
     const text = [
-        "*LAPORAN PENJUALAN HARIAN*",
-        "============================="
+        "📋 *LAPORAN PENJUALAN HARIAN*\n",
+        "=============================\n"
     ];
-    let grandTotalRevenue = 0;
 
     for(const [tenantName, tenantData] of Object.entries(databaseProduct || {})) {
         let totalRevenue = 0;
 
-        text.push("", `Tenant: ${tenantName}`);
+        text.push("", `\n*🏪 ${tenantName}*\n`);
 
         for(const product of Object.values(tenantData?.["products"] || {})) {
-            const qtySold = Number(product["qty_sold"]) || 0;
-            const price = Number(product["price"] ?? product["product_unit_price"]) || 0;
+            if(Number(product["qty_sold" == 0])) {
+                continue;
+            }
 
-            text.push(`${product["product_name"]}: ${qtySold}`);
+            const qtySold = Number(product["qty_sold"]);
+            const price = Number(product["price"]);
+
+            text.push(`- ${product["product_name"]} * ${qtySold}\n`);
+
             totalRevenue += qtySold * price;
         }
 
-        grandTotalRevenue += totalRevenue;
-        text.push(`Total -> ${formatRupiah(totalRevenue)}`);
-    }
+        if(totalRevenue == 0) {
+            text.push("~ _Tidak memiliki data penjualan_");
+        } else {
+            text.push(`*_Total -> ${formatRupiah(totalRevenue)}_*\n`);
+        }
 
-    text.push("", `TOTAL SEMUA TENANT -> ${formatRupiah(grandTotalRevenue)}`);
+    }
 
     await response.send(
         GROUP_ID,
-        text.join("\n"),
+        text.join(""),
         "normal"
     );
 }

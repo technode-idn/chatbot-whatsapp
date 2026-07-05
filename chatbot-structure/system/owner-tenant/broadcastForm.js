@@ -18,12 +18,6 @@ async function refreshBroadcastData() {
     tenants = await loadJsonFile(DATA_TENANT_PATH);
 }
 
-// for(const tenant of tenants) {
-//     if(tenant?.owner_phone && !allNumberOwnerTenant.includes(tenant.owner_phone)) {
-//         allNumberOwnerTenant.push(tenant.owner_phone);
-//     }
-// }
-
 function delay(ms) {
     return new Promise(resolve => setTimeout(resolve, ms));
 }
@@ -33,7 +27,7 @@ function formStock(tenant) {
         return 'Data tenant tidak ditemukan. Mohon hubungi admin.';
     }
 
-    const formStock = [`🏪 *Tenant: ${tenant["store"]}*\n\n`, "Tolong lakukan pengisian segera.\n\n", "*BERIKUT DAFTAR PRODUK ANDA*\n", "===========================\n"];
+    const formStock = [`🏪 *Tenant: ${tenant["store"]}*\n\n`, "Tolong lakukan pengisian segera.\n\n", "📦 *DAFTAR PRODUK ANDA*\n", "==========================="];
     const tenantKey = Object.keys(database_product).find(key => key === tenant["store"]);
 
     if(!tenantKey) {
@@ -66,6 +60,7 @@ export async function broadcastMenu() {
         }
         
         await response.send(tenant["owner_phone"], formStock(tenant), "normal");
+        
         formTenantSession[tenant["owner_phone"]] = true;
 
         await delay(Math.floor(Math.random() * 5000) + 3000);

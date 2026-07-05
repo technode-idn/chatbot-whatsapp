@@ -1,7 +1,7 @@
 import { editingOrder, orderConfirmationSession, paymentStatus, pendingOrders } from "../../settings/globalVariables.js";
 import { getResponse } from "../security/response.js";
 
-const PRODUCT_AVAILABLE_MESSAGE = "✅ *PRODUK TERSEDIA*\n\nApakah kakak sudah yakin dengan pesanannya?\n\n[1] Belum (Mau Edit)\n[2] Lanjut Ke Pembayaran";
+const PRODUCT_AVAILABLE_MESSAGE = "✅ *PRODUK TERSEDIA*\n\nApakah kakak sudah yakin dengan pesanannya?\n\n[1] Belum (Mau Edit)\n[2] Lanjut Ke Pembayaran\n[3] Batalkan Pesanan";
 
 const PAYMENT_METHOD_MESSAGE = "Untuk informasi pembayarannya, kakak bisa pilih 🙏\n\n[1] Cash (bayar di tempat)\n[2] QRIS\n\nSilahkan diinformasikan mau pakai metode yang mana ya kak?";
 

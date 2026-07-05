@@ -150,7 +150,7 @@ export async function verificationPayment(text, client, fallbackOrderId = null) 
 
     await response.send(customerId, "Bukti pembayaran tidak valid, silakan kirim ulang.");
 
-    delete paymentVerificationSession['120363407187484870@g.us'];
+    delete paymentVerificationSession['120363405226602187@g.us'];
 
     return {
         success: false,
