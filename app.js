@@ -81,6 +81,8 @@ client.on("ready", async () => {
     recoveryFollowUpSent = true;
 
     for(const customerId of getActiveCustomerIds()) {
+        welcomedUsers.add(customerId);
+
         await response.send(
             customerId,
             "Mohon maaf, sepertinya sempat ada gangguan sistem. Silahkan lanjutkan kembali aktivitas anda.",
@@ -188,15 +190,6 @@ nodeCron.schedule('0 16 * * 1-5', async() => {
 // ===================
 client.on('message', async message => {
     try {
-    const allowedNumbers = [
-        '76403240386784@lid', // Fikri
-        '249344376729705@lid', // Kakak
-        '129454609268764@lid', // Ayah
-        '77855006433494@lid', // Diaz
-        '58493310615674@lid', // Azmi
-        '98599765577810@lid', // Aliya
-        '120363407187484870@g.us' // Group
-    ]; // [X]
 
     // Melacak Siapa Pengirim & Isi Pesannya
     // ======================================
@@ -220,10 +213,6 @@ client.on('message', async message => {
     if(message.fromMe) {
         return;
     }
-
-    if(!allowedNumbers.includes(userId) && !allNumberOwnerTenant.includes(userId)) {
-        return;
-    } // [X]
 
     // Memeriksa Apakah Pesan Yang Dikirim Berupa Media (Sticker, Gambar, Dokumen, Video)
     // ==================================================================================
@@ -360,7 +349,7 @@ client.on('message', async message => {
     // Handling Untuk Export File (Excel)
     // ==================================
     if(text === "export") {
-        if(userId === "58493310615674@lid") {
+        if(userId === "64282960068848@lid") {
             const allowed = await monitor.guardians.export.begin();
 
             if(!allowed){
@@ -512,7 +501,7 @@ client.on('message', async message => {
     // =============================================================
     if(userMode[userId] === "form") {
         if(text == "1") {
-            await response.send(userId, "Baik kak, supaya kami bisa proses pesanannya, mohon info ya.\n\n📌Nama Pemesan: \n📌ID Produk: \n📌Jumlah Pesanan: \n📌Nomor Telepon Aktif: \n\n🏠 *TUJUAN PENGANTARAN*\n=============================\n_Tolong isi alamat pengantaran secara lengkap, jika berlokasi diluar SV IPB_\n\n- Perumahan/Tempat\n- Jalan + Nomor\n- Kelurahan/Desa\n- Kecamatan\n- Kota/Kabupaten\n- Gunakan koma sebagai pemisah\n\n*Cth: Kos Lodaya, Jl. Lodaya II No.15, Babakan, Bogor Tengah, Kota Bogor*\n\nIsi alamat Anda di bawah 👇\n📌Alamat Lengkap Pengantaran: \n\n*_*Jika tidak jadi memesan, ketik 'keluar'_*\n*_*Jika ingin ganti jenis pemesanan, ketik 'ganti'_*"
+            await response.send(userId, "Baik kak, supaya kami bisa proses pesanannya, mohon info ya.\n\n📌Nama Pemesan: \n📌ID Produk: \n📌Jumlah Pesanan: \n📌Nomor Telepon Aktif: \n\n🏠 *TUJUAN PENGANTARAN*\n=============================\n_Tolong isi alamat pengantaran secara lengkap, jika berlokasi diluar gedung/kawasan (Gymnas, Zeta, CA/CB/LAB, Dll) SV IPB_\n\n- Perumahan/Tempat\n- Jalan + Nomor\n- Kelurahan/Desa\n- Kecamatan\n- Kota/Kabupaten\n- Gunakan koma sebagai pemisah\n\n*Cth: Kos Lodaya, Jl. Lodaya II No.15, Babakan, Bogor Tengah, Kota Bogor*\n\nIsi alamat Anda di bawah 👇\n📌Alamat Lengkap Pengantaran: \n\n*_*Jika tidak jadi memesan, ketik 'keluar'_*\n*_*Jika ingin ganti jenis pemesanan, ketik 'ganti'_*"
             );
 
             sessions[userId] = true;

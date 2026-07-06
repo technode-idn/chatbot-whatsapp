@@ -4,7 +4,7 @@ import { DATA_DELIVERY_PATH, DATA_USERS_PATH } from '../../settings/loadFiles.js
 import { getResponse } from '../security/response.js';
 import { completeOrder } from '../ordering/validationOrder.js';
 
-const GROUP_ID = '120363407187484870@g.us';
+const GROUP_ID = '120363405226602187@g.us';
 
 async function loadJsonFile(path) {
     const rawData = await fs.readFile(path, 'utf8');
@@ -95,7 +95,7 @@ export async function handleDeliveryResponse(text, client, fallbackOrderId = nul
 
     await response.send(
         customerId,
-        "Terima kasih sudah berbelanja di KlikBi-Go kakak 🙏\n\nKami minta dukungannya agar bisnis ini bisa terus berkembang dengan follow akun instagram KlikBi\nhttps://www.instagram.com/klikbisvipb?igsh=MWM5NGUwcnN1bTNvaQ==\n\nSemoga kita dapat bertemu kembali di pemesanan berikutnya 😊"
+        "Terima kasih sudah berbelanja di KlikBi-Go kakak 🙏\n\nKami minta dukungannya agar bisnis ini bisa terus berkembang dengan follow akun instagram KlikBi\nhttps://www.instagram.com/klikbisvipb?igsh=MWM5NGUwcnN1bTNvaQ==\n\nSemoga kita dapat bertemu kembali di pemesanan berikutnya 😊\n\n*_*Silahkan ketik 'keluar' untuk menyelesaikan_"
     );
 
     delete deliverySession[GROUP_ID];

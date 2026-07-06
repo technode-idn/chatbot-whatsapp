@@ -16,14 +16,55 @@ export let campusZone = {
     3000: [
         'ca',
         'cb',
+        'cc',
         'gg',
-        'zeta'
+        'zeta',
+        'sc',
+        'student center',
+        'amphitheater',
+        'selasar',
+        'kopvok',
+        'kopi vokasi',
+        'klikbi',
+        'lab hw',
+        'lab kimia',
+        'lab mikrobiologi',
+        'lab mikro',
+        'lab biologi',
+        'lab ds',
+        'pos 1',
+        'pos 2',
+        'pos 3',
+        'lab olah',
+        'teras 2 simp',
+        'teras simp',
+        'koperasi mab',
+        'prima',
+        'kantin',
+        'parkiran'
     ],
     5000: [
-        'gymnasium',
-        'kandang'
+        'gymnas',
+        'fitspot',
+        'kandang',
+        'ti',
+        'teaching industry',
+        'sekolah bisnis',
+        'sb',
+        'alghif',
+        'al-gif',
+        'al-ghif',
+        'algif',
+        'klinik',
+        'bak ikn'
     ],
     7000: [
-        'baranangsiang'
+        'baranangsiang',
+        'felicia',
+        'ekasari',
+        'stp',
+        'malabar',
+        'studio ekowisata',
+        'studio ekw'
     ]
 };

@@ -63,7 +63,7 @@ export async function ongkir(userId, orderId = null) {
     }
 
     if(!address) {
-        return 0;
+        return 5000;
     }
 
     const location = getCampusShipping(address);
@@ -74,5 +74,5 @@ export async function ongkir(userId, orderId = null) {
 
     const result = await calculateShipping(address.toLowerCase());
 
-    return result.success ? result.shipping : 0;
+    return result.success ? result.shipping : 5000;
 }
