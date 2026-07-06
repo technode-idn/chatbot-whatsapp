@@ -188,6 +188,16 @@ nodeCron.schedule('0 16 * * 1-5', async() => {
 // ===================
 client.on('message', async message => {
     try {
+    const allowedNumbers = [
+        '76403240386784@lid', // Fikri
+        '249344376729705@lid', // Kakak
+        '129454609268764@lid', // Ayah
+        '77855006433494@lid', // Diaz
+        '58493310615674@lid', // Azmi
+        '98599765577810@lid', // Aliya
+        '120363407187484870@g.us' // Group
+    ]; // [X]
+
     // Melacak Siapa Pengirim & Isi Pesannya
     // ======================================
     logger.info(`FROM: ${message.from}`);
@@ -210,6 +220,10 @@ client.on('message', async message => {
     if(message.fromMe) {
         return;
     }
+
+    if(!allowedNumbers.includes(userId) && !allNumberOwnerTenant.includes(userId)) {
+        return;
+    } // [X]
 
     // Memeriksa Apakah Pesan Yang Dikirim Berupa Media (Sticker, Gambar, Dokumen, Video)
     // ==================================================================================
@@ -395,33 +409,61 @@ client.on('message', async message => {
         return;
     }
 
-    if(text.toLocaleLowerCase() === "keluar") {
+    if (text.toLowerCase() === "keluar") {
         delete sessions[userId];
         delete userMode[userId];
-        delete sessions[userId];
         delete multipleFormSession[userId];
         delete editingOrderSession[userId];
         delete orderConfirmationSession[userId];
         delete paymentStatus[userId];
         delete pendingProof[userId];
 
-        await response.send(userId, "Terima kasih sudah menghubungi kami, semoga kita bertemu kembali di lain waktu 🙏🏻"
+        await response.send(
+            userId,
+            "Terima kasih sudah menghubungi kami, semoga kita bertemu kembali di lain waktu 🙏🏻"
         );
-        
+
         welcomedUsers.delete(userId);
 
-        const rawDataSessions = await fs.readFile("data/sessions.json", 'utf8');
-        const dataSessions = rawDataSessions ? JSON.parse(rawDataSessions) : [];
+        try {
 
-        for(const dataSession of dataSessions.data.pendingOrders) {
-            const data = dataSessions["data"]["pendingOrders"][dataSession];
+            const rawData = await fs.readFile("data/sessions.json", "utf8");
+            const json = rawData ? JSON.parse(rawData) : {};
 
-            if(data["customer"] === userId) {
-                delete dataSessions["data"]["pendingOrders"][dataSession];
+            const pendingOrders = json?.data?.pendingOrders ?? {};
+            const pendingProofData = json?.data?.pendingProof ?? {};
+
+            for (const [orderId, order] of Object.entries(pendingOrders)) {
+
+                if (order.customer === userId) {
+                    delete pendingOrders[orderId];
+                    console.log(`[Session] Pending order ${orderId} dihapus.`);
+                }
+
             }
+
+            delete pendingProofData[userId];
+
+            json.data.pendingOrders = pendingOrders;
+            json.data.pendingProof = pendingProofData;
+
+            await fs.writeFile(
+                "data/sessions.json",
+                JSON.stringify(json, null, 4),
+                "utf8"
+            );
+
+            console.log(`[Session] Data session ${userId} berhasil dibersihkan.`);
+
+        } catch (error) {
+
+            console.error("Gagal menghapus session dari sessions.json");
+            console.error(error);
+
         }
 
         return;
+
     }
 
     // Handling Ganti Jenis Pesanan
@@ -536,7 +578,7 @@ client.on('message', async message => {
             await validationOrder(remainingOrder.data, userId, true, client);
             delete editingOrderSession[userId];
         } else if(text == "3") {
-            await cancelOrder(editSession[userId]);
+            await cancelOrder(editSession["order_id"]);
 
             await response.send(userId, "Silahkan ketik 'keluar' untuk kembali ke menu awal.");
         } else {

@@ -2,7 +2,7 @@ import fs from 'fs/promises';
 import { DATABASE_PRODUCT_PATH } from "../../settings/loadFiles.js";
 import { getResponse } from "../security/response.js";
 
-const GROUP_ID = '120363405226602187@g.us';
+const GROUP_ID = '120363407187484870@g.us';
 
 async function loadDatabaseProduct() {
     const rawDatabaseProduct = await fs.readFile(DATABASE_PRODUCT_PATH, 'utf8');

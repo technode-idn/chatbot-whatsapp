@@ -1,5 +1,6 @@
 import { editingOrder, orderConfirmationSession, paymentStatus, pendingOrders } from "../../settings/globalVariables.js";
 import { getResponse } from "../security/response.js";
+import { cancelOrder } from "./validationOrder.js";
 
 const PRODUCT_AVAILABLE_MESSAGE = "✅ *PRODUK TERSEDIA*\n\nApakah kakak sudah yakin dengan pesanannya?\n\n[1] Belum (Mau Edit)\n[2] Lanjut Ke Pembayaran\n[3] Batalkan Pesanan";
 
@@ -102,9 +103,7 @@ export async function handleOrderConfirmation(text, userId) {
 
         await response.send(userId, buildEditOrderForm(orderId, pendingOrder.data));
         return true;
-    }
-
-    if(text === "2") {
+    } else if(text === "2") {
         paymentStatus[userId] = {
             status: true,
             order_id: orderId
@@ -114,8 +113,13 @@ export async function handleOrderConfirmation(text, userId) {
 
         await response.send(userId, PAYMENT_METHOD_MESSAGE);
         return true;
+    } else if(text === "3") {
+        await cancelOrder(orderId);
+        
+        await response.send(userId, "Silahkan ketik 'keluar' untuk kembali ke menu awal.");
+    } else {
+        await response.send(userId, "Mohon pilih salah satu yang ada di menu ya kak");
     }
 
-    await response.send(userId, "Mohon pilih salah satu ya kak:\n[1] Belum (Mau Edit)\n[2] Lanjut Ke Pembayaran");
     return true;
 }

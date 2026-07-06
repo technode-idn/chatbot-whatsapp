@@ -1,9 +1,12 @@
 import fs from 'fs/promises';
 import crypto from 'crypto';
-import { DATABASE_PRODUCT_PATH, DATA_USERS_PATH } from "../../settings/loadFiles.js";
+import { DATABASE_PRODUCT_PATH, DATA_USERS_PATH, rawDataUsers, rawDatabaseProduct } from "../../settings/loadFiles.js";
 import { editingOrder, orderConfirmationSession, paymentStatus, pendingOrders } from "../../settings/globalVariables.js";
 import { askOrderConfirmation } from "./editOrder.js";
 import { getResponse } from '../security/response.js';
+
+const database_product = rawDatabaseProduct ? JSON.parse(rawDatabaseProduct) : [];
+const users = rawDataUsers ? JSON.parse(rawDataUsers) : [];
 
 async function loadJsonFile(path) {
     const rawData = await fs.readFile(path, 'utf8');

@@ -4,7 +4,7 @@ import { DATA_DELIVERY_PATH, DATA_USERS_PATH } from '../../settings/loadFiles.js
 import { getResponse } from '../security/response.js';
 import { completeOrder } from '../ordering/validationOrder.js';
 
-const GROUP_ID = '120363405226602187@g.us';
+const GROUP_ID = '120363407187484870@g.us';
 
 async function loadJsonFile(path) {
     const rawData = await fs.readFile(path, 'utf8');
