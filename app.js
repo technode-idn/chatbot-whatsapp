@@ -27,6 +27,7 @@ import { getActiveCustomerIds, restoreRuntimeSessions, saveRuntimeSessions } fro
 import { generalSalesReport } from './chatbot-structure/system/broadcasting/generalSalesReport.js';
 import { extraction } from './chatbot-structure/system/owner-tenant/extraction.js';
 import { welcomedUsers } from './chatbot-structure/settings/runtimeUsers.js';
+import { isWeekend } from './chatbot-structure/settings/weekend.js';
 
 // Membuat Settingan Whatsapp Web
 // ==============================
@@ -207,6 +208,14 @@ client.on('message', async message => {
     // Ekstraksi Pesan
     // ===============
     const text = message.body.trim();
+
+    // Memeriksa Apakah Hari Libur
+    // ===========================
+    if(isWeekend()) {
+        await response.send(userId, "Maaf, KlikbiGo sedang tutup. Jam Operasinal kami hanya sampai Senin-Jumat. Terima kasih atas pengertiannya.");
+
+        return;
+    }
 
     // Memeriksa Apakah Pengirim Adalah Dirinya Sendiri
     // ================================================
