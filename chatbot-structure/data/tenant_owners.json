@@ -44,6 +44,7 @@
     {
         "tenant_id": "TEN007",
         "store": "klikbi",
-        "qris": "./chatbot-structure/img/qris_tenant_8.jpg"
+        "qris": "./chatbot-structure/img/qris_tenant_8.jpg",
+        "status_stock": "pending"
     }
 ]

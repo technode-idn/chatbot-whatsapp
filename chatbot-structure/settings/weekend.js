@@ -1,5 +1,9 @@
-export async function isWeekend() {
+export function isWeekend() {
     const today = new Date().getDay();
 
-    return today === 0 || today === 6;
+    if(today === 0 || today === 6) {
+	return true;
+    }
+
+    return false;
 }

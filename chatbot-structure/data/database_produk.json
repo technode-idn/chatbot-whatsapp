@@ -11,13 +11,13 @@
       "POPD01": {
         "product_name": "Americano",
         "price": 10000,
-        "stock": 0,
+        "stock": 5,
         "qty_sold": 0
       },
       "POPD02": {
         "product_name": "Kopi susu",
         "price": 13000,
-        "stock": 0,
+        "stock": 10,
         "qty_sold": 0
       },
       "POPD03": {
@@ -166,7 +166,7 @@
       "SOEF01": {
         "product_name": "Soeka O.G Dimsum (Small)",
         "price": 15000,
-        "stock": 0,
+        "stock": 7,
         "qty_sold": 0
       },
       "SOEF02": {

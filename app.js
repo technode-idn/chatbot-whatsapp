@@ -223,6 +223,10 @@ client.on('message', async message => {
         return;
     }
 
+    if(userId === "64282960068848@lid" && text != "export") {
+	return;
+    }
+
     // Memeriksa Apakah Pesan Yang Dikirim Berupa Media (Sticker, Gambar, Dokumen, Video)
     // ==================================================================================
     if(message.hasMedia) {
@@ -346,7 +350,7 @@ client.on('message', async message => {
 
     // Memeriksa & Menyimpan Data Pengirim, Jika Pertama Kalinya Berkunjung
     // ====================================================================
-    if(!welcomedUsers.has(userId) && !userId.endsWith('@g.us') && !allNumberOwnerTenant.includes(userId)) {
+    if(!welcomedUsers.has(userId) && !userId.endsWith('@g.us') && !allNumberOwnerTenant.includes(userId) && userId != "64282960068848@lid") {
         welcomedUsers.add(userId);
 
         await response.send(userId, "Halo kak👋\n\nTerima kasih sudah menghubungi Klikbi Go🍽️🚚\n\nSaya admin KlikBiGo, ada yang bisa kami bantu?\n[1] Pesan Produk\n[2] FAQ\n[3] Hubungi Admin"
