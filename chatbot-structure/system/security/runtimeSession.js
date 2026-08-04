@@ -10,7 +10,8 @@ import {
     pendingOrders,
     pendingProof,
     sessions,
-    userMode
+    userMode,
+    allNumberOwnerTenant
 } from "../../settings/globalVariables.js";
 
 const SESSION_BUCKETS = {
@@ -72,7 +73,13 @@ export function getActiveCustomerIds() {
         }
     }
 
-    return [...ids].filter(id => id && !String(id).endsWith("@g.us"));
+    return [...ids].filter(id => {
+        const normalizedId = String(id || '');
+
+        return normalizedId.includes('@')
+            && !normalizedId.endsWith('@g.us')
+            && !allNumberOwnerTenant.includes(normalizedId);
+    });
 }
 
 export async function saveRuntimeSessions(sessionGuardian) {

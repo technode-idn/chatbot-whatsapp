@@ -1,695 +1,96 @@
 import pkg from 'whatsapp-web.js';
-import fs from 'fs/promises';
 import nodeCron from 'node-cron';
-const { Client, LocalAuth, MessageMedia } = pkg;
-import qrcode from "qrcode-terminal";
-import puppeteer from 'puppeteer';
-import Logger from "./chatbot-structure/system/security/logger.js";
+import Logger from './chatbot-structure/system/security/logger.js';
 import SystemMonitor from './chatbot-structure/system/security/monitor.js';
-import { exportData } from './chatbot-structure/system/exportData.js';
-import { faq } from './chatbot-structure/system/FAQ.js';
-import { extractionOrder } from './chatbot-structure/system/ordering/extractionOrder.js';
-import { sendProofToGroup } from './chatbot-structure/system/broadcasting/sendProof.js';
-import { payment } from './chatbot-structure/system/payment.js';
-import { ongkir } from './chatbot-structure/system/ongkir.js';
-import { paymentVerificationSession, pendingProof, sessions, paymentStatus, orderConfirmationSession, groupSession, deliverySession, multipleFormSession, editingOrder as editingOrderSession, pendingOrders, userMode, allNumberOwnerTenant, formTenantSession } from './chatbot-structure/settings/globalVariables.js';
-import { verificationPayment } from './chatbot-structure/system/verification.js';
-import { handleDeliveryResponse, inputDelivery } from './chatbot-structure/system/broadcasting/sendDelivery.js';
-import { generateFormMultipleOrder } from './chatbot-structure/system/ordering/generateFormMultipleOrder.js';
-import { deleteOrder } from './chatbot-structure/system/ordering/deleteOrder.js';
-import { cancelOrder, validationOrder } from './chatbot-structure/system/ordering/validationOrder.js';
-import { editingOrder as sendEditingOrderForm } from './chatbot-structure/system/ordering/editingOrder.js';
-import { handleOrderConfirmation } from './chatbot-structure/system/ordering/editOrder.js';
-import { broadcastMenu, generateFormStock, validationFormStock } from './chatbot-structure/system/owner-tenant/broadcastForm.js';
-import { displayStock, editStock, resetStock } from './chatbot-structure/system/owner-tenant/stock.js';
 import { getResponse, initializeResponse } from './chatbot-structure/system/security/response.js';
 import { getActiveCustomerIds, restoreRuntimeSessions, saveRuntimeSessions } from './chatbot-structure/system/security/runtimeSession.js';
 import { generalSalesReport } from './chatbot-structure/system/broadcasting/generalSalesReport.js';
-import { extraction } from './chatbot-structure/system/owner-tenant/extraction.js';
+import { resetStock } from './chatbot-structure/system/owner-tenant/stock.js';
+import { broadcastMenu } from './chatbot-structure/sessions/tenant/handler.js';
+import { handleGroupSession } from './chatbot-structure/sessions/group/handler.js';
+import { handleTenantSession, isTenant } from './chatbot-structure/sessions/tenant/handler.js';
+import { handleCustomerSession } from './chatbot-structure/sessions/customer/handler.js';
 import { welcomedUsers } from './chatbot-structure/settings/runtimeUsers.js';
 import { isWeekend } from './chatbot-structure/settings/weekend.js';
+import { isOutsideOperationalHours } from './chatbot-structure/settings/operationalHours.js';
 
-// Membuat Settingan Whatsapp Web
-// ==============================
+const { Client, LocalAuth } = pkg;
+
 const client = new Client({
     authStrategy: new LocalAuth(),
     puppeteer: {
-        executablePath: "C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe",
+        executablePath: 'C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe',
         headless: true
     }
 });
 
-// Inisialisasi Logger
-// ===================
 const logger = new Logger();
-
-// Inisialisasi Sistem Monitor
-// ===========================
 const monitor = new SystemMonitor(client, logger);
-
-// Inisialisasi Response
-// =====================
 initializeResponse(client, logger);
-
-// Mengambil Instance Response
-// ===========================
 const response = getResponse();
 
-const restoredSession = await monitor.guardians.session.load();
-restoreRuntimeSessions(restoredSession);
-
-let recoveryFollowUpSent = false;
+restoreRuntimeSessions(await monitor.guardians.session.load());
 
 async function saveSessionBeforeExit() {
     await saveRuntimeSessions(monitor.guardians.session);
 }
 
-process.once("SIGINT", async () => {
-    await saveSessionBeforeExit();
-    process.exit(0);
-});
+process.once('SIGINT', async () => { await saveSessionBeforeExit(); process.exit(0); });
+process.once('SIGTERM', async () => { await saveSessionBeforeExit(); process.exit(0); });
 
-process.once("SIGTERM", async () => {
-    await saveSessionBeforeExit();
-    process.exit(0);
-});
+let recoveryFollowUpSent = false;
 
-client.on("ready", async () => {
-    if(recoveryFollowUpSent) {
-        return;
-    }
-
+client.on('ready', async () => {
+    if(recoveryFollowUpSent) return;
     recoveryFollowUpSent = true;
+
+    await broadcastMenu();
 
     for(const customerId of getActiveCustomerIds()) {
         welcomedUsers.add(customerId);
-
-        await response.send(
-            customerId,
-            "Mohon maaf, sepertinya sempat ada gangguan sistem. Silahkan lanjutkan kembali aktivitas anda.",
-            "high"
-        );
+        await response.send(customerId, 'Mohon maaf, sepertinya sempat ada gangguan sistem. Silahkan lanjutkan kembali aktivitas anda.', 'high');
     }
 });
 
-// Menyimpan Session Users
-// =======================
-const welcomedTenant = new Set();
-const TENANT_MENU_MESSAGE = "🏪 Halo Pemilik Tenant!\n\nAda yang bisa kami bantu?\n[1] Isi Ulang Stok\n[2] Lihat Stok\n[3] Update/Restok Produk\n\n_Gunakan fitur dibawah jika hanya tidak ingin isi ulang stok harian_\n[4] Gunakan Stok Sisa Kemarin";
-
-function isAvailabilityResponse(text) {
-    const hasOrderId = /^\s*order id\s*:/im.test(text);
-    const hasStatusProduk = /^\s*status produk(?:\s+\d+)?\s*:/im.test(text);
-
-    return (
-        hasOrderId &&
-        (text.toLowerCase().includes('pesanan') || hasStatusProduk)
-    );
-}
-
-function isPaymentResponse(text) {
-    const hasOrderId = /^\s*order id\s*(?::|->)/im.test(text);
-    const hasPaymentStatus = /^\s*(?:\|\s*)?status\s*(?::|->)/im.test(text);
-
-    return (
-        hasOrderId &&
-        (text.toLowerCase().includes('pembayaran') || hasPaymentStatus)
-    );
-}
-
-function isDeliveryResponse(text) {
-    const hasOrderId = /^\s*order id\s*(?::|->)/im.test(text);
-    const hasDeliveryField = /^\s*id pengirim\s*(?::|->)/im.test(text)
-        || /^\s*nim pengirim\s*(?::|->)/im.test(text)
-        || /^\s*nama pengirim\s*(?::|->)/im.test(text)
-        || /^\s*nomor pengirim\s*(?::|->)/im.test(text);
-
-    return (
-        hasDeliveryField ||
-        (hasOrderId && text.toLowerCase().includes('pengiriman'))
-    );
-}
-
-function isPaymentDecision(text) {
-    const rawText = String(text || '').trim();
-    const firstLine = rawText
-        .split(/\r?\n/)
-        .map(line => line.trim())
-        .find(Boolean);
-    const statusMatch = rawText.match(/^\s*(?:\|\s*)?status(?:\s+pembayaran)?\s*(?::|->)\s*(.+)$/im);
-    const knownStatuses = [
-        'ok',
-        'oke',
-        'valid',
-        'sesuai',
-        'benar',
-        'lunas',
-        'ya',
-        'yes',
-        'y',
-        'done',
-        'paid',
-        'sudah',
-        'berhasil',
-        'x',
-        'no',
-        'n',
-        'tidak',
-        'invalid',
-        'gagal',
-        'salah',
-        'batal'
-    ];
-
-    return [firstLine, statusMatch?.[1], rawText].some(candidate => {
-        const compactText = String(candidate || '').trim().toLowerCase().replace(/[^a-z0-9]/g, '');
-
-        return knownStatuses.includes(compactText);
-    });
-}
-
-// Broadcasting Form Pengisian Stock Ke Setiap Owner Tenant (Broadcasting Form)
-// ============================================================================
-let statusBroadcast = true;
-
-if(statusBroadcast) {
-    nodeCron.schedule('0 7 * * 1-5', async() => {
-        await broadcastMenu();
-    });
-
-    statusBroadcast = false;
-}
-
-// Broadcasting Laporan Penjualan (Sales Report Broadcasting)
-// ==========================================================
-nodeCron.schedule('0 16 * * 1-5', async() => {
+nodeCron.schedule('0 16 * * 1-5', async () => {
     await generalSalesReport(client);
     await resetStock(false);
 });
 
-// Membaca Pesan Masuk
-// ===================
 client.on('message', async message => {
     try {
+        const userId = message.from;
+        const text = message.body.trim();
 
-    // Melacak Siapa Pengirim & Isi Pesannya
-    // ======================================
-    logger.info(`FROM: ${message.from}`);
-    logger.info(`MESSAGE: ${message.body}`);
+        logger.info(`FROM: ${userId}`);
+        logger.info(`MESSAGE: ${message.body}`);
 
-    // Menyimpan Informasi Pengirim
-    // ============================
-    const userId = message.from;
+        if(message.fromMe || (userId === '64282960068848@lid' && text !== 'export')) return;
 
-    // Menyimpan Informasi Grup
-    // ========================
-    const isGroupMessage = userId.endsWith('@g.us');
+        const isGroup = userId.endsWith('@g.us');
+        const isCustomer = !isGroup && !isTenant(userId);
+        const closedMessage = 'Maaf, KlikbiGo sedang tutup. Waktu Operasinal kami hanya sampai Senin-Jumat di jam 10.00 - 16.00. Terima kasih atas pengertiannya.';
 
-    // Ekstraksi Pesan
-    // ===============
-    const text = message.body.trim();
+        if(isCustomer && (isWeekend() || isOutsideOperationalHours())) {
+            await response.send(userId, closedMessage);
+            return;
+        }
 
-    // Memeriksa Apakah Hari Libur
-    // ===========================
-    if(isWeekend()) {
-        await response.send(userId, "Maaf, KlikbiGo sedang tutup. Jam Operasinal kami hanya sampai Senin-Jumat. Terima kasih atas pengertiannya.");
-
-        return;
-    }
-
-    // Memeriksa Apakah Pengirim Adalah Dirinya Sendiri
-    // ================================================
-    if(message.fromMe) {
-        return;
-    }
-
-    if(userId === "64282960068848@lid" && text != "export") {
-	return;
-    }
-
-    // Memeriksa Apakah Pesan Yang Dikirim Berupa Media (Sticker, Gambar, Dokumen, Video)
-    // ==================================================================================
-    if(message.hasMedia) {
-        if(pendingProof[userId]) {
-            if(!message.hasMedia) {
-                await response.send(userId, "Mohon kirimkan screenshot bukti pembayarannya kak.");
-                return;
+        if(message.hasMedia) {
+            if(isCustomer) {
+                await handleCustomerSession({ message, userId, text, client, response, logger, monitor });
             }
-
-            await response.send(userId, "Baik, sebentar ya kak. Kami cek dulu bukti pembayarannya 🙏");
-
-            const proof_photo = await message.downloadMedia();
-            const orderId = pendingProof[userId];
-            const order = pendingOrders[orderId];
-
-            if(!order?.data) {
-                await response.send(userId, 'Data pesanan tidak ditemukan. Mohon hubungi admin.');
-                return;
-            }
-
-            await sendProofToGroup(proof_photo, orderId, order.data, client);
-            
             return;
         }
 
-        return;
-    }
+        if(await handleGroupSession({ userId, text, message, client })) return;
+        if(await handleTenantSession({ userId, text, response })) return;
 
-    // Follow-Up Dari Group Tenant (Group Session)
-    // ===========================================
-    if(isGroupMessage) {
-        if(!groupSession[userId]) {
-            return;
-        }
-
-        if(paymentVerificationSession[userId] && isPaymentDecision(text)) {
-            await verificationPayment(text, client, paymentVerificationSession[userId]);
-
-            return;
-        }
-
-        if(isPaymentResponse(text)) {
-            await verificationPayment(message.body, client);
-
-            return;
-        }
-
-        if(deliverySession[userId] && isDeliveryResponse(text)) {
-            await handleDeliveryResponse(text, client, deliverySession[userId]);
-
-            return;
-        }
-
-        return;
-    }
-
-    // Tenant (Tenant Session)
-    // =======================
-    if(allNumberOwnerTenant.includes(userId)) {
-        if(text.toLocaleLowerCase() === "keluar" || text.toLocaleLowerCase() === "kembali") {
-            delete formTenantSession[userId];
-            delete userMode[userId];
-
-            welcomedTenant.add(userId);
-
-            await response.send(userId, TENANT_MENU_MESSAGE);
-            return;
-        }
-
-        if(formTenantSession[userId]) {
-            const responseStock = await validationFormStock(text, userId);
-            await response.send(userId, responseStock);
-            return;
-        }
-
-        if(userMode[userId] === "tenant-update-stock") {
-            const responseStock = await extraction(text, "edit");
-
-            if(responseStock === "Stok Berhasil Diperbarui") {
-                delete userMode[userId];
-            }
-
-            await response.send(userId, responseStock);
-            return;
-        }
-
-        if(!welcomedTenant.has(userId)) {
-            welcomedTenant.add(userId);
-
-            await response.send(userId, TENANT_MENU_MESSAGE);
-
-            return;
-        } 
-
-        switch(text) {
-            case "1":
-                await resetStock(true);
-                await generateFormStock(userId);
-                return;
-            case "2":
-                const responseDisplay = await displayStock(userId);
-                await response.send(userId, responseDisplay);
-                return;
-            case "3":
-                await response.send(userId, "📝 *SILAKAN PERBARUI STOK*\n=============================\nID Produk: \nJumlah Stok: \nStatus: \n\n_Status diisi dengan tambah/kurang/reset secara text_");
-                userMode[userId] = "tenant-update-stock";
-                return;
-            case "PERBARUI":
-                const responseStock = await extraction(text, "edit");
-                await response.send(userId, responseStock);
-                return;
-            case "4":
-                await response.send(userId, "Baik, stok sisa kemarin digunakan.");
-                return;
-            default:
-                await response.send(userId, "Anda memilih pilihan diluar menu.");
-        }
-
-        return;
-    }
-
-    // Memeriksa & Menyimpan Data Pengirim, Jika Pertama Kalinya Berkunjung
-    // ====================================================================
-    if(!welcomedUsers.has(userId) && !userId.endsWith('@g.us') && !allNumberOwnerTenant.includes(userId) && userId != "64282960068848@lid") {
-        welcomedUsers.add(userId);
-
-        await response.send(userId, "Halo kak👋\n\nTerima kasih sudah menghubungi Klikbi Go🍽️🚚\n\nSaya admin KlikBiGo, ada yang bisa kami bantu?\n[1] Pesan Produk\n[2] FAQ\n[3] Hubungi Admin"
-        );
-
-        return;
-    } 
-
-    // Handling Untuk Export File (Excel)
-    // ==================================
-    if(text === "export") {
-        if(userId === "64282960068848@lid") {
-            const allowed = await monitor.guardians.export.begin();
-
-            if(!allowed){
-                await response.send(userId, "Sedang ada proses export yang berjalan.");
-
-                return;
-            }
-
-            try {
-
-                await exportData();
-
-                const media = MessageMedia.fromFilePath("./chatbot-structure/file/customer_recap.xlsx");
-
-                await response.sendMedia(userId, media, "", "low");
-
-                await monitor.guardians.export.finish(true);
-
-            } catch(error) {
-
-                logger.error(error);
-
-                await monitor.guardians.export.finish(false);
-
-            }
-
-        }
-
-    }
-
-    // Handling Berpindah Menu
-    // =======================
-    if(text.toLocaleLowerCase() === "menu") {
-        delete sessions[userId];
-        delete userMode[userId];
-        delete sessions[userId];
-        delete multipleFormSession[userId];
-        delete editingOrderSession[userId];
-        delete orderConfirmationSession[userId];
-        delete paymentStatus[userId];
-        delete pendingProof[userId];
-
-        await response.send(userId, "Halo kak👋\n\nTerima kasih sudah menghubungi Klikbi Go🍽️🚚\n\nSaya admin KlikBiGo, ada yang bisa kami bantu?\n[1] Pesan Produk\n[2] FAQ\n[3] Hubungi Admin"
-        );
-        
-        return;
-    }
-
-    if (text.toLowerCase() === "keluar") {
-        delete sessions[userId];
-        delete userMode[userId];
-        delete multipleFormSession[userId];
-        delete editingOrderSession[userId];
-        delete orderConfirmationSession[userId];
-        delete paymentStatus[userId];
-        delete pendingProof[userId];
-
-        await response.send(
-            userId,
-            "Terima kasih sudah menghubungi kami, semoga kita bertemu kembali di lain waktu 🙏🏻"
-        );
-
-        welcomedUsers.delete(userId);
-
-        try {
-
-            const rawData = await fs.readFile("data/sessions.json", "utf8");
-            const json = rawData ? JSON.parse(rawData) : {};
-
-            const pendingOrders = json?.data?.pendingOrders ?? {};
-            const pendingProofData = json?.data?.pendingProof ?? {};
-
-            for (const [orderId, order] of Object.entries(pendingOrders)) {
-
-                if (order.customer === userId) {
-                    delete pendingOrders[orderId];
-                    console.log(`[Session] Pending order ${orderId} dihapus.`);
-                }
-
-            }
-
-            delete pendingProofData[userId];
-
-            json.data.pendingOrders = pendingOrders;
-            json.data.pendingProof = pendingProofData;
-
-            await fs.writeFile(
-                "data/sessions.json",
-                JSON.stringify(json, null, 4),
-                "utf8"
-            );
-
-            console.log(`[Session] Data session ${userId} berhasil dibersihkan.`);
-
-        } catch (error) {
-
-            console.error("Gagal menghapus session dari sessions.json");
-            console.error(error);
-
-        }
-
-        return;
-
-    }
-
-    // Handling Ganti Jenis Pesanan
-    // ============================
-    if(text.toLocaleLowerCase() === "ganti") {
-        await response.send(userId, "📝 *JENIS PEMESANAN ANDA*\n===========================\n[1] Single Order\n[2] Multiple Order\n\n*_*Jika ingin kembali ke menu, ketik 'menu'_*");
-
-        userMode[userId] = "form";
-        delete sessions[userId];
-        delete multipleFormSession[userId];
-    }
-
-    // Peralihan chatbot -> admin manusia (Human Admin Session)
-    // ========================================================
-    if(userMode[userId] === "human-admin") {
-        return;
-    }
-
-    // Menjalankan FAQ, Jika Pengirim Memilih Menu 2 (FAQ Session)
-    // ===========================================================
-    if(userMode[userId] === "faq") {
-        const responseFaq = await faq(text);
-
-        await response.send(userId, responseFaq);
-
-        return;
-    }
-
-    // Menjalankan Sistem Pendataan Formulir, Jika Pengirim Memilih Menu 2 (Ordering Session)
-    // ======================================================================================
-    if(sessions[userId]) {
-        if(!/nama\s*pemesan|id\s*produk|alamat\s*lengkap\s*pengantaran/i.test(text)) {
-            return response.send(userId, "Mohon untuk mengisi formulir pesanan kakak.");
-        }
-
-        const responseOrder = await extractionOrder(text, userId);        
-
-        if(responseOrder) {
-            await response.send(userId, responseOrder);
-        }
-
-        return;
-    }
-
-    // Pemilihan Metode Pemesanan, Single or Multiple (Form Session)
-    // =============================================================
-    if(userMode[userId] === "form") {
-        if(text == "1") {
-            await response.send(userId, "Baik kak, supaya kami bisa proses pesanannya, mohon info ya.\n\n📌Nama Pemesan: \n📌ID Produk: \n📌Jumlah Pesanan: \n📌Nomor Telepon Aktif: \n\n🏠 *TUJUAN PENGANTARAN*\n=============================\n_Tolong isi alamat pengantaran secara lengkap, jika berlokasi diluar gedung/kawasan (Gymnas, Zeta, CA/CB/LAB, Dll) SV IPB_\n\n- Perumahan/Tempat\n- Jalan + Nomor\n- Kelurahan/Desa\n- Kecamatan\n- Kota/Kabupaten\n- Gunakan koma sebagai pemisah\n\n*Cth: Kos Lodaya, Jl. Lodaya II No.15, Babakan, Bogor Tengah, Kota Bogor*\n\nIsi alamat Anda di bawah 👇\n📌Alamat Lengkap Pengantaran: \n\n*_*Jika tidak jadi memesan, ketik 'keluar'_*\n*_*Jika ingin ganti jenis pemesanan, ketik 'ganti'_*"
-            );
-
-            sessions[userId] = true;
-
-            delete userMode[userId];
-        } else if(text == "2") {
-            await response.send(userId, "📝 Berapa produk yang ingin anda pesan?\n[1] 1\n[2] 2\n[3] 3\n[4] 4\n[5] 5\n\n*_*Jika ingin ganti jenis pemesanan, ketik 'ganti'_*");
-
-            multipleFormSession[userId] = true;
-
-            delete userMode[userId];
-        } else {
-            await response.send(userId, "Mohon maaf, sepertinya kakak memilih diluar pilihan yang ada. Silahkan pilih ulang kembali.");
-        }
-
-        return;
-    }
-
-    // Metode Pemesanan Multiple Order (Multiple Order Session)
-    // ========================================================
-    if(multipleFormSession[userId]) {
-        if(Number(text) > 5) {
-            await response.send(userId, "Mohon maaf, sepertinya jumlah produk yang ingin kakak pesan sudah diluar batas.");
-            return;
-        }
-
-        const responseForm = await generateFormMultipleOrder(text);
-
-        await response.send(userId, responseForm);
-
-        sessions[userId] = true;
-
-        delete multipleFormSession[userId];
-
-        return;
-    }
-
-    // Konfirmasi/Edit Pesanan Setelah Produk Tersedia
-    // ===============================================
-    if(orderConfirmationSession[userId]?.status) {
-        await handleOrderConfirmation(text, userId);
-        return;
-    }
-
-    // Mengganti/Edit, Jika Suatu Produk Tidak Tersedia (Editing Order Session)
-    // ========================================================================
-    if(editingOrderSession[userId]?.status) {
-        const editSession = editingOrderSession[userId];
-
-        if(text == "1") {
-            await sendEditingOrderForm(editSession["all_data_available"], editSession["order_id"], userId, client);
-        } else if(text == "2") {
-            const remainingOrder = deleteOrder(editSession["all_data_available"], editSession["order_id"]);
-
-            if(!remainingOrder?.hasProducts) {
-                delete pendingOrders[editSession["order_id"]];
-                delete editingOrderSession[userId];
-
-                await response.send(userId, 'Pesanan dibatalkan karena tidak ada produk yang bisa diproses.');
-                return;
-            }
-
-            await validationOrder(remainingOrder.data, userId, true, client);
-            delete editingOrderSession[userId];
-        } else if(text == "3") {
-            await cancelOrder(editSession["order_id"]);
-
-            await response.send(userId, "Silahkan ketik 'keluar' untuk kembali ke menu awal.");
-        } else {
-            delete editingOrderSession[userId];
-            await extractionOrder(text, userId, true, client);
-        }
-
-        return;
-    }
-
-    // Handling Pemilihan Metode Payment (Payment Session)
-    // ===================================================
-    if(paymentStatus[userId]?.status) {
-        const paymentSession = paymentStatus[userId];
-        const orderId = paymentSession["order_id"];
-        const responsePayment = await payment(orderId);
-
-        if(!responsePayment) {
-            await response.send(userId, 'Data pembayaran belum ditemukan. Mohon coba lagi setelah pesanan dikonfirmasi.');
-            return;
-        }
-
-        const responseOngkir = await ongkir(userId, orderId);
-        const shippingCost = Number(responseOngkir) || 0;
-        const totalPrice = Number(responsePayment["total_price"]) || 0;
-        const totalPayment = totalPrice + shippingCost;
-
-        if(text == "1") {
-            await response.send(userId, 
-                `Siap kak\n\nUntuk total pembayaran ${totalPayment}, sudah dengan ongkir sebesar ${shippingCost} ya kak, dilakukan secara cash saat pesanan diterima.\n\nPesanan akan segera kami proses 😊🙏🏻`
-            );
-
-            await response.send(userId, "Informasi pengirim akan dikirim dalam beberapa waktu...");
-
-            await inputDelivery(orderId, client);
-
-            delete pendingOrders[orderId];
-        } else if(text == "2") {
-            if(!responsePayment["qris_photo"]) {
-                await response.send(userId, 'QRIS tenant belum ditemukan. Mohon pilih cash atau hubungi admin.');
-                return;
-            }
-
-            const qris_photo = MessageMedia.fromFilePath(responsePayment["qris_photo"]);
-
-            await response.sendMedia(
-                userId, 
-                qris_photo,
-                `Total harga yang harus dibayar sejumlah *Rp ${totalPayment}*\n\nSudah ditambah dengan *ongkir ${shippingCost}* ya kak 🙏🏻\n\nMohon konfirmasi dan screenshot jika pembayaran sudah dilakukan.`
-            );
-
-            pendingProof[userId] = orderId;
-        } else {
-            await response.send(userId, 'Mohon pilih metode pembayaran yang ada.');
-            return;
-        }
-
-        delete paymentStatus[userId];
-
-        return;
-    }
-
-    // Mengirimkan Informasi Pengirim Kepada Customer (Delivery Session)
-    // =================================================================
-    if(deliverySession[userId]) {
-        const result = await handleDeliveryResponse(text, client);
-
-        if(result?.message) {
-            await response.send(userId, result.message);
-        }
-
-        return;
-    }
-
-    // Pengelolaan Pilihan Menu
-    // ========================
-    switch(text) {
-        case "1":
-            userMode[userId] = "form";
-
-            await response.send(userId, "📝 *JENIS PEMESANAN ANDA*\n===========================\n[1] Single Order\n[2] Multiple Order\n\n*_*Jika ingin kembali ke menu, ketik 'menu'_*");
-            
-            return;
-        case "2":
-            userMode[userId] = "faq";
-
-            await response.send(userId, "🔍 *DAFTAR PERTANYAAN FAQ*\n=============================\n\n[1] KlikBi-Go Jual Apa Saja?\n\n[2] Bagaimana Cara Memesan?\n\n[3] Kapan Waktu Operasionalnya?\n\n[4] Apakah Pesanan Bisa Di Antar?\n\n[5] Metode Pembayarannya Apa Saja?\n\n*_Ketik 'menu' untuk kembali ke menu awal_*");
-
-            return;
-        case "3":
-            userMode[userId] = "human-admin";
-
-            await response.send(userId, "Terima kasih telah menghubungi, selanjutnya admin kami akan membantu kakak secara langsung 🙏🏻\n\nSilakan ajukan pertanyaan atau informasi yang ingin disampaikan.\n\n*_Ketik 'menu' untuk kembali ke chatbot_*");
-
-            return;
-        default:
-            await response.send(userId, "Mohon maaf, sepertinya kakak memilih diluar pilihan yang ada.\n\nSilahkan pilih ulang menu kembali.");
-
-            return;
-    }
+        await handleCustomerSession({ message, userId, text, client, response, logger, monitor });
     } finally {
         await saveRuntimeSessions(monitor.guardians.session);
     }
 });
 
-// Menjalankan Sistem Monitor
-// ==========================
 monitor.start();
-
-// Inisialisasi Chatbot
-// ====================
 client.initialize();

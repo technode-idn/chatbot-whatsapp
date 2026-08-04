@@ -86,6 +86,14 @@ function readPaymentStatus(status) {
     return 'unknown';
 }
 
+function clearPaymentVerificationSession(orderId) {
+    for(const [groupId, sessionOrderId] of Object.entries(paymentVerificationSession)) {
+        if(String(sessionOrderId) === String(orderId)) {
+            delete paymentVerificationSession[groupId];
+        }
+    }
+}
+
 export async function verificationPayment(text, client, fallbackOrderId = null) {
     const response = getResponse();
     const data = parseKeyValueText(text);
@@ -131,7 +139,7 @@ export async function verificationPayment(text, client, fallbackOrderId = null) 
 
         delete pendingProof[customerId];
         delete pendingOrders[orderId];
-        delete paymentVerificationSession['120363407187484870@g.us'];
+        clearPaymentVerificationSession(orderId);
 
         await response.send(customerId, 'Pembayaran berhasil diverifikasi. Pesanan akan segera kami proses.');
 
@@ -150,7 +158,7 @@ export async function verificationPayment(text, client, fallbackOrderId = null) 
 
     await response.send(customerId, "Bukti pembayaran tidak valid, silakan kirim ulang.");
 
-    delete paymentVerificationSession['120363405226602187@g.us'];
+    clearPaymentVerificationSession(orderId);
 
     return {
         success: false,
