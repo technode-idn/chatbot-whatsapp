@@ -19,7 +19,7 @@ const { Client, LocalAuth } = pkg;
 const client = new Client({
     authStrategy: new LocalAuth(),
     puppeteer: {
-        executablePath: 'C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe',
+        executablePath: 'C:\\Program Files (x86)\\Microsoft\\Edge\\Application\\msedge.exe',
         headless: true
     }
 });
@@ -41,15 +41,17 @@ process.once('SIGTERM', async () => { await saveSessionBeforeExit(); process.exi
 let recoveryFollowUpSent = false;
 
 client.on('ready', async () => {
-    if(recoveryFollowUpSent) return;
-    recoveryFollowUpSent = true;
+    // if(recoveryFollowUpSent) return;
+    // recoveryFollowUpSent = true;
 
-    await broadcastMenu();
+    // await broadcastMenu();
 
-    for(const customerId of getActiveCustomerIds()) {
-        welcomedUsers.add(customerId);
-        await response.send(customerId, 'Mohon maaf, sepertinya sempat ada gangguan sistem. Silahkan lanjutkan kembali aktivitas anda.', 'high');
-    }
+    // for(const customerId of getActiveCustomerIds()) {
+    //     welcomedUsers.add(customerId);
+    //     await response.send(customerId, 'Mohon maaf, sepertinya sempat ada gangguan sistem. Silahkan lanjutkan kembali aktivitas anda.', 'high');
+    // }
+
+    console.log("ready");
 });
 
 nodeCron.schedule('0 16 * * 1-5', async () => {
@@ -59,11 +61,22 @@ nodeCron.schedule('0 16 * * 1-5', async () => {
 
 client.on('message', async message => {
     try {
+        const allowedNumberCust = [
+            '64282960068848@lid', // ka ainun
+            '135124670787747@lid', // technode
+            '77855006433494@lid', // diaz
+            '79959943024845@lid', // azmi 2
+            '28420016742628@lid', // yusuf
+            '58493310615674@lid', // azmi 1 
+        ];
+
         const userId = message.from;
         const text = message.body.trim();
 
         logger.info(`FROM: ${userId}`);
         logger.info(`MESSAGE: ${message.body}`);
+
+        if(!userId.includes(allowedNumberCust)) return;
 
         if(message.fromMe || (userId === '64282960068848@lid' && text !== 'export')) return;
 
