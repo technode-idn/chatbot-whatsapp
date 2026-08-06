@@ -41,17 +41,15 @@ process.once('SIGTERM', async () => { await saveSessionBeforeExit(); process.exi
 let recoveryFollowUpSent = false;
 
 client.on('ready', async () => {
-    // if(recoveryFollowUpSent) return;
-    // recoveryFollowUpSent = true;
+    if(recoveryFollowUpSent) return;
+    recoveryFollowUpSent = true;
 
-    // await broadcastMenu();
+    await broadcastMenu();
 
-    // for(const customerId of getActiveCustomerIds()) {
-    //     welcomedUsers.add(customerId);
-    //     await response.send(customerId, 'Mohon maaf, sepertinya sempat ada gangguan sistem. Silahkan lanjutkan kembali aktivitas anda.', 'high');
-    // }
-
-    console.log("ready");
+    for(const customerId of getActiveCustomerIds()) {
+        welcomedUsers.add(customerId);
+        await response.send(customerId, 'Mohon maaf, sepertinya sempat ada gangguan sistem. Silahkan lanjutkan kembali aktivitas anda.', 'high');
+    }
 });
 
 nodeCron.schedule('0 16 * * 1-5', async () => {
