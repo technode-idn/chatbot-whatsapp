@@ -10,7 +10,7 @@ export const multipleFormSession = {};
 export const editingOrder = {};
 export const userMode = {};
 // "155981031973047@lid", "162608233615561@lid", "158501556994144@lid", "58236082323536@lid", "119963033596086@lid", "177670532915314@lid"
-export const allNumberOwnerTenant = ['135124670787747@lid'];
+export const allNumberOwnerTenant = ['77855006433494@lid'];
 export const formTenantSession = {};
 export let lastOrderId = null;
 export let campusZone = {
