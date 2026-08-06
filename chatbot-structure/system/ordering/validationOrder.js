@@ -5,8 +5,8 @@ import { editingOrder, orderConfirmationSession, paymentStatus, pendingOrders } 
 import { askOrderConfirmation } from "./editOrder.js";
 import { getResponse } from '../security/response.js';
 
-const database_product = rawDatabaseProduct ? JSON.parse(rawDatabaseProduct) : [];
-const users = rawDataUsers ? JSON.parse(rawDataUsers) : [];
+let database_product = rawDatabaseProduct ? JSON.parse(rawDatabaseProduct) : [];
+let users = rawDataUsers ? JSON.parse(rawDataUsers) : [];
 
 async function loadJsonFile(path) {
     const rawData = await fs.readFile(path, 'utf8');
@@ -15,8 +15,8 @@ async function loadJsonFile(path) {
 }
 
 async function refreshData() {
-    const database_product = await loadJsonFile(DATABASE_PRODUCT_PATH);
-    const users = await loadJsonFile(DATA_USERS_PATH);
+    database_product = await loadJsonFile(DATABASE_PRODUCT_PATH);
+    users = await loadJsonFile(DATA_USERS_PATH);
 }
 
 function parsePrice(value) {
@@ -114,6 +114,15 @@ function buildUnavailableMessage(unavailableItems) {
     const text = [];
 
     for(const item of unavailableItems) {
+        if(item.reason === 'insufficient-stock') {
+            text.push(
+                `❌ Stok produk *${item.productName}* tidak mencukupi. `
+                + `Stok tersedia saat ini: *${item.availableStock}*. `
+                + `Jumlah pesanan: *${item.quantity}*.\n`
+            );
+            continue;
+        }
+
         text.push(`❌ Produk *${item.productName}* sedang tidak tersedia.\n`);
     }
 
@@ -231,7 +240,8 @@ async function reserveStock({orderId, userId, orderData, orderItems, editingStat
 
             unavailableItems.push({
                 ...item,
-                productName: item.productId
+                productName: item.productId,
+                reason: 'not-found'
             });
 
             continue;
@@ -251,7 +261,10 @@ async function reserveStock({orderId, userId, orderData, orderItems, editingStat
 
                     product.name ||
 
-                    item.productId
+                    item.productId,
+
+                reason: stock > 0 ? 'insufficient-stock' : 'out-of-stock',
+                availableStock: stock
 
             });
 

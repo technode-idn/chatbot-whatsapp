@@ -13,7 +13,7 @@ export function isTenant(userId) {
 export async function handleTenantSession({ userId, text, response }) {
     if(!isTenant(userId)) return false;
 
-    if(['keluar', 'kembali'].includes(text.toLocaleLowerCase())) {
+    if(['keluar', 'kembali', 'menu'].includes(text.toLocaleLowerCase())) {
         delete formTenantSession[userId];
         delete userMode[userId];
         welcomedTenant.add(userId);

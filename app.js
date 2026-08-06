@@ -62,7 +62,6 @@ client.on('message', async message => {
         const allowedNumberCust = [
             '64282960068848@lid', // ka ainun
             '135124670787747@lid', // technode
-            '77855006433494@lid', // diaz
             '79959943024845@lid', // azmi 2
             '28420016742628@lid', // yusuf
             '58493310615674@lid', // azmi 1 
