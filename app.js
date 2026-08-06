@@ -76,7 +76,9 @@ client.on('message', async message => {
         logger.info(`FROM: ${userId}`);
         logger.info(`MESSAGE: ${message.body}`);
 
-        if(!userId.includes(allowedNumberCust)) return;
+        if(!allowedNumberCust.includes(userId)) {
+            return;
+        }
 
         if(message.fromMe || (userId === '64282960068848@lid' && text !== 'export')) return;
 

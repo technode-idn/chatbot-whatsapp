@@ -165,17 +165,11 @@ class ResponseQueue {
 
             try{
 
-                const chat = await this.client.getChatById(task.chatId);
-
                 if (config.response.typing) {
 
-                    const typingTime =
-                        config.response.typingDuration +
-                        this.getDelay(task.priority);
-
-                    await chat.sendStateTyping();
-
-                    await this.sleep(typingTime);
+                    await this.sleep(
+                        config.response.typingDuration + this.getDelay(task.priority)
+                    );
 
                 } else {
 
