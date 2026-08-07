@@ -5,7 +5,7 @@
     },
     {
         "faq_id": "2",
-        "response": "*[1] :* Pilih opsi nomor 1 pada menu awal untuk pesan produk.\n\n*[2] :* Pilih apakah _single order_ atau _multiple order_.\n\n*[3] :* Masukkan pesanan Anda.\n\n*[4] :* Tunggu konfirmasi apakah produk masih tersedia.\n\n*[5a] :* Jika produk tidak tersedia, Anda dapat mengganti produk.\n\n*[5b] :* Jika produk tersedia, selanjutnya memilih metode pembayaran.\n\n*[6a] :* Jika Anda memilih cash, pembayaran dilakukan setelah produk diterima.\n\n*[6b] :* Jika qris, admin chatbot akan mengirimkan barcode qris, dan Anda diminta mengirimkan bukti pembayarannya.\n\n*[7] :* Setelah pembayaran selesai, Anda akan mendapatkan informasi kurir yang akan mangantar.\n\n*[8] :* Proses pemesanan selesai."
+        "response": "*[1] :* Pilih opsi nomor 1 pada menu awal untuk pesan produk.\n\n*[2] :* Pilih apakah _single order_ atau _multiple order_.\n\n*[3] :* Masukkan pesanan Anda.\n\n*[4] :* Tunggu konfirmasi apakah produk masih tersedia.\n\n*[5a] :* Jika produk tidak tersedia, Anda dapat mengganti produk.\n\n*[5b] :* Jika produk tersedia, selanjutnya masuk ke pembayaran.\n\n*[6] :* Admin chatbot akan mengirimkan barcode qris, dan Anda diminta mengirimkan bukti pembayarannya.\n\n*[7] :* Setelah pembayaran selesai, Anda akan mendapatkan informasi kurir yang akan mangantar.\n\n*[8] :* Proses pemesanan selesai."
     },
     {
         "faq_id": "3",
@@ -17,6 +17,6 @@
     },
     {
         "faq_id": "5",
-        "response": "Kami memiliki 2 metode pembayaran, cash dan qris."
+        "response": "Kami memiliki metode pembayaran qris."
     }
 ]

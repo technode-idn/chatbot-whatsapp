@@ -2,6 +2,9 @@ import fs from 'fs/promises';
 import { DATA_TENANT_PATH, DATA_USERS_PATH } from '../settings/loadFiles.js';
 import { pendingOrders } from '../settings/globalVariables.js';
 
+const INCLUDED_ITEM_QUANTITY = 5;
+const EXTRA_ITEM_CHARGE = 1000;
+
 async function loadDataUsers() {
     const dataUsers = await fs.readFile(DATA_USERS_PATH, 'utf8');
 
@@ -50,16 +53,22 @@ export async function payment(orderId) {
         ? orderRows
         : (pendingOrder?.items || []).map(item => ({
             tenant_name: item.tenantName,
-            total_price: (Number(item.unitPrice) || 0) * (Number(item.quantity) || 0)
+            total_price: (Number(item.unitPrice) || 0) * (Number(item.quantity) || 0),
+            quantity: Number(item.quantity) || 0
         }));
 
     if(!paymentRows.length) {
         return null;
     }
 
-    const totalPrice = paymentRows.reduce((total, row) => (
+    const productTotal = paymentRows.reduce((total, row) => (
         total + (Number(row["total_price"]) || 0)
     ), 0);
+    const totalQuantity = paymentRows.reduce((total, row) => (
+        total + (Number(row["total_product"] ?? row["quantity"]) || 0)
+    ), 0);
+    const extraItemQuantity = Math.max(0, totalQuantity - INCLUDED_ITEM_QUANTITY);
+    const quantityCharge = extraItemQuantity * EXTRA_ITEM_CHARGE;
     const tenantNames = [...new Set(paymentRows.map(row => row["tenant_name"]).filter(Boolean))];
     const qrisPhoto = tenantNames.length === 1
         ? findTenantQris(tenants, tenantNames[0])
@@ -68,6 +77,10 @@ export async function payment(orderId) {
     return {
         order_id: orderId,
         qris_photo: qrisPhoto || null,
-        total_price: totalPrice
+        product_total: productTotal,
+        total_quantity: totalQuantity,
+        extra_item_quantity: extraItemQuantity,
+        quantity_charge: quantityCharge,
+        total_price: productTotal + quantityCharge
     };
 }

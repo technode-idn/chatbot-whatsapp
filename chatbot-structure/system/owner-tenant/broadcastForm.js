@@ -45,6 +45,15 @@ function formStock(tenant) {
     return formStock.join("");
 }
 
+const STOCK_INPUT_MENU = 'Pilih metode pengisian stok:\n[1] Isi stok rata untuk seluruh produk\n[2] Isi stok satu-satu';
+
+export async function sendStockInputMenu(userId) {
+    const response = getResponse();
+
+    await response.send(userId, STOCK_INPUT_MENU, 'normal');
+    formTenantSession[userId] = { mode: 'choice' };
+}
+
 export async function broadcastMenu() {
     await refreshBroadcastData();
 
@@ -59,9 +68,7 @@ export async function broadcastMenu() {
             continue;
         }
         
-        await response.send(tenant["owner_phone"], formStock(tenant), "normal");
-        
-        formTenantSession[tenant["owner_phone"]] = true;
+        await sendStockInputMenu(tenant["owner_phone"]);
 
         await delay(Math.floor(Math.random() * 5000) + 3000);
     }
@@ -79,7 +86,7 @@ export async function generateFormStock(userId) {
     const form = formStock(tenant);
 
     await response.send(userId, form, "normal");
-    formTenantSession[userId] = true;
+    formTenantSession[userId] = { mode: 'detail' };
 
     return;
 }

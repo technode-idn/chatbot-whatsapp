@@ -1,16 +1,46 @@
 import fs from 'fs/promises';
-import { deliverySession, groupSession } from "../../settings/globalVariables.js";
+import { deliverySession, groupSession, pendingOrders } from "../../settings/globalVariables.js";
 import { DATA_DELIVERY_PATH, DATA_USERS_PATH } from '../../settings/loadFiles.js';
 import { getResponse } from '../security/response.js';
 import { completeOrder } from '../ordering/validationOrder.js';
+import { payment } from '../payment.js';
+import { ongkir } from '../ongkir.js';
 
-// 120363405226602187@g.us
 const GROUP_ID = '120363407187484870@g.us';
 
 async function loadJsonFile(path) {
     const rawData = await fs.readFile(path, 'utf8');
 
     return rawData.trim() ? JSON.parse(rawData) : [];
+}
+
+function formatRupiah(value) {
+    return `Rp ${Number(value || 0).toLocaleString('id-ID')}`;
+}
+
+async function buildDeliveryForm(orderId) {
+    const order = pendingOrders[orderId];
+    const customerInfo = order?.customerInfo || {};
+    const orderData = order?.data || {};
+    const paymentData = await payment(orderId);
+    const shippingCost = Number(await ongkir(order?.customer, orderId)) || 0;
+    const totalPrice = (Number(paymentData?.total_price) || 0) + shippingCost;
+    const orderLines = (order?.items || [])
+        .map(item => `- ${item.productName || item.productId} (${item.quantity})`)
+        .join('\n') || '-';
+
+    return [
+        '*SILAKAN ISI FORM PENGIRIMAN*',
+        `Nama Pemesan: ${customerInfo.name || orderData['nama_pemesan'] || '-'}`,
+        `Nomor Telepon: ${customerInfo.phone || orderData['nomor_telepon_aktif'] || '-'}`,
+        `Alamat: ${customerInfo.address || orderData['alamat_lengkap_pengantaran'] || '-'}`,
+        `Total Harga: ${formatRupiah(totalPrice)}`,
+        '',
+        '*PESANAN:*',
+        orderLines,
+        '',
+        'NIM PENGIRIM:'
+    ].join('\n');
 }
 
 function parseKeyValueText(text) {
@@ -42,7 +72,7 @@ export async function inputDelivery(orderId, client) {
 
     await response.send(
         GROUP_ID,
-        `🛵 *KONFIRMASI PENGIRIMAN*\n==========================\nOrder ID: ${orderId}\n\nNIM Pengirim: `,
+        await buildDeliveryForm(orderId),
         "normal"
     );
 

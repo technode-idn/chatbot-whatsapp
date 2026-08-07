@@ -1,6 +1,44 @@
 import { validationOrder } from './validationOrder.js';
 import { sessions } from '../../settings/globalVariables.js';
 
+function productLabel(productKey) {
+    const number = productKey.match(/_(\d+)$/)?.[1];
+
+    return number ? ` ${number}` : '';
+}
+
+function getMissingOrderFields(data) {
+    const requiredFields = [
+        ['nama_pemesan', 'Nama Pemesan'],
+        ['nomor_telepon_aktif', 'Nomor Telepon Aktif'],
+        ['alamat_lengkap_pengantaran', 'Alamat Lengkap Pengantaran']
+    ];
+    const missingFields = requiredFields
+        .filter(([key]) => !String(data[key] || '').trim())
+        .map(([, label]) => label);
+    const productKeys = Object.keys(data)
+        .filter(key => key === 'id_produk' || /^id_produk_\d+$/.test(key));
+
+    if(!productKeys.length) {
+        missingFields.push('ID Produk');
+    }
+
+    for(const productKey of productKeys) {
+        const label = productLabel(productKey);
+        const quantityKey = label ? `jumlah_pesanan${label.replace(' ', '_')}` : 'jumlah_pesanan';
+
+        if(!String(data[productKey] || '').trim()) {
+            missingFields.push(`ID Produk${label}`);
+        }
+
+        if(!String(data[quantityKey] || '').trim()) {
+            missingFields.push(`Jumlah Pesanan${label}`);
+        }
+    }
+
+    return missingFields;
+}
+
 export async function extractionOrder(text, userId, editingStatus = false) {
     // Ekstraksi Form Pesanan Customer
     // ===============================
@@ -27,6 +65,14 @@ export async function extractionOrder(text, userId, editingStatus = false) {
 
         if(!Object.keys(data).length) {
             return 'Format yang dikirim tidak sesuai, silahkan isi ulang kembali';
+        }
+
+        if(!editingStatus) {
+            const missingFields = getMissingOrderFields(data);
+
+            if(missingFields.length) {
+                return `Mohon lengkapi data formulir berikut:\n- ${missingFields.join('\n- ')}`;
+            }
         }
 
         // Mengirim Informasi Pesanan Ke Group Tenant

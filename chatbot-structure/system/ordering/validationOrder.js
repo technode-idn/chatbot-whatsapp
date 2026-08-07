@@ -4,6 +4,7 @@ import { DATABASE_PRODUCT_PATH, DATA_USERS_PATH, rawDataUsers, rawDatabaseProduc
 import { editingOrder, orderConfirmationSession, paymentStatus, pendingOrders } from "../../settings/globalVariables.js";
 import { askOrderConfirmation } from "./editOrder.js";
 import { getResponse } from '../security/response.js';
+import { isDeliveryWithinRange } from './deliveryDistance.js';
 
 let database_product = rawDatabaseProduct ? JSON.parse(rawDatabaseProduct) : [];
 let users = rawDataUsers ? JSON.parse(rawDataUsers) : [];
@@ -365,6 +366,23 @@ export async function validationOrder(orderData, userId, editingStatus) {
         );
 
         return { success: false };
+    }
+
+    const deliveryRange = await isDeliveryWithinRange(
+        orderDataFinal["alamat_lengkap_pengantaran"]
+    );
+
+    if(!deliveryRange.isWithinRange) {
+        if(editingStatus && existingPendingOrder) {
+            await cancelOrder(orderId);
+        }
+
+        await response.send(
+            userId,
+            'Mohon maaf sebelumnya kak, jarak pengantaran alamat kakak melibihi 5km'
+        );
+
+        return { success: false, rejectedByDistance: true };
     }
 
     const reserveResult = await reserveStock({

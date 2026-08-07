@@ -85,6 +85,27 @@ export async function addStock(dataStock) {
     return "Stok Berhasil Ditambahkan!";
 }
 
+export async function addUniformStock(userId, quantity) {
+    await refreshStockData();
+
+    const stockToAdd = parseStock(quantity);
+    const tenant = tenants.find(tenant => tenant["owner_phone"] === userId);
+    const tenantKey = tenant?.["store"];
+
+    if(!tenantKey || !database_product[tenantKey]?.["products"]) {
+        return 'Data tenant atau produk tidak ditemukan.';
+    }
+
+    for(const product of Object.values(database_product[tenantKey]["products"])) {
+        product["stock"] += stockToAdd;
+    }
+
+    tenant["status_stock"] = "complete";
+    await persistStockData();
+
+    return 'Stok seluruh produk berhasil ditambahkan.';
+}
+
 export async function editStock(dataEditStock) {
     await refreshStockData();
 

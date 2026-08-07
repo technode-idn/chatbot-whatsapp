@@ -1,12 +1,9 @@
 import fs from 'fs/promises';
-import whatsappWeb from 'whatsapp-web.js';
 import { exportData } from '../../system/exportData.js';
 import { faq } from '../../system/FAQ.js';
 import { extractionOrder } from '../../system/ordering/extractionOrder.js';
 import { sendProofToGroup } from '../../system/broadcasting/sendProof.js';
-import { payment } from '../../system/payment.js';
-import { ongkir } from '../../system/ongkir.js';
-import { handleDeliveryResponse, inputDelivery } from '../../system/broadcasting/sendDelivery.js';
+import { handleDeliveryResponse } from '../../system/broadcasting/sendDelivery.js';
 import { generateFormMultipleOrder } from '../../system/ordering/generateFormMultipleOrder.js';
 import { deleteOrder } from '../../system/ordering/deleteOrder.js';
 import { cancelOrder, validationOrder } from '../../system/ordering/validationOrder.js';
@@ -14,8 +11,7 @@ import { editingOrder as sendEditingOrderForm } from '../../system/ordering/edit
 import { handleOrderConfirmation } from '../../system/ordering/editOrder.js';
 import { welcomedUsers } from '../../settings/runtimeUsers.js';
 import { pendingProof, sessions, paymentStatus, orderConfirmationSession, deliverySession, multipleFormSession, editingOrder as editingOrderSession, pendingOrders, userMode } from '../../settings/globalVariables.js';
-
-const { MessageMedia } = whatsappWeb;
+import { sendQrisPayment } from '../../system/ordering/qrisPayment.js';
 
 const MAIN_MENU = 'Halo kak👋\n\nTerima kasih sudah menghubungi Klikbi Go🍽️🚚\n\nSaya admin KlikBiGo, ada yang bisa kami bantu?\n[1] Pesan Produk\n[2] FAQ\n[3] Hubungi Admin';
 
@@ -86,7 +82,7 @@ export async function handleCustomerSession({ message, userId, text, client, res
     }
     if(userMode[userId] === 'form') {
         if(text === '1') {
-            await response.send(userId, "Baik kak, supaya kami bisa proses pesanannya, mohon info ya.\n\n📌Nama Pemesan: \n📌ID Produk: \n📌Jumlah Pesanan: \n📌Nomor Telepon Aktif: \n\n🏠 *TUJUAN PENGANTARAN*\n=============================\n_Tolong isi alamat pengantaran secara lengkap, jika berlokasi diluar gedung/kawasan (Gymnas, Zeta, CA/CB/LAB, Dll) SV IPB_\n\n- Perumahan/Tempat\n- Jalan + Nomor\n- Kelurahan/Desa\n- Kecamatan\n- Kota/Kabupaten\n- Gunakan koma sebagai pemisah\n\n*Cth: Kos Lodaya, Jl. Lodaya II No.15, Babakan, Bogor Tengah, Kota Bogor*\n\nIsi alamat Anda di bawah 👇\n📌Alamat Lengkap Pengantaran: \n\n*_*Jika tidak jadi memesan, ketik 'keluar'_ *\n*_*Jika ingin ganti jenis pemesanan, ketik 'ganti'_*");
+            await response.send(userId, "Baik kak, supaya kami bisa proses pesanannya, mohon info ya.\n\n📌Nama Pemesan: \n📌ID Produk: \n📌Jumlah Pesanan: \n📌Nomor Telepon Aktif: \n\n🏠 *TUJUAN PENGANTARAN*\n=============================\n_Tolong isi alamat pengantaran secara lengkap, jika berlokasi diluar gedung/kawasan (Gymnas, Zeta, CA/CB/LAB, Dll) SV IPB_\n\n- Perumahan/Tempat\n- Jalan + Nomor\n- Kelurahan/Desa\n- Kecamatan\n- Kota/Kabupaten\n- Gunakan koma sebagai pemisah\n\n*Cth: Kos Lodaya, Jl. Lodaya II No.15, Babakan, Bogor Tengah, Kota Bogor*\n\nIsi alamat Anda di bawah 👇\n📌Alamat Lengkap Pengantaran: \n\n*_*Jika tidak jadi memesan, ketik 'keluar'_*\n*_*Jika ingin ganti jenis pemesanan, ketik 'ganti'_*");
             sessions[userId] = true; delete userMode[userId]; return true;
         }
         if(text === '2') { await response.send(userId, "📝 Berapa produk yang ingin anda pesan?\n[1] 1\n[2] 2\n[3] 3\n[4] 4\n[5] 5\n\n*_*Jika ingin ganti jenis pemesanan, ketik 'ganti'_*"); multipleFormSession[userId] = true; delete userMode[userId]; return true; }
@@ -101,18 +97,13 @@ export async function handleCustomerSession({ message, userId, text, client, res
         const editSession = editingOrderSession[userId];
         if(text === '1') await sendEditingOrderForm(editSession.all_data_available, editSession.order_id, userId, client);
         else if(text === '2') { const remainingOrder = deleteOrder(editSession.all_data_available, editSession.order_id); if(!remainingOrder?.hasProducts) { delete pendingOrders[editSession.order_id]; delete editingOrderSession[userId]; await response.send(userId, 'Pesanan dibatalkan karena tidak ada produk yang bisa diproses.'); return true; } await validationOrder(remainingOrder.data, userId, true, client); delete editingOrderSession[userId]; }
-        else if(text === '3') { await cancelOrder(editSession.order_id); await response.send(userId, "Silahkan ketik 'keluar' untuk kembali ke menu awal."); }
+        else if(text === '3') { await cancelOrder(editSession.order_id); await response.send(userId, "Silahkan ketik 'keluar'."); }
         else { delete editingOrderSession[userId]; await extractionOrder(text, userId, true, client); }
         return true;
     }
     if(paymentStatus[userId]?.status) {
-        const orderId = paymentStatus[userId].order_id; const responsePayment = await payment(orderId);
-        if(!responsePayment) { await response.send(userId, 'Data pembayaran belum ditemukan. Mohon coba lagi setelah pesanan dikonfirmasi.'); return true; }
-        const shippingCost = Number(await ongkir(userId, orderId)) || 0; const totalPayment = (Number(responsePayment.total_price) || 0) + shippingCost;
-        if(text === '1') { await response.send(userId, `Siap kak\n\nUntuk total pembayaran ${totalPayment}, sudah dengan ongkir sebesar ${shippingCost} ya kak, dilakukan secara cash saat pesanan diterima.\n\nPesanan akan segera kami proses 😊🙏🏻`); await response.send(userId, 'Informasi pengirim akan dikirim dalam beberapa waktu...'); await inputDelivery(orderId, client); delete pendingOrders[orderId]; }
-        else if(text === '2') { if(!responsePayment.qris_photo) { await response.send(userId, 'QRIS tenant belum ditemukan. Mohon pilih cash atau hubungi admin.'); return true; } await response.sendMedia(userId, MessageMedia.fromFilePath(responsePayment.qris_photo), `Total harga yang harus dibayar sejumlah *Rp ${totalPayment}*\n\nSudah ditambah dengan *ongkir ${shippingCost}* ya kak 🙏🏻\n\nMohon konfirmasi dan screenshot jika pembayaran sudah dilakukan.`); pendingProof[userId] = orderId; }
-        else { await response.send(userId, 'Mohon pilih metode pembayaran yang ada.'); return true; }
-        delete paymentStatus[userId]; return true;
+        await sendQrisPayment(userId, paymentStatus[userId].order_id);
+        return true;
     }
     if(deliverySession[userId]) { const result = await handleDeliveryResponse(text, client); if(result?.message) await response.send(userId, result.message); return true; }
     switch(text) {
