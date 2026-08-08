@@ -69,6 +69,7 @@ export async function payment(orderId) {
     ), 0);
     const extraItemQuantity = Math.max(0, totalQuantity - INCLUDED_ITEM_QUANTITY);
     const quantityCharge = extraItemQuantity * EXTRA_ITEM_CHARGE;
+    const weatherCharge = Number(pendingOrder?.weather_charge?.charge) || 0;
     const tenantNames = [...new Set(paymentRows.map(row => row["tenant_name"]).filter(Boolean))];
     const qrisPhoto = tenantNames.length === 1
         ? findTenantQris(tenants, tenantNames[0])
@@ -81,6 +82,8 @@ export async function payment(orderId) {
         total_quantity: totalQuantity,
         extra_item_quantity: extraItemQuantity,
         quantity_charge: quantityCharge,
-        total_price: productTotal + quantityCharge
+        weather_charge: weatherCharge,
+        weather_condition: pendingOrder?.weather_charge?.condition || 'tidak tersedia',
+        total_price: productTotal + quantityCharge + weatherCharge
     };
 }

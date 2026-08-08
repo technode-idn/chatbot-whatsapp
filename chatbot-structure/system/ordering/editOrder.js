@@ -2,9 +2,9 @@ import { editingOrder, orderConfirmationSession, pendingOrders } from "../../set
 import { getResponse } from "../security/response.js";
 import { cancelOrder } from "./validationOrder.js";
 import { sendQrisPayment } from './qrisPayment.js';
-
-const PRODUCT_AVAILABLE_MESSAGE = "✅ *PRODUK TERSEDIA*\n\nApakah kakak sudah yakin dengan pesanannya?\n\n[1] Belum (Mau Edit)\n[2] Lanjut Ke Pembayaran\n[3] Batalkan Pesanan";
-
+import { payment } from '../payment.js';
+import { ongkir } from '../ongkir.js';
+import { getOrderWeatherCharge } from '../weather.js';
 
 function productNumberFromKey(key) {
     const number = key.match(/_(\d+)$/)?.[1];
@@ -28,6 +28,46 @@ function getProductKeys(orderData = {}) {
     return Object.keys(orderData)
         .filter(key => key === "id_produk" || /^id_produk_\d+$/.test(key))
         .sort((a, b) => productNumberFromKey(a) - productNumberFromKey(b));
+}
+
+function formatRupiah(value) {
+    return `Rp ${Number(value || 0).toLocaleString('id-ID')}`;
+}
+
+async function buildOrderConfirmationMessage(userId, orderId) {
+    const pendingOrder = pendingOrders[orderId];
+    await getOrderWeatherCharge(orderId);
+    const paymentData = await payment(orderId);
+    const shippingCost = Number(await ongkir(userId, orderId)) || 0;
+    const quantityCharge = Number(paymentData?.quantity_charge) || 0;
+    const weatherCharge = Number(paymentData?.weather_charge) || 0;
+    const productLines = (pendingOrder?.items || [])
+        .map(item => {
+            const productTotal = (Number(item.unitPrice) || 0) * (Number(item.quantity) || 0);
+
+            return `- ${item.productName || item.productId} (${item.quantity}) = ${formatRupiah(productTotal)}`;
+        })
+        .join('\n') || '-';
+    const totalPrice = (Number(paymentData?.total_price) || 0) + shippingCost;
+
+    return [
+        '✅ *PRODUK TERSEDIA*',
+        '=============================',
+        '📦 *Rincian Pesanan*',
+        productLines,
+        '',
+        `Ongkir: ${formatRupiah(shippingCost)}`,
+        `Charge Pesanan: ${formatRupiah(quantityCharge)}`,
+        `Charge Cuaca: ${formatRupiah(weatherCharge)}`,
+        `*Total Harga: ${formatRupiah(totalPrice)}*`,
+        '=============================',
+        '',
+        'Apakah kakak sudah yakin dengan pesanannya?',
+        '',
+        '[1] Belum (Mau Edit)',
+        '[2] Lanjut Ke Pembayaran',
+        '[3] Batalkan Pesanan'
+    ].join('\n');
 }
 
 function buildEditOrderForm(orderId, orderData = {}) {
@@ -70,7 +110,7 @@ export async function askOrderConfirmation(userId, orderId) {
         order_id: orderId
     };
 
-    await response.send(userId, PRODUCT_AVAILABLE_MESSAGE);
+    await response.send(userId, await buildOrderConfirmationMessage(userId, orderId));
 }
 
 export async function handleOrderConfirmation(text, userId) {
