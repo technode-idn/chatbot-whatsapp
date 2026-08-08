@@ -82,7 +82,7 @@ export async function sendProofToGroup(proofPhoto, orderId, orderData, client) {
     const caption = await buildProofCaption(orderId, orderData);
     const response = getResponse();
 
-    await response.send(GROUP_ID, proofPhoto, caption);
+    await response.sendMedia(GROUP_ID, proofPhoto, caption);
 
     groupSession[GROUP_ID] = true;
     paymentVerificationSession[GROUP_ID] = orderId;
