@@ -11,6 +11,8 @@ import { handleGroupSession } from './chatbot-structure/sessions/group/handler.j
 import { handleTenantSession, isTenant } from './chatbot-structure/sessions/tenant/handler.js';
 import { handleCustomerSession } from './chatbot-structure/sessions/customer/handler.js';
 import { welcomedUsers } from './chatbot-structure/settings/runtimeUsers.js';
+// Production dihapus
+import { orderConfirmationSession } from './chatbot-structure/settings/globalVariables.js';
 import { isWeekend } from './chatbot-structure/settings/weekend.js';
 import { isOutsideOperationalHours } from './chatbot-structure/settings/operationalHours.js';
 
@@ -59,6 +61,7 @@ nodeCron.schedule('0 16 * * 1-5', async () => {
 
 client.on('message', async message => {
     try {
+        // Production dihapus
         const allowedNumberCust = [
             '64282960068848@lid', // ka ainun
             '135124670787747@lid', // technode
@@ -75,7 +78,11 @@ client.on('message', async message => {
         logger.info(`FROM: ${userId}`);
         logger.info(`MESSAGE: ${message.body}`);
 
-        if(!allowedNumberCust.includes(userId) && !isKnownTenant && !isGroup) {
+        // Production dihapus
+        const hasActiveOrderConfirmation = orderConfirmationSession[userId]?.status;
+
+        // Production dihapus
+        if(!allowedNumberCust.includes(userId) && !isKnownTenant && !isGroup && !hasActiveOrderConfirmation) {
             return;
         }
 

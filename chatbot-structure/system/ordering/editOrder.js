@@ -52,6 +52,7 @@ async function buildOrderConfirmationMessage(userId, orderId) {
 
     return [
         '✅ *PRODUK TERSEDIA*',
+        '',
         '=============================',
         '📦 *Rincian Pesanan*',
         productLines,
