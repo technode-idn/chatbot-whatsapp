@@ -21,7 +21,7 @@ const { Client, LocalAuth } = pkg;
 const client = new Client({
     authStrategy: new LocalAuth(),
     puppeteer: {
-        executablePath: '',
+        executablePath: 'C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe',
         headless: true
     }
 });
