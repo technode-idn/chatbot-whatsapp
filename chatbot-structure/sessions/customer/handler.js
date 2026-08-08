@@ -44,13 +44,23 @@ export async function handleCustomerSession({ message, userId, text, client, res
     if(message.hasMedia) {
         if(!pendingProof[userId]) return true;
         try {
+            logger.info(`MEDIA TYPE: ${message.type}`);
+            logger.info(`MIMETYPE: ${message._data?.mimetype}`);
+            logger.info(`HAS MEDIA: ${message.hasMedia}`);
+
             await response.send(userId, 'Baik, sebentar ya kak. Kami cek dulu bukti pembayarannya 🙏');
 
             const proofPhoto = await message.downloadMedia();
 
             if(!proofPhoto) {
-                await response.send(userId, 'Mohon maaf kak, foto bukti pembayaran tidak dapat dibaca. Silakan kirim ulang.')
+                logger.error('DOWNLOAD MEDIA: hasilnya null');
+
+                await response.send(userId, 'Mohon maaf kak, foto bukti pembayaran tidak dapat dibaca. Silakan kirim ulang.');
+
+                return true;
             }
+
+            logger.info(`MEDIA DOWNLOADED: ${proofPhoto.mimetype}`);
 
             const orderId = pendingProof[userId];
             const order = pendingOrders[orderId];
