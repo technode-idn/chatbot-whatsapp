@@ -107,8 +107,14 @@ client.on('message', async message => {
         if(await handleTenantSession({ userId, text, response })) return;
 
         await handleCustomerSession({ message, userId, text, client, response, logger, monitor });
+    } catch(error) {
+        logger.error(error);
     } finally {
-        await saveRuntimeSessions(monitor.guardians.session);
+        try {
+            await saveRuntimeSessions(monitor.guardians.session);
+        } catch(error) {
+            logger.error(error);
+        }
     }
 });
 

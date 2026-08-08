@@ -43,12 +43,20 @@ function resetCustomerSession(userId) {
 export async function handleCustomerSession({ message, userId, text, client, response, logger, monitor }) {
     if(message.hasMedia) {
         if(!pendingProof[userId]) return true;
-        await response.send(userId, 'Baik, sebentar ya kak. Kami cek dulu bukti pembayarannya 🙏');
-        const proofPhoto = await message.downloadMedia();
-        const orderId = pendingProof[userId];
-        const order = pendingOrders[orderId];
-        if(!order?.data) { await response.send(userId, 'Data pesanan tidak ditemukan. Mohon hubungi admin.'); return true; }
-        await sendProofToGroup(proofPhoto, orderId, order.data, client);
+        try {
+            await response.send(userId, 'Baik, sebentar ya kak. Kami cek dulu bukti pembayarannya 🙏');
+            const proofPhoto = await message.downloadMedia();
+            if(!proofPhoto?.data) throw new Error(`Bukti pembayaran dari ${userId} tidak memiliki data media.`);
+
+            const orderId = pendingProof[userId];
+            const order = pendingOrders[orderId];
+            if(!order?.data) { await response.send(userId, 'Data pesanan tidak ditemukan. Mohon hubungi admin.'); return true; }
+
+            await sendProofToGroup(proofPhoto, orderId, order.data, client);
+        } catch(error) {
+            logger.error(error);
+            await response.send(userId, 'Mohon maaf kak, bukti pembayaran belum bisa diteruskan. Silakan kirim ulang foto bukti pembayarannya.');
+        }
         return true;
     }
 
