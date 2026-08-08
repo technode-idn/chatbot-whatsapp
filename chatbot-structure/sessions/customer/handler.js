@@ -50,7 +50,10 @@ export async function handleCustomerSession({ message, userId, text, client, res
             const order = pendingOrders[orderId];
             if(!order?.data) { await response.send(userId, 'Data pesanan tidak ditemukan. Mohon hubungi admin.'); return true; }
 
-            await sendProofToGroup(message, orderId, order.data, client);
+            const proofPhoto = await message.downloadMedia();
+            if(!proofPhoto?.data) throw new Error('Data foto bukti pembayaran tidak tersedia.');
+
+            await sendProofToGroup(proofPhoto, orderId, order.data, client);
         } catch(error) {
             logger.error(error);
             await response.send(userId, 'Mohon maaf kak, bukti pembayaran belum bisa diteruskan. Silakan kirim ulang foto bukti pembayarannya.');
