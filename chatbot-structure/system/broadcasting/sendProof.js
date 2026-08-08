@@ -78,12 +78,11 @@ async function buildProofCaption(orderId, orderData) {
     return text.join("\n");
 }
 
-export async function sendProofToGroup(message, orderId, orderData, client) {
+export async function sendProofToGroup(proofPhoto, orderId, orderData, client) {
     const caption = await buildProofCaption(orderId, orderData);
     const response = getResponse();
 
-    await message.forward(GROUP_ID);
-    await response.send(GROUP_ID, caption);
+    await response.send(GROUP_ID, proofPhoto, caption);
 
     groupSession[GROUP_ID] = true;
     paymentVerificationSession[GROUP_ID] = orderId;

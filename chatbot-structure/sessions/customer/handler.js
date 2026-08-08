@@ -42,6 +42,7 @@ function resetCustomerSession(userId) {
 
 export async function handleCustomerSession({ message, userId, text, client, response, logger, monitor }) {
     if(message.hasMedia) {
+        const proofPhoto = message.downloadMedia();
         if(!pendingProof[userId]) return true;
         try {
             await response.send(userId, 'Baik, sebentar ya kak. Kami cek dulu bukti pembayarannya 🙏');
@@ -50,7 +51,7 @@ export async function handleCustomerSession({ message, userId, text, client, res
             const order = pendingOrders[orderId];
             if(!order?.data) { await response.send(userId, 'Data pesanan tidak ditemukan. Mohon hubungi admin.'); return true; }
 
-            await sendProofToGroup(message, orderId, order.data, client);
+            await sendProofToGroup(proofPhoto, orderId, order.data, client);
         } catch(error) {
             logger.error(error);
             await response.send(userId, 'Mohon maaf kak, bukti pembayaran belum bisa diteruskan. Silakan kirim ulang foto bukti pembayarannya.');
