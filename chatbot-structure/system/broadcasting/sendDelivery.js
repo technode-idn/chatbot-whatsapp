@@ -6,7 +6,7 @@ import { completeOrder } from '../ordering/validationOrder.js';
 import { payment } from '../payment.js';
 import { ongkir } from '../ongkir.js';
 
-const GROUP_ID = '120363407187484870@g.us';
+const GROUP_ID = '120363430834351521@g.us';
 
 async function loadJsonFile(path) {
     const rawData = await fs.readFile(path, 'utf8');
