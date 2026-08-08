@@ -2,7 +2,7 @@ import { groupSession, paymentVerificationSession } from "../../settings/globalV
 import fs from 'fs/promises';
 import { DATABASE_PRODUCT_PATH } from "../../settings/loadFiles.js";
 
-const GROUP_ID = '120363405226602187@g.us';
+const GROUP_ID = '120363407187484870@g.us';
 
 function productNumberFromKey(key) {
     const number = key.match(/_(\d+)$/)?.[1];
