@@ -42,10 +42,15 @@ function resetCustomerSession(userId) {
 
 export async function handleCustomerSession({ message, userId, text, client, response, logger, monitor }) {
     if(message.hasMedia) {
-        const proofPhoto = message.downloadMedia();
         if(!pendingProof[userId]) return true;
         try {
             await response.send(userId, 'Baik, sebentar ya kak. Kami cek dulu bukti pembayarannya 🙏');
+
+            const proofPhoto = await message.downloadMedia();
+
+            if(!proofPhoto) {
+                await response.send(userId, 'Mohon maaf kak, foto bukti pembayaran tidak dapat dibaca. Silakan kirim ulang.')
+            }
 
             const orderId = pendingProof[userId];
             const order = pendingOrders[orderId];
