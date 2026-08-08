@@ -69,18 +69,19 @@ client.on('message', async message => {
 
         const userId = message.from;
         const text = message.body.trim();
+        const isGroup = userId.endsWith('@g.us');
+        const isKnownTenant = isTenant(userId);
 
         logger.info(`FROM: ${userId}`);
         logger.info(`MESSAGE: ${message.body}`);
 
-        if(!allowedNumberCust.includes(userId)) {
+        if(!allowedNumberCust.includes(userId) && !isKnownTenant && !isGroup) {
             return;
         }
 
         if(message.fromMe || (userId === '64282960068848@lid' && text !== 'export')) return;
 
-        const isGroup = userId.endsWith('@g.us');
-        const isCustomer = !isGroup && !isTenant(userId);
+        const isCustomer = !isGroup && !isKnownTenant;
         const closedMessage = 'Maaf, KlikbiGo sedang tutup. Waktu Operasinal kami hanya sampai Senin-Jumat di jam 10.00 - 16.00. Terima kasih atas pengertiannya.';
 
         if(isCustomer && (isWeekend() || isOutsideOperationalHours())) {
