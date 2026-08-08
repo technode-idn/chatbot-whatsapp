@@ -1,10 +1,8 @@
 import { groupSession, paymentVerificationSession } from "../../settings/globalVariables.js";
 import fs from 'fs/promises';
 import { DATABASE_PRODUCT_PATH } from "../../settings/loadFiles.js";
-import { getResponse } from "../security/response.js";
 
-// 120363405226602187@g.us
-const GROUP_ID = '120363407187484870@g.us';
+const GROUP_ID = '120363405226602187@g.us';
 
 function productNumberFromKey(key) {
     const number = key.match(/_(\d+)$/)?.[1];
@@ -79,15 +77,11 @@ async function buildProofCaption(orderId, orderData) {
     return text.join("\n");
 }
 
-export async function sendProofToGroup(proof, orderId, orderData, client) {
-    const response = getResponse();
+export async function sendProofToGroup(message, orderId, orderData, client) {
+    const caption = await buildProofCaption(orderId, orderData);
 
-    await response.sendMedia(
-        GROUP_ID,
-        proof,
-        await buildProofCaption(orderId, orderData),
-        "normal"
-    );
+    await message.forward(GROUP_ID);
+    await client.sendMessage(GROUP_ID, caption);
 
     groupSession[GROUP_ID] = true;
     paymentVerificationSession[GROUP_ID] = orderId;
