@@ -5,7 +5,7 @@ import { getResponse } from "../security/response.js";
 import { payment } from '../payment.js';
 import { ongkir } from '../ongkir.js';
 
-const GROUP_ID = '120363407187484870@g.us';
+const GROUP_ID = "120363405226602187@g.us";
 
 function productNumberFromKey(key) {
     const number = key.match(/_(\d+)$/)?.[1];

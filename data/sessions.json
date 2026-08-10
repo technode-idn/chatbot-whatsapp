@@ -1,1 +1,17 @@
-{}
+{
+    "savedAt": "2026-08-10T05:21:29.351Z",
+    "data": {
+        "pendingOrders": {},
+        "pendingProof": {},
+        "paymentVerificationSession": {},
+        "sessions": {},
+        "paymentStatus": {},
+        "orderConfirmationSession": {},
+        "groupSession": {},
+        "deliverySession": {},
+        "multipleFormSession": {},
+        "editingOrder": {},
+        "userMode": {},
+        "formTenantSession": {}
+    }
+}

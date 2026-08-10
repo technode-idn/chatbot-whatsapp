@@ -11,7 +11,8 @@ import {
     pendingProof,
     sessions,
     userMode,
-    allNumberOwnerTenant
+    allNumberOwnerTenant,
+    allNumberDriverAdmin
 } from "../../settings/globalVariables.js";
 
 const SESSION_BUCKETS = {
@@ -78,7 +79,8 @@ export function getActiveCustomerIds() {
 
         return normalizedId.includes('@')
             && !normalizedId.endsWith('@g.us')
-            && !allNumberOwnerTenant.includes(normalizedId);
+            && !allNumberOwnerTenant.includes(normalizedId)
+            && !allNumberDriverAdmin.includes(normalizedId);
     });
 }
 
