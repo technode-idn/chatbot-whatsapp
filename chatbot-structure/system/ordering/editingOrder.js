@@ -3,7 +3,7 @@ import { getResponse } from "../security/response.js";
 export async function editingOrder(orderDataUnavailable = [], orderId, userId, client) {
     const response = getResponse();
     const unavailableKeys = Array.isArray(orderDataUnavailable) ? orderDataUnavailable : [];
-    const text = ["📝 *PRODUK PENGGANTI*\n", "===========================", `Order ID: ${orderId}\n\n`];
+    const text = ["📝 *PRODUK PENGGANTI*\n", "===========================\n", `Order ID: ${orderId}\n\n`];
 
     for(const key of unavailableKeys) {
         const number = key.match(/_(\d+)$/)?.[1];

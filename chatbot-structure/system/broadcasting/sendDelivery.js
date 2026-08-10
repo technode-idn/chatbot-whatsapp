@@ -26,19 +26,33 @@ async function buildDeliveryForm(orderId) {
     const shippingCost = Number(await ongkir(order?.customer, orderId)) || 0;
     const totalPrice = (Number(paymentData?.total_price) || 0) + shippingCost;
     const orderLines = (order?.items || [])
-        .map(item => `- ${item.productName || item.productId} (${item.quantity})`)
+        .map(item => `- ${item.productName || item.productId}`)
+        .join('\n') || '-';
+    const tenantLines = [...new Set(
+        (order?.items || [])
+            .map(item => item.tenantName)
+            .filter(Boolean)
+    )]
+        .map(tenantName => `- ${tenantName}`)
         .join('\n') || '-';
 
     return [
-        '*SILAKAN ISI FORM PENGIRIMAN*',
-        `Nama Pemesan: ${customerInfo.name || orderData['nama_pemesan'] || '-'}`,
-        `Nomor Telepon: ${customerInfo.phone || orderData['nomor_telepon_aktif'] || '-'}`,
-        `Alamat: ${customerInfo.address || orderData['alamat_lengkap_pengantaran'] || '-'}`,
-        `Total Harga: ${formatRupiah(totalPrice)}`,
+        '📝 *INFORMASI PENGIRIMAN*',
         '',
-        '*PESANAN:*',
+        '=============================',
+        `*Nama:* ${customerInfo.name || orderData['nama_pemesan'] || '-'}`,
+        `*Nomor:* ${customerInfo.phone || orderData['nomor_telepon_aktif'] || '-'}`,
+        `*Alamat:* ${customerInfo.address || orderData['alamat_lengkap_pengantaran'] || '-'}`,
+        `*Total:* ${formatRupiah(totalPrice)}`,
+        '=============================',
+        '',
+        '📦 *PRODUK PESANAN:*',
         orderLines,
         '',
+        '🏪 *PENGAMBILAN PESANAN:*',
+        tenantLines,
+        '',
+        '👇🏻 _Pengisian NIM Driver_',
         'NIM PENGIRIM:'
     ].join('\n');
 }
@@ -126,7 +140,7 @@ export async function handleDeliveryResponse(text, client, fallbackOrderId = nul
 
     await response.send(
         customerId,
-        "Terima kasih sudah berbelanja di KlikBi-Go kakak 🙏\n\nKami minta dukungannya agar bisnis ini bisa terus berkembang dengan follow akun instagram KlikBi\nhttps://www.instagram.com/klikbisvipb?igsh=MWM5NGUwcnN1bTNvaQ==\n\nSemoga kita dapat bertemu kembali di pemesanan berikutnya 😊\n\n*_*Silahkan ketik 'keluar' untuk menyelesaikan_"
+        "Terima kasih sudah berbelanja di KlikBi-Go kakak 🙏\n\nKami minta dukungannya agar bisnis ini bisa terus berkembang dengan follow akun instagram KlikBi\nhttps://www.instagram.com/klikbisvipb?igsh=MWM5NGUwcnN1bTNvaQ==\n\nSemoga kita dapat bertemu kembali di pemesanan berikutnya 😊\n\n*_*Silahkan ketik 'keluar' untuk menyelesaikan_*"
     );
 
     delete deliverySession[GROUP_ID];

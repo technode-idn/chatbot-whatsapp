@@ -44,10 +44,6 @@ export async function handleCustomerSession({ message, userId, text, client, res
     if(message.hasMedia) {
         if(!pendingProof[userId]) return true;
         try {
-            logger.info(`MEDIA TYPE: ${message.type}`);
-            logger.info(`MIMETYPE: ${message._data?.mimetype}`);
-            logger.info(`HAS MEDIA: ${message.hasMedia}`);
-
             await response.send(userId, 'Baik, sebentar ya kak. Kami cek dulu bukti pembayarannya 🙏');
 
             const proofPhoto = await message.downloadMedia();
@@ -59,8 +55,6 @@ export async function handleCustomerSession({ message, userId, text, client, res
 
                 return true;
             }
-
-            logger.info(`MEDIA DOWNLOADED: ${proofPhoto.mimetype}`);
 
             const orderId = pendingProof[userId];
             const order = pendingOrders[orderId];

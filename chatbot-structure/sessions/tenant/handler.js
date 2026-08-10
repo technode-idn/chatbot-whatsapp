@@ -35,7 +35,7 @@ export async function handleTenantSession({ userId, text, response }) {
     if(formTenantSession[userId]?.mode === 'choice') {
         if(text === '1') {
             formTenantSession[userId] = { mode: 'uniform' };
-            await response.send(userId, 'Masukkan jumlah stok yang akan ditambahkan ke seluruh produk.\n\nJumlah Stok:');
+            await response.send(userId, 'Masukkan jumlah stok yang akan ditambahkan ke seluruh produk.');
             return true;
         }
 
@@ -113,7 +113,7 @@ export async function handleTenantSession({ userId, text, response }) {
         case '1': await resetStock(true); await sendStockInputMenu(userId); return true;
         case '2': await response.send(userId, await displayStock(userId)); return true;
         case '3':
-            await response.send(userId, "📝 *SILAKAN PERBARUI STOK*\n=============================\nID Produk: \nJumlah Stok: \nStatus: \n\n_Status diisi dengan tambah/kurang/reset secara text_");
+            await response.send(userId, "📝 *SILAKAN PERBARUI STOK*\n=============================\nID Produk: \nJumlah Stok: \nStatus: \n\n_*Status diisi dengan tambah/kurang/reset secara text*_");
             userMode[userId] = 'tenant-update-stock';
             return true;
         case '4':
