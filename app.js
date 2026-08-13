@@ -32,6 +32,13 @@ const response = getResponse();
 
 restoreRuntimeSessions(await monitor.guardians.session.load());
 
+// Tandai pelanggan yang memiliki sesi sebelum client menerima pesan baru.
+// Ini mencegah menu awal terkirim saat proses recovery masih berjalan.
+const recoveredCustomerIds = getActiveCustomerIds();
+for(const customerId of recoveredCustomerIds) {
+    welcomedUsers.add(customerId);
+}
+
 async function saveSessionBeforeExit() {
     await saveRuntimeSessions(monitor.guardians.session);
 }
@@ -47,8 +54,7 @@ client.on('ready', async () => {
 
      await broadcastMenu();
 
-     for(const customerId of getActiveCustomerIds()) {
-         welcomedUsers.add(customerId);
+     for(const customerId of recoveredCustomerIds) {
          await response.send(customerId, 'Mohon maaf, sepertinya sempat ada gangguan sistem. Silahkan lanjutkan kembali aktivitas anda.', 'high');
      }
 });

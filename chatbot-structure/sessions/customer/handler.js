@@ -167,7 +167,7 @@ export async function handleCustomerSession({
   if (text.toLocaleLowerCase() === "ganti") {
     await response.send(
       userId,
-      "📝 *JENIS PEMESANAN ANDA*\n===========================\n[1] Single Order\n[2] Multiple Order\n\n*_*Jika ingin kembali ke menu, ketik 'menu'_*",
+      "📝 *JENIS PEMESANAN ANDA*\n===========================\n[1] Single Order (Pilih ini jika hanya memesan satu jenis produk)\n[2] Multiple Order (Pilih ini jika memesan lebih dari satu jenis produk)\n\n*_*Jika ingin kembali ke menu, ketik 'menu'_*",
     );
     userMode[userId] = "form";
     delete sessions[userId];
@@ -206,7 +206,7 @@ export async function handleCustomerSession({
     if (text === "2") {
       await response.send(
         userId,
-        "📝 Berapa produk yang ingin anda pesan?\n[1] 1\n[2] 2\n[3] 3\n[4] 4\n[5] 5\n\n*_*Jika ingin ganti jenis pemesanan, ketik 'ganti'_*",
+        "Boleh dipilih untuk berapa jenis produk kak?\n\n[1] 1\n[2] 2\n[3] 3\n[4] 4\n[5] 5\n\n*_*Jika ingin ganti jenis pemesanan, ketik 'ganti'_*",
       );
       multipleFormSession[userId] = true;
       delete userMode[userId];
@@ -283,7 +283,7 @@ export async function handleCustomerSession({
       userMode[userId] = "form";
       await response.send(
         userId,
-        "📝 *JENIS PEMESANAN ANDA*\n===========================\n[1] Single Order\n[2] Multiple Order\n\n*_*Jika ingin kembali ke menu, ketik 'menu'_*",
+        "📝 *JENIS PEMESANAN ANDA*\n===========================\n[1] Single Order (Pilih ini jika hanya memesan produk di satu tenant yang sama)\n[2] Multiple Order (Pilih ini jika memesan produk di beberapa tenant berbeda) \n\n*_*Jika ingin kembali ke menu, ketik 'menu'_*",
       );
       return true;
     case "2":
