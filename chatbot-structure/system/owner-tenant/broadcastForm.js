@@ -18,6 +18,17 @@ async function refreshBroadcastData() {
     tenants = await loadJsonFile(DATA_TENANT_PATH);
 }
 
+async function markStockBroadcastSent(userId) {
+    const tenant = tenants.find(item => item["owner_phone"] === userId);
+
+    if(!tenant || tenant["stock_broadcast_sent"]) {
+        return;
+    }
+
+    tenant["stock_broadcast_sent"] = true;
+    await fs.writeFile(DATA_TENANT_PATH, JSON.stringify(tenants, null, 4));
+}
+
 function delay(ms) {
     return new Promise(resolve => setTimeout(resolve, ms));
 }
@@ -47,11 +58,15 @@ function formStock(tenant) {
 
 const STOCK_INPUT_MENU = 'Pilih metode pengisian stok:\n[1] Isi stok rata untuk seluruh produk\n[2] Isi stok satu-satu';
 
-export async function sendStockInputMenu(userId) {
+export async function sendStockInputMenu(userId, { markAsBroadcastSent = true } = {}) {
     const response = getResponse();
 
     await response.send(userId, STOCK_INPUT_MENU, 'normal');
     formTenantSession[userId] = { mode: 'choice' };
+
+    if(markAsBroadcastSent) {
+        await markStockBroadcastSent(userId);
+    }
 }
 
 export async function broadcastMenu() {
@@ -64,11 +79,11 @@ export async function broadcastMenu() {
             continue;
         }
 
-        if(tenant["status_stock"] === "complete") {
+        if(tenant["status_stock"] === "complete" || tenant["stock_broadcast_sent"]) {
             continue;
         }
         
-        await sendStockInputMenu(tenant["owner_phone"]);
+        await sendStockInputMenu(tenant["owner_phone"], { markAsBroadcastSent: true });
 
         await delay(Math.floor(Math.random() * 5000) + 3000);
     }

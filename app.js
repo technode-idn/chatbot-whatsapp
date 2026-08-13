@@ -53,6 +53,7 @@ client.on('ready', async () => {
      recoveryFollowUpSent = true;
 
      await broadcastMenu();
+     await saveRuntimeSessions(monitor.guardians.session);
 
      for(const customerId of recoveredCustomerIds) {
          await response.send(customerId, 'Mohon maaf, sepertinya sempat ada gangguan sistem. Silahkan lanjutkan kembali aktivitas anda.', 'high');

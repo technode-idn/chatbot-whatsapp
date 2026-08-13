@@ -154,6 +154,7 @@ export async function resetStock(fill) {
     if(!fill) {
         for(const tenant of tenants) {
             tenant["status_stock"] = "pending";
+            tenant["stock_broadcast_sent"] = false;
         }
     }
 
