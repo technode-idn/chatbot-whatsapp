@@ -36,8 +36,8 @@ function buildTenantMessage(orderId, customerInfo, tenantName, items) {
         productLines,
         '',
         'Balas salah satu:',
-        `OK ${orderId} = semua produk tersedia`,
-        `X ${orderId} = ada produk yang tidak tersedia`
+        'OK = semua produk tersedia',
+        'X = ada produk yang tidak tersedia'
     ].join('\n');
 }
 
@@ -89,11 +89,21 @@ export async function requestTenantOrderConfirmation(orderId) {
 }
 
 export async function handleTenantOrderConfirmation(userId, text, response) {
-    const match = String(text || '').trim().match(/^(OK|X)\s+(ORD-[A-Z0-9-]+)$/i);
+    const rawText = String(text || '').trim();
+    const match = rawText.match(/^(OK|X)(?:\s+(ORD-[A-Z0-9-]+))?$/i);
 
     if(!match) return false;
 
-    const [, decision, orderId] = match;
+    const [, decision, requestedOrderId] = match;
+    const pendingConfirmations = Object.entries(tenantOrderConfirmation[userId] || {})
+        .filter(([, confirmation]) => confirmation.status === 'pending');
+    const orderId = requestedOrderId || pendingConfirmations[0]?.[0];
+
+    if(!requestedOrderId && pendingConfirmations.length > 1) {
+        await response.send(userId, 'Ada lebih dari satu pesanan yang menunggu konfirmasi. Balas dengan format OK <Order ID> atau X <Order ID>.');
+        return true;
+    }
+
     const confirmation = tenantOrderConfirmation[userId]?.[orderId];
 
     if(!confirmation || confirmation.status !== 'pending') return false;

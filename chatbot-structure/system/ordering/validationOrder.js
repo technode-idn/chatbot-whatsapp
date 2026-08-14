@@ -1,7 +1,7 @@
 import fs from 'fs/promises';
 import crypto from 'crypto';
 import { DATABASE_PRODUCT_PATH, DATA_USERS_PATH, rawDataUsers, rawDatabaseProduct } from "../../settings/loadFiles.js";
-import { editingOrder, orderConfirmationSession, paymentStatus, pendingOrders } from "../../settings/globalVariables.js";
+import { campusZone, editingOrder, orderConfirmationSession, paymentStatus, pendingOrders } from "../../settings/globalVariables.js";
 import { askOrderConfirmation } from "./editOrder.js";
 import { clearTenantOrderConfirmation, requestTenantOrderConfirmation } from './tenantOrderConfirmation.js';
 import { getResponse } from '../security/response.js';
@@ -19,6 +19,19 @@ async function loadJsonFile(path) {
 }
 
 async function checkDeliveryAddress(address) {
+    const tokens = String(address || '')
+        .toLowerCase()
+        .split(/[^a-z0-9]+/)
+        .filter(Boolean);
+
+    for(const keywords of Object.values(campusZone)) {
+        for(const keyword of keywords) {
+            if(tokens.includes(String(keyword).toLowerCase().trim())) {
+                return { valid: true, reason: null };
+            }
+        }
+    }
+
     const result = await calculateShipping(String(address || '').toLowerCase());
     const distance = Number(result.distance);
 

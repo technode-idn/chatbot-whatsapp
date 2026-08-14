@@ -6,14 +6,16 @@ import { completeOrder } from '../ordering/validationOrder.js';
 import { payment } from '../payment.js';
 import { ongkir } from '../ongkir.js';
 
-// Production Pake
-// const GROUP_ID = "120363431265939870@g.us";
-const GROUP_ID = '120363430834351521@g.us';
+const GROUP_ID = "120363431265939870@g.us";
 
 async function loadJsonFile(path) {
     const rawData = await fs.readFile(path, 'utf8');
 
     return rawData.trim() ? JSON.parse(rawData) : [];
+}
+
+function normalizeDriverId(value) {
+    return String(value || '').trim().toLowerCase();
 }
 
 function formatRupiah(value) {
@@ -104,7 +106,29 @@ export async function handleDeliveryResponse(text, client, fallbackOrderId = nul
     const users = await loadJsonFile(DATA_USERS_PATH);
     const deliveries = await loadJsonFile(DATA_DELIVERY_PATH);
     const orderId = data["order_id"] || fallbackOrderId;
-    const deliveryId = data["id_pengirim"] || data["nim_pengirim"];
+    const deliveryId = data["id_pengirim"] || data["nim_pengirim"] || data["nim"];
+
+    if(!deliveryId) {
+        return {
+            success: false,
+            message: 'NIM driver belum diisi. Silakan kirim NIM driver yang terdaftar di database.'
+        };
+    }
+
+    const normalizedDeliveryId = normalizeDriverId(deliveryId);
+    const deliveryPerson = deliveries.find(delivery => (
+        normalizeDriverId(
+            delivery["id_delivery"] || delivery["nim"] || delivery["nim_pengirim"]
+        ) === normalizedDeliveryId
+    ));
+
+    if(!deliveryPerson) {
+        return {
+            success: false,
+            message: 'NIM driver tidak terdaftar. Silakan kirim NIM driver lain yang ada di database.'
+        };
+    }
+
     let customerId = null;
 
     for(const user of users) {
@@ -118,17 +142,6 @@ export async function handleDeliveryResponse(text, client, fallbackOrderId = nul
         return {
             success: false,
             message: 'Data customer tidak ditemukan untuk Order ID tersebut.'
-        };
-    }
-
-    const deliveryPerson = deliveries.find(delivery => (
-        String(delivery["id_delivery"]) === String(deliveryId)
-    ));
-
-    if(!deliveryPerson) {
-        return {
-            success: false,
-            message: 'Data pengirim tidak ditemukan. Pastikan NIM/ID Pengirim sesuai database delivery.'
         };
     }
 

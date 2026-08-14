@@ -1,6 +1,7 @@
 import { paymentVerificationSession, groupSession, deliverySession } from '../../settings/globalVariables.js';
 import { verificationPayment } from '../../system/verification.js';
 import { handleDeliveryResponse } from '../../system/broadcasting/sendDelivery.js';
+import { getResponse } from '../../system/security/response.js';
 
 function isPaymentResponse(text) {
     return /^\s*order id\s*(?::|->)/im.test(text)
@@ -40,7 +41,11 @@ export async function handleGroupSession({ userId, text, message, client }) {
     }
 
     if(deliverySession[userId] && isDeliveryResponse(text)) {
-        await handleDeliveryResponse(text, client, deliverySession[userId]);
+        const result = await handleDeliveryResponse(text, client, deliverySession[userId]);
+
+        if(result?.message) {
+            await getResponse().send(userId, result.message);
+        }
     }
 
     return true;
