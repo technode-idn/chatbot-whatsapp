@@ -9,7 +9,9 @@ export const deliverySession = {};
 export const multipleFormSession = {};
 export const editingOrder = {};
 export const userMode = {};
-export const allNumberOwnerTenant = ["155981031973047@lid", "162608233615561@lid", "158501556994144@lid", "58236082323536@lid", "119963033596086@lid", "177670532915314@lid"];
+// Production Pake
+// "155981031973047@lid", "162608233615561@lid", "158501556994144@lid", "58236082323536@lid", "119963033596086@lid", "177670532915314@lid"
+export const allNumberOwnerTenant = ["135124670787747@lid"];
 export const allNumberDriverAdmin = ["232731510366286@lid"];
 export const formTenantSession = {};
 export const tenantOrderConfirmation = {};
@@ -71,3 +73,51 @@ export let campusZone = {
         'studio ekw'
     ]
 };
+
+    // {
+    //     "tenant_id": "TEN002",
+    //     "store": "soeka_dimsum",
+    //     "owner_phone": "162608233615561@lid",
+    //     "qris": "./chatbot-structure/img/qris_tenant_3.jpg",
+    //     "status_stock": "pending",
+    //     "stock_broadcast_sent": false
+    // },
+    // {
+    //     "tenant_id": "TEN003",
+    //     "store": "miwiti_kusaji",
+    //     "owner_phone": "158501556994144@lid",
+    //     "qris": "./chatbot-structure/img/qris_tenant_4.jpg",
+    //     "status_stock": "pending",
+    //     "stock_broadcast_sent": false
+    // },
+    // {
+    //     "tenant_id": "TEN004",
+    //     "store": "servis_coffee",
+    //     "owner_phone": "58236082323536@lid",
+    //     "qris": "./chatbot-structure/img/qris_tenant_5.jpg",
+    //     "status_stock": "pending",
+    //     "stock_broadcast_sent": false
+    // },
+    // {
+    //     "tenant_id": "TEN005",
+    //     "store": "hagarasa",
+    //     "owner_phone": "119963033596086@lid",
+    //     "qris": "./chatbot-structure/img/qris_tenant_6.jpg",
+    //     "status_stock": "pending",
+    //     "stock_broadcast_sent": false
+    // },
+    // {
+    //     "tenant_id": "TEN006",
+    //     "store": "acio",
+    //     "owner_phone": "177670532915314@lid",
+    //     "qris": "./chatbot-structure/img/qris_tenant_7.jpg",
+    //     "status_stock": "pending",
+    //     "stock_broadcast_sent": false
+    // },
+    // {
+    //     "tenant_id": "TEN007",
+    //     "store": "klikbi",
+    //     "qris": "./chatbot-structure/img/qris_tenant_8.jpg",
+    //     "status_stock": "pending",
+    //     "stock_broadcast_sent": false
+    // }

@@ -2,55 +2,8 @@
     {
         "tenant_id": "TEN001",
         "store": "popkit",
-        "owner_phone": "155981031973047@lid",
+        "owner_phone": "135124670787747@lid",
         "qris": "./chatbot-structure/img/qris_tenant_2.jpg",
-        "status_stock": "pending",
-        "stock_broadcast_sent": false
-    },
-    {
-        "tenant_id": "TEN002",
-        "store": "soeka_dimsum",
-        "owner_phone": "162608233615561@lid",
-        "qris": "./chatbot-structure/img/qris_tenant_3.jpg",
-        "status_stock": "pending",
-        "stock_broadcast_sent": false
-    },
-    {
-        "tenant_id": "TEN003",
-        "store": "miwiti_kusaji",
-        "owner_phone": "158501556994144@lid",
-        "qris": "./chatbot-structure/img/qris_tenant_4.jpg",
-        "status_stock": "pending",
-        "stock_broadcast_sent": false
-    },
-    {
-        "tenant_id": "TEN004",
-        "store": "servis_coffee",
-        "owner_phone": "58236082323536@lid",
-        "qris": "./chatbot-structure/img/qris_tenant_5.jpg",
-        "status_stock": "pending",
-        "stock_broadcast_sent": false
-    },
-    {
-        "tenant_id": "TEN005",
-        "store": "hagarasa",
-        "owner_phone": "119963033596086@lid",
-        "qris": "./chatbot-structure/img/qris_tenant_6.jpg",
-        "status_stock": "pending",
-        "stock_broadcast_sent": false
-    },
-    {
-        "tenant_id": "TEN006",
-        "store": "acio",
-        "owner_phone": "177670532915314@lid",
-        "qris": "./chatbot-structure/img/qris_tenant_7.jpg",
-        "status_stock": "pending",
-        "stock_broadcast_sent": false
-    },
-    {
-        "tenant_id": "TEN007",
-        "store": "klikbi",
-        "qris": "./chatbot-structure/img/qris_tenant_8.jpg",
         "status_stock": "pending",
         "stock_broadcast_sent": false
     }

@@ -14,6 +14,8 @@ import { handleCustomerSession } from './chatbot-structure/sessions/customer/han
 import { welcomedUsers } from './chatbot-structure/settings/runtimeUsers.js';
 import { isWeekend } from './chatbot-structure/settings/weekend.js';
 import { isOutsideOperationalHours } from './chatbot-structure/settings/operationalHours.js';
+// Production dihapus
+import { orderConfirmationSession } from './chatbot-structure/settings/globalVariables.js';
 
 const { Client, LocalAuth } = pkg;
 
@@ -67,6 +69,15 @@ nodeCron.schedule('0 16 * * 1-5', async () => {
 
 client.on('message', async message => {
     try {
+      // Production dihapus
+      const allowedNumberCust = [
+        "64282960068848@lid", // ka ainun
+        "135124670787747@lid", // technode
+        "79959943024845@lid", // azmi 2
+        "28420016742628@lid", // yusuf
+        "58493310615674@lid", // azmi 1
+      ];
+
       const userId = message.from;
       const text = message.body.trim();
       const isGroup = userId.endsWith("@g.us");
@@ -75,6 +86,20 @@ client.on('message', async message => {
 
       logger.info(`FROM: ${userId}`);
       logger.info(`MESSAGE: ${message.body}`);
+
+      // Production dihapus
+      const hasActiveOrderConfirmation = orderConfirmationSession[userId]?.status;
+
+      // Production dihapus
+      if (
+        !allowedNumberCust.includes(userId) &&
+        !isKnownTenant &&
+        !isKnownDriverAdmin &&
+        !isGroup &&
+        !hasActiveOrderConfirmation
+      ) {
+        return;
+      }
 
       if (
         message.fromMe ||
