@@ -30,7 +30,7 @@ async function buildDeliveryForm(orderId) {
     const shippingCost = Number(await ongkir(order?.customer, orderId)) || 0;
     const totalPrice = (Number(paymentData?.total_price) || 0) + shippingCost;
     const orderLines = (order?.items || [])
-        .map(item => `- ${item.productName || item.productId}`)
+        .map(item => `- ${item.productName || item.productId} (${item.quantity || 1})`)
         .join('\n') || '-';
     const tenantLines = [...new Set(
         (order?.items || [])
@@ -155,7 +155,7 @@ export async function handleDeliveryResponse(text, client, fallbackOrderId = nul
 
     await response.send(
         customerId,
-        "Terima kasih sudah berbelanja di KlikBi-Go kakak 🙏\n\nKami minta dukungannya agar bisnis ini bisa terus berkembang dengan follow akun instagram KlikBi\nhttps://www.instagram.com/klikbisvipb?igsh=MWM5NGUwcnN1bTNvaQ==\n\nSemoga kita dapat bertemu kembali di pemesanan berikutnya 😊\n\n_*Silahkan ketik *keluar* untuk menyelesaikan_"
+        "Terima kasih sudah berbelanja di KlikBi-Go kakak 🙏\n\nKami minta dukungannya agar bisnis ini bisa terus berkembang dengan follow akun instagram KlikBi\nhttps://www.instagram.com/klikbisvipb?igsh=MWM5NGUwcnN1bTNvaQ==\n\nSemoga kita dapat bertemu kembali di pemesanan berikutnya 😊\n\n_Silahkan ketik *keluar* untuk menyelesaikan_"
     );
 
     delete deliverySession[GROUP_ID];

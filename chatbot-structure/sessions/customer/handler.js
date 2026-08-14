@@ -170,7 +170,7 @@ export async function handleCustomerSession({
   if (text.toLocaleLowerCase() === "ganti") {
     await response.send(
       userId,
-      "📝 *JENIS PEMESANAN ANDA*\n===========================\n[1] Single Order (Pilih ini jika hanya memesan satu jenis produk)\n[2] Multiple Order (Pilih ini jika memesan lebih dari satu jenis produk)\n\n_*Jika ingin kembali ke menu, ketik *menu*_",
+      "📝 *JENIS PEMESANAN ANDA*\n===========================\n[1] Single Order (Pilih ini jika hanya memesan satu jenis produk)\n[2] Multiple Order (Pilih ini jika memesan lebih dari satu jenis produk)\n\n_Jika ingin kembali ke menu, ketik *menu*_",
     );
     userMode[userId] = "form";
     delete sessions[userId];
@@ -200,7 +200,7 @@ export async function handleCustomerSession({
     if (text === "1") {
       await response.send(
         userId,
-        "Baik kak, supaya kami bisa proses pesanannya, mohon info ya.\n\n📌Nama Pemesan: \n📌ID Produk: \n📌Jumlah Pesanan: \n📌Nomor Telepon Aktif: \n\n🏠 *TUJUAN PENGANTARAN*\n=============================\n_Tolong isi alamat pengantaran secara lengkap, jika berlokasi diluar gedung/kawasan (Gymnas, Zeta, CA/CB/LAB, Dll) SV IPB_\n\n- Perumahan/Tempat\n- Jalan + Nomor\n- Kelurahan/Desa\n- Kecamatan\n- Kota/Kabupaten\n- Gunakan koma sebagai pemisah\n\n*Cth: Kos Lodaya, Jl. Lodaya II No.15, Babakan, Bogor Tengah, Kota Bogor*\n\nIsi alamat Anda di bawah 👇\n📌Alamat Lengkap Pengantaran: \n\n_*Jika tidak jadi memesan, ketik *keluar*_\n_*Jika ingin ganti jenis pemesanan, ketik *ganti*_",
+        "Baik kak, supaya kami bisa proses pesanannya, mohon info ya.\n\n📌Nama Pemesan: \n📌ID Produk: \n📌Jumlah Pesanan: \n📌Nomor Telepon Aktif: \n\n🏠 *TUJUAN PENGANTARAN*\n=============================\n_Tolong isi alamat pengantaran secara lengkap, jika berlokasi diluar gedung/kawasan (Gymnas, Zeta, CA/CB/LAB, Dll) SV IPB_\n\n- Perumahan/Tempat\n- Jalan + Nomor\n- Kelurahan/Desa\n- Kecamatan\n- Kota/Kabupaten\n- Gunakan koma sebagai pemisah\n\n*Cth: Kos Lodaya, Jl. Lodaya II No.15, Babakan, Bogor Tengah, Kota Bogor*\n\nIsi alamat Anda di bawah 👇\n📌Alamat Lengkap Pengantaran: \n\n_Jika tidak jadi memesan, ketik *keluar*_\n_Jika ingin ganti jenis pemesanan, ketik *ganti*_",
       );
       sessions[userId] = true;
       delete userMode[userId];
@@ -315,7 +315,7 @@ export async function handleCustomerSession({
       userMode[userId] = "form";
       await response.send(
         userId,
-        "📝 *JENIS PEMESANAN ANDA*\n===========================\n[1] Single Order (Pilih ini jika hanya memesan satu jenis produk)\n[2] Multiple Order (Pilih ini jika memesan lebih dari satu jenis produk) \n\n_*Jika ingin kembali ke menu, ketik *menu*_",
+        "📝 *JENIS PEMESANAN ANDA*\n===========================\n[1] Single Order (Pilih ini jika hanya memesan satu jenis produk)\n[2] Multiple Order (Pilih ini jika memesan lebih dari satu jenis produk) \n\n_Jika ingin kembali ke menu, ketik *menu*_",
       );
       return true;
     case "2":

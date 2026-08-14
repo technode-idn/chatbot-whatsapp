@@ -19,6 +19,18 @@ function getProductKeys(orderData = {}) {
         .sort((a, b) => productNumberFromKey(a) - productNumberFromKey(b));
 }
 
+function quantityKeyFromProductKey(productKey) {
+    const number = productKey.match(/_(\d+)$/)?.[1];
+
+    return number ? `jumlah_pesanan_${number}` : 'jumlah_pesanan';
+}
+
+function formatQuantity(value) {
+    const quantity = Number(String(value || '').replace(/[^\d]/g, ''));
+
+    return quantity > 0 ? quantity : 1;
+}
+
 async function loadJsonFile(path) {
     const rawData = await fs.readFile(path, 'utf8');
 
@@ -56,13 +68,15 @@ async function buildProofCaption(orderId, orderData) {
         .join('\n') || '-';
 
     let productLines = orderItems
-        .map(item => `- ${item.productName || item.productId}`)
+        .map(item => `- ${item.productName || item.productId} (${formatQuantity(item.quantity)})`)
         .join('\n');
 
     if(!productLines) {
         const databaseProduct = await loadJsonFile(DATABASE_PRODUCT_PATH);
         productLines = getProductKeys(orderData)
-            .map(productKey => `- ${getProductName(orderData[productKey], databaseProduct)}`)
+            .map(productKey => (
+                `- ${getProductName(orderData[productKey], databaseProduct)} (${formatQuantity(orderData[quantityKeyFromProductKey(productKey)])})`
+            ))
             .join('\n') || '-';
     }
 
