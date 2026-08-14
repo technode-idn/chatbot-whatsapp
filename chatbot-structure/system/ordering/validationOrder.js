@@ -3,8 +3,11 @@ import crypto from 'crypto';
 import { DATABASE_PRODUCT_PATH, DATA_USERS_PATH, rawDataUsers, rawDatabaseProduct } from "../../settings/loadFiles.js";
 import { editingOrder, orderConfirmationSession, paymentStatus, pendingOrders } from "../../settings/globalVariables.js";
 import { askOrderConfirmation } from "./editOrder.js";
+import { clearTenantOrderConfirmation, requestTenantOrderConfirmation } from './tenantOrderConfirmation.js';
 import { getResponse } from '../security/response.js';
-import { isDeliveryWithinRange } from './deliveryDistance.js';
+import { MAX_DELIVERY_DISTANCE_KM } from './deliveryDistance.js';
+import { calculateShipping } from '../shippingCalculator.js';
+import { startAddressConfirmation } from './addressConfirmation.js';
 
 let database_product = rawDatabaseProduct ? JSON.parse(rawDatabaseProduct) : [];
 let users = rawDataUsers ? JSON.parse(rawDataUsers) : [];
@@ -13,6 +16,20 @@ async function loadJsonFile(path) {
     const rawData = await fs.readFile(path, 'utf8');
 
     return rawData.trim() ? JSON.parse(rawData) : [];
+}
+
+async function checkDeliveryAddress(address) {
+    const result = await calculateShipping(String(address || '').toLowerCase());
+    const distance = Number(result.distance);
+
+    if(!result.success || !Number.isFinite(distance)) {
+        return { valid: false, reason: 'unreadable' };
+    }
+
+    return {
+        valid: distance <= MAX_DELIVERY_DISTANCE_KM,
+        reason: 'out-of-range'
+    };
 }
 
 async function refreshData() {
@@ -368,21 +385,27 @@ export async function validationOrder(orderData, userId, editingStatus) {
         return { success: false };
     }
 
-    const deliveryRange = await isDeliveryWithinRange(
+    const deliveryAddress = await checkDeliveryAddress(
         orderDataFinal["alamat_lengkap_pengantaran"]
     );
 
-    if(!deliveryRange.isWithinRange) {
+    if(!deliveryAddress.valid) {
         if(editingStatus && existingPendingOrder) {
             await cancelOrder(orderId);
         }
 
+        startAddressConfirmation(userId, orderDataFinal, deliveryAddress.reason);
+
+        const addressMessage = deliveryAddress.reason === 'unreadable'
+            ? 'Mohon maaf kak, alamat pengantaran belum dapat dibaca oleh sistem kami.'
+            : 'Mohon maaf sebelumnya kak, jarak pengantaran alamat kakak melibihi 5km.';
+
         await response.send(
             userId,
-            'Mohon maaf sebelumnya kak, jarak pengantaran alamat kakak melibihi 5km'
+            `${addressMessage}\n\nApakah kakak ingin mengubah alamat atau membatalkan pesanan?\n\n[1] Ubah Alamat\n[2] Batalkan Pesanan`
         );
 
-        return { success: false, rejectedByDistance: true };
+        return { success: false, requiresAddressConfirmation: true };
     }
 
     const reserveResult = await reserveStock({
@@ -418,7 +441,16 @@ export async function validationOrder(orderData, userId, editingStatus) {
 
     delete editingOrder[userId];
 
-    await askOrderConfirmation(userId, orderId);
+    const tenantConfirmation = await requestTenantOrderConfirmation(orderId);
+
+    if(tenantConfirmation.waitingForTenants) {
+        await response.send(
+            userId,
+            'Pesanan kakak sedang dikonfirmasi ketersediaannya oleh tenant terkait. Mohon tunggu sebentar ya.'
+        );
+    } else {
+        await askOrderConfirmation(userId, orderId);
+    }
 
     return {
         success: true,
@@ -498,6 +530,8 @@ export async function completeOrder(orderId) {
 export async function cancelOrder(orderId) {
 
     await refreshData();
+
+    clearTenantOrderConfirmation(orderId);
 
     const pendingOrder = pendingOrders[orderId];
 

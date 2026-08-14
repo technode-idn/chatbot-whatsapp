@@ -12,6 +12,8 @@ export const userMode = {};
 export const allNumberOwnerTenant = ["155981031973047@lid", "162608233615561@lid", "158501556994144@lid", "58236082323536@lid", "119963033596086@lid", "177670532915314@lid"];
 export const allNumberDriverAdmin = ["232731510366286@lid"];
 export const formTenantSession = {};
+export const tenantOrderConfirmation = {};
+export const addressConfirmationSession = {};
 export let lastOrderId = null;
 export let campusZone = {
     3000: [

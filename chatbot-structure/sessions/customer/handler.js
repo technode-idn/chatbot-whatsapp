@@ -24,8 +24,10 @@ import {
   editingOrder as editingOrderSession,
   pendingOrders,
   userMode,
+  addressConfirmationSession,
 } from "../../settings/globalVariables.js";
 import { sendQrisPayment } from "../../system/ordering/qrisPayment.js";
+import { handleAddressConfirmation } from '../../system/ordering/addressConfirmation.js';
 
 const { MessageMedia } = pkg;
 
@@ -61,6 +63,7 @@ function resetCustomerSession(userId) {
   delete multipleFormSession[userId];
   delete editingOrderSession[userId];
   delete orderConfirmationSession[userId];
+  delete addressConfirmationSession[userId];
   delete paymentStatus[userId];
   delete pendingProof[userId];
 }
@@ -229,6 +232,9 @@ export async function handleCustomerSession({
     await response.send(userId, await generateFormMultipleOrder(text));
     sessions[userId] = true;
     delete multipleFormSession[userId];
+    return true;
+  }
+  if (await handleAddressConfirmation(userId, text, response)) {
     return true;
   }
   if (orderConfirmationSession[userId]?.status) {

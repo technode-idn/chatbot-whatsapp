@@ -3,6 +3,7 @@ import { broadcastMenu, generateFormStock, sendStockInputMenu, validationFormSto
 import { addUniformStock, displayStock, resetStock } from '../../system/owner-tenant/stock.js';
 import { extraction } from '../../system/owner-tenant/extraction.js';
 import { addTenantProduct, deleteTenantProduct } from '../../system/owner-tenant/catalog.js';
+import { handleTenantOrderConfirmation } from '../../system/ordering/tenantOrderConfirmation.js';
 
 const welcomedTenant = new Set();
 const TENANT_MENU_MESSAGE = "🏪 Halo Pemilik Tenant!\n\nAda yang bisa kami bantu?\n[1] Isi Ulang Stok\n[2] Lihat Stok\n[3] Update/Restok Produk\n[4] Tambah Produk\n[5] Hapus Produk\n\n_Gunakan fitur dibawah jika hanya tidak ingin isi ulang stok harian_\n[6] Gunakan Stok Sisa Kemarin";
@@ -23,6 +24,8 @@ function parseUniformStock(text) {
 
 export async function handleTenantSession({ userId, text, response }) {
     if(!isTenant(userId)) return false;
+
+    if(await handleTenantOrderConfirmation(userId, text, response)) return true;
 
     if(['keluar', 'kembali', 'menu'].includes(text.toLocaleLowerCase())) {
         delete formTenantSession[userId];

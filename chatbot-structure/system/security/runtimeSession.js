@@ -11,6 +11,8 @@ import {
     pendingProof,
     sessions,
     userMode,
+    tenantOrderConfirmation,
+    addressConfirmationSession,
     allNumberOwnerTenant,
     allNumberDriverAdmin
 } from "../../settings/globalVariables.js";
@@ -27,7 +29,9 @@ const SESSION_BUCKETS = {
     multipleFormSession,
     editingOrder,
     userMode,
-    formTenantSession
+    formTenantSession,
+    tenantOrderConfirmation,
+    addressConfirmationSession
 };
 
 function replaceObject(target, source = {}) {
