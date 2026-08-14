@@ -474,6 +474,15 @@ export async function validationOrder(orderData, userId, editingStatus) {
 
     delete editingOrder[userId];
 
+    if(editingStatus) {
+        await askOrderConfirmation(userId, orderId);
+
+        return {
+            success: true,
+            order_id: orderId
+        };
+    }
+
     const tenantConfirmation = await requestTenantOrderConfirmation(orderId);
 
     if(tenantConfirmation.waitingForTenants) {

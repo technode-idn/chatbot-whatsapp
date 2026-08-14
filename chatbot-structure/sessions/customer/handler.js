@@ -170,7 +170,7 @@ export async function handleCustomerSession({
   if (text.toLocaleLowerCase() === "ganti") {
     await response.send(
       userId,
-      "📝 *JENIS PEMESANAN ANDA*\n===========================\n[1] Single Order (Pilih ini jika hanya memesan satu jenis produk)\n[2] Multiple Order (Pilih ini jika memesan lebih dari satu jenis produk)\n\n*_*Jika ingin kembali ke menu, ketik 'menu'_*",
+      "📝 *JENIS PEMESANAN ANDA*\n===========================\n[1] Single Order (Pilih ini jika hanya memesan satu jenis produk)\n[2] Multiple Order (Pilih ini jika memesan lebih dari satu jenis produk)\n\n_*Jika ingin kembali ke menu, ketik *menu*_",
     );
     userMode[userId] = "form";
     delete sessions[userId];
@@ -200,7 +200,7 @@ export async function handleCustomerSession({
     if (text === "1") {
       await response.send(
         userId,
-        "Baik kak, supaya kami bisa proses pesanannya, mohon info ya.\n\n📌Nama Pemesan: \n📌ID Produk: \n📌Jumlah Pesanan: \n📌Nomor Telepon Aktif: \n\n🏠 *TUJUAN PENGANTARAN*\n=============================\n_Tolong isi alamat pengantaran secara lengkap, jika berlokasi diluar gedung/kawasan (Gymnas, Zeta, CA/CB/LAB, Dll) SV IPB_\n\n- Perumahan/Tempat\n- Jalan + Nomor\n- Kelurahan/Desa\n- Kecamatan\n- Kota/Kabupaten\n- Gunakan koma sebagai pemisah\n\n*Cth: Kos Lodaya, Jl. Lodaya II No.15, Babakan, Bogor Tengah, Kota Bogor*\n\nIsi alamat Anda di bawah 👇\n📌Alamat Lengkap Pengantaran: \n\n*_*Jika tidak jadi memesan, ketik 'keluar'_*\n*_*Jika ingin ganti jenis pemesanan, ketik 'ganti'_*",
+        "Baik kak, supaya kami bisa proses pesanannya, mohon info ya.\n\n📌Nama Pemesan: \n📌ID Produk: \n📌Jumlah Pesanan: \n📌Nomor Telepon Aktif: \n\n🏠 *TUJUAN PENGANTARAN*\n=============================\n_Tolong isi alamat pengantaran secara lengkap, jika berlokasi diluar gedung/kawasan (Gymnas, Zeta, CA/CB/LAB, Dll) SV IPB_\n\n- Perumahan/Tempat\n- Jalan + Nomor\n- Kelurahan/Desa\n- Kecamatan\n- Kota/Kabupaten\n- Gunakan koma sebagai pemisah\n\n*Cth: Kos Lodaya, Jl. Lodaya II No.15, Babakan, Bogor Tengah, Kota Bogor*\n\nIsi alamat Anda di bawah 👇\n📌Alamat Lengkap Pengantaran: \n\n_*Jika tidak jadi memesan, ketik *keluar*_\n_*Jika ingin ganti jenis pemesanan, ketik *ganti*_",
       );
       sessions[userId] = true;
       delete userMode[userId];
@@ -283,13 +283,22 @@ export async function handleCustomerSession({
     if (!text.includes(":")) {
       await response.send(
         userId,
-        "Mohon isi formulir penggantian atau edit pesanan sesuai format yang dikirimkan.",
+        "Mohon isi formulir yang dikirimkan segera ya kak, agar saya bisa memproses pesanan kakak.",
       );
       return true;
     }
 
-    const responseOrder = await extractionOrder(text, userId, true, client);
-    if (responseOrder) await response.send(userId, responseOrder);
+    try {
+      await response.send(userId, "Baik kak, pesanan pengganti sedang kami cek.");
+      const responseOrder = await extractionOrder(text, userId, true, client);
+      if (responseOrder) await response.send(userId, responseOrder);
+    } catch (error) {
+      logger.error(error);
+      await response.send(
+        userId,
+        "Maaf kak, pesanan pengganti belum bisa diproses. Silakan isi ulang formulir penggantian produknya.",
+      );
+    }
     return true;
   }
   if (paymentStatus[userId]?.status) {
@@ -306,27 +315,27 @@ export async function handleCustomerSession({
       userMode[userId] = "form";
       await response.send(
         userId,
-        "📝 *JENIS PEMESANAN ANDA*\n===========================\n[1] Single Order (Pilih ini jika hanya memesan produk di satu tenant yang sama)\n[2] Multiple Order (Pilih ini jika memesan produk di beberapa tenant berbeda) \n\n*_*Jika ingin kembali ke menu, ketik 'menu'_*",
+        "📝 *JENIS PEMESANAN ANDA*\n===========================\n[1] Single Order (Pilih ini jika hanya memesan satu jenis produk)\n[2] Multiple Order (Pilih ini jika memesan lebih dari satu jenis produk) \n\n_*Jika ingin kembali ke menu, ketik *menu*_",
       );
       return true;
     case "2":
       userMode[userId] = "faq";
       await response.send(
         userId,
-        "🔍 *DAFTAR PERTANYAAN FAQ*\n=============================\n\n[1] KlikBi-Go Jual Apa Saja?\n\n[2] Bagaimana Cara Memesan?\n\n[3] Kapan Waktu Operasionalnya?\n\n[4] Apakah Pesanan Bisa Di Antar?\n\n[5] Metode Pembayarannya Apa Saja?\n\n*_Ketik 'menu' untuk kembali ke menu awal_*",
+        "🔍 *DAFTAR PERTANYAAN FAQ*\n=============================\n\n[1] KlikBi-Go Jual Apa Saja?\n\n[2] Bagaimana Cara Memesan?\n\n[3] Kapan Waktu Operasionalnya?\n\n[4] Apakah Pesanan Bisa Di Antar?\n\n[5] Metode Pembayarannya Apa Saja?\n\n_Ketik *menu* untuk kembali ke menu awal_",
       );
       return true;
     case "3":
       userMode[userId] = "human-admin";
       await response.send(
         userId,
-        "Terima kasih telah menghubungi, selanjutnya admin kami akan membantu kakak secara langsung 🙏🏻\n\nSilakan ajukan pertanyaan atau informasi yang ingin disampaikan.\n\n*_Ketik 'menu' untuk kembali ke chatbot_*",
+        "Terima kasih telah menghubungi, selanjutnya admin kami akan membantu kakak secara langsung 🙏🏻\n\nSilakan ajukan pertanyaan atau informasi yang ingin disampaikan.\n\n_Ketik *menu* untuk kembali ke chatbot_",
       );
       return true;
     default:
       await response.send(
         userId,
-        "Mohon maaf, sepertinya kakak memilih diluar pilihan yang ada.\n\nSilahkan pilih ulang menu kembali.",
+        "Mohon maaf, sepertinya kakak memilih diluar pilihan yang ada.\n\nSilahkan pilih ulang kembali.",
       );
       return true;
   }

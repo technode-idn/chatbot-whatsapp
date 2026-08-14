@@ -155,7 +155,7 @@ export async function handleDeliveryResponse(text, client, fallbackOrderId = nul
 
     await response.send(
         customerId,
-        "Terima kasih sudah berbelanja di KlikBi-Go kakak 🙏\n\nKami minta dukungannya agar bisnis ini bisa terus berkembang dengan follow akun instagram KlikBi\nhttps://www.instagram.com/klikbisvipb?igsh=MWM5NGUwcnN1bTNvaQ==\n\nSemoga kita dapat bertemu kembali di pemesanan berikutnya 😊\n\n*_*Silahkan ketik 'keluar' untuk menyelesaikan_*"
+        "Terima kasih sudah berbelanja di KlikBi-Go kakak 🙏\n\nKami minta dukungannya agar bisnis ini bisa terus berkembang dengan follow akun instagram KlikBi\nhttps://www.instagram.com/klikbisvipb?igsh=MWM5NGUwcnN1bTNvaQ==\n\nSemoga kita dapat bertemu kembali di pemesanan berikutnya 😊\n\n_*Silahkan ketik *keluar* untuk menyelesaikan_"
     );
 
     delete deliverySession[GROUP_ID];

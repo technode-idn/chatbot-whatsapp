@@ -2,7 +2,7 @@ import { allNumberDriverAdmin, userMode } from '../../settings/globalVariables.j
 import { addDelivery, deleteDelivery, displayDeliveries } from '../../system/driver-admin/deliveryCatalog.js';
 
 const DRIVER_ADMIN_MENU =
-    'Halo Admin Driver!\n\nAda yang bisa kami bantu?\n[1] Tambah Data Kurir\n[2] Hapus Data Kurir\n[3] Lihat Data Kurir\n\n_Ketik menu untuk menampilkan menu ini kembali._';
+    'Halo Admin Driver!\n\nAda yang bisa kami bantu?\n[1] Tambah Data Kurir\n[2] Hapus Data Kurir\n[3] Lihat Data Kurir\n\n_Ketik *menu* untuk menampilkan menu ini kembali._';
 
 const ADD_DELIVERY_FORM =
     '📝 *TAMBAH DATA KURIR*\n=============================\nNIM: \nNomor Telepon: \nNama: \n\n_Isi form sesuai data kurir, lalu kirim kembali._';

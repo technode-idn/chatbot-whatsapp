@@ -99,7 +99,7 @@ function buildEditOrderForm(orderId, orderData = {}) {
     text.push(`Nomor Telepon Aktif: ${orderData["nomor_telepon_aktif"] || ""}`);
     text.push(`Alamat Lengkap Pengantaran: ${orderData["alamat_lengkap_pengantaran"] || ""}`);
     text.push("");
-    text.push("Silahkan edit bagian yang ingin diubah, lalu kirim ulang form ini ya kak.");
+    text.push("_*Silahkan salin pesan ini dan edit bagian yang diinginkan kak.*_");
 
     return text.join("\n");
 }
@@ -155,7 +155,7 @@ export async function handleOrderConfirmation(text, userId) {
         await cancelOrder(orderId);
         welcomedUsers.delete(userId);
         
-        await response.send(userId, "Silahkan ketik 'keluar'.");
+        await response.send(userId, "Mohon ketik *keluar* untuk menyelesaikan ya kak.");
     } else {
         await response.send(userId, "Mohon pilih salah satu yang ada di menu ya kak");
     }

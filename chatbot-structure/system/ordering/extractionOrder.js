@@ -67,11 +67,21 @@ export async function extractionOrder(text, userId, editingStatus = false) {
             return 'Format yang dikirim tidak sesuai, silahkan isi ulang kembali';
         }
 
+        if(editingStatus) {
+            const emptyProductIds = Object.entries(data)
+                .filter(([key]) => key === 'id_produk' || /^id_produk_\d+$/.test(key))
+                .some(([, value]) => !String(value || '').trim());
+
+            if(emptyProductIds) {
+                return 'ID Produk belum diisi. Mohon isi ID Produk pengganti pada kolom yang tersedia.';
+            }
+        }
+
         if(!editingStatus) {
             const missingFields = getMissingOrderFields(data);
 
             if(missingFields.length) {
-                return `Mohon lengkapi data formulir berikut:\n- ${missingFields.join('\n- ')}`;
+                return `Mohon lengkapi data formulir berikut (belum terisi):\n- ${missingFields.join('\n- ')}\n\n_*Salin formulir sebelumnya dan lengkapi bagian yang masih kosong*_`;
             }
         }
 

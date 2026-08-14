@@ -6,7 +6,7 @@ export async function faq(text) {
     const faq_id = allResponseFaq.find(r => r["faq_id"] === text);
 
     if(!faq_id) {
-        return "Menu yang Anda pilih tidak ada di dalam opsi.";
+        return "Menu yang Anda pilih tidak ada di dalam opsi. Silahkan pilih ulang kembali.";
     }
 
     return faq_id["response"];

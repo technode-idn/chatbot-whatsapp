@@ -15,7 +15,7 @@ function getProductKeys(orderData = {}) {
 
 function buildOrderForm(orderData = {}) {
     const lines = [
-        'Silakan kirim ulang formulir pesanan dengan alamat pengantaran yang benar.',
+        'Silakan salin pesan ini dan perbarui alamat kakak.',
         '',
         `Nama Pemesan: ${orderData['nama_pemesan'] || ''}`
     ];
@@ -59,6 +59,6 @@ export async function handleAddressConfirmation(userId, text, response) {
         return true;
     }
 
-    await response.send(userId, 'Mohon pilih salah satu\n[1] untuk ubah alamat\n[2] untuk batalkan pesanan.');
+    await response.send(userId, 'Mohon pilih salah satu\n[1] Ubah Alamat\n[2] Batalkan Pesanan');
     return true;
 }
