@@ -142,6 +142,23 @@ function getProductPrice(product) {
 }
 
 function buildUnavailableMessage(unavailableItems) {
+    const unavailableProductIds = unavailableItems.filter(item => item.reason === 'not-found');
+
+    if(unavailableProductIds.length) {
+        const productFields = unavailableProductIds.map(item => {
+            const number = item.productKey.match(/_(\d+)$/)?.[1];
+            const label = number ? ` ${number}` : '';
+
+            return `ID Produk${label}:`;
+        });
+
+        return [
+            'Mohon maaf kak ID Produk yang kakak pesan tidak tersedia, mungkin kakak salah penulisan, silahkan masukkan ulang.',
+            '',
+            ...productFields
+        ].join('\n');
+    }
+
     const text = [];
 
     for(const item of unavailableItems) {
@@ -433,6 +450,9 @@ export async function validationOrder(orderData, userId, editingStatus) {
 
         editingOrder[userId] = {
             status: true,
+            mode: reserveResult.unavailableItems.some(item => item.reason === 'not-found')
+                ? 'awaiting-form'
+                : 'awaiting-choice',
             order_id: orderId,
             data: orderDataFinal,
             all_data_available: reserveResult.unavailableItems.map(

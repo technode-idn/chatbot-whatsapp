@@ -243,36 +243,53 @@ export async function handleCustomerSession({
   }
   if (editingOrderSession[userId]?.status) {
     const editSession = editingOrderSession[userId];
-    if (text === "1")
-      await sendEditingOrderForm(
-        editSession.all_data_available,
-        editSession.order_id,
-        userId,
-        client,
-      );
-    else if (text === "2") {
-      const remainingOrder = deleteOrder(
-        editSession.all_data_available,
-        editSession.order_id,
-      );
-      if (!remainingOrder?.hasProducts) {
-        delete pendingOrders[editSession.order_id];
+    const mode = editSession.mode || "awaiting-choice";
+
+    if (mode === "awaiting-choice") {
+      if (text === "1") {
+        editSession.mode = "awaiting-form";
+        await sendEditingOrderForm(
+          editSession.all_data_available,
+          editSession.order_id,
+          userId,
+          client,
+        );
+      } else if (text === "2") {
+        const remainingOrder = deleteOrder(
+          editSession.all_data_available,
+          editSession.order_id,
+        );
+        if (!remainingOrder?.hasProducts) {
+          delete pendingOrders[editSession.order_id];
+          delete editingOrderSession[userId];
+          welcomedUsers.delete(userId);
+          await response.send(
+            userId,
+            "Pesanan dibatalkan karena tidak ada produk yang bisa diproses.",
+          );
+          return true;
+        }
+        await validationOrder(remainingOrder.data, userId, true, client);
         delete editingOrderSession[userId];
+      } else {
         await response.send(
           userId,
-          "Pesanan dibatalkan karena tidak ada produk yang bisa diproses.",
+          "Mohon pilih salah satu yang tersedia.\n\n[1] Ya\n[2] Tidak",
         );
-        return true;
       }
-      await validationOrder(remainingOrder.data, userId, true, client);
-      delete editingOrderSession[userId];
-    } else if (text === "3") {
-      await cancelOrder(editSession.order_id);
-      await response.send(userId, "Silahkan ketik 'keluar'.");
-    } else {
-      delete editingOrderSession[userId];
-      await extractionOrder(text, userId, true, client);
+      return true;
     }
+
+    if (!text.includes(":")) {
+      await response.send(
+        userId,
+        "Mohon isi formulir penggantian atau edit pesanan sesuai format yang dikirimkan.",
+      );
+      return true;
+    }
+
+    const responseOrder = await extractionOrder(text, userId, true, client);
+    if (responseOrder) await response.send(userId, responseOrder);
     return true;
   }
   if (paymentStatus[userId]?.status) {

@@ -1,5 +1,6 @@
 import { editingOrder, orderConfirmationSession, pendingOrders } from "../../settings/globalVariables.js";
 import { getResponse } from "../security/response.js";
+import { welcomedUsers } from '../../settings/runtimeUsers.js';
 import { cancelOrder } from "./validationOrder.js";
 import { sendQrisPayment } from './qrisPayment.js';
 import { payment } from '../payment.js';
@@ -135,6 +136,7 @@ export async function handleOrderConfirmation(text, userId) {
 
         editingOrder[userId] = {
             status: true,
+            mode: 'awaiting-form',
             order_id: orderId,
             data: pendingOrder.data,
             all_data_available: getProductKeys(pendingOrder.data)
@@ -151,6 +153,7 @@ export async function handleOrderConfirmation(text, userId) {
         return true;
     } else if(text === "3") {
         await cancelOrder(orderId);
+        welcomedUsers.delete(userId);
         
         await response.send(userId, "Silahkan ketik 'keluar'.");
     } else {

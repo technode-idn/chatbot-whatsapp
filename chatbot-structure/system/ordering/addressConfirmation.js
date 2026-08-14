@@ -1,4 +1,5 @@
 import { addressConfirmationSession, sessions, userMode } from '../../settings/globalVariables.js';
+import { welcomedUsers } from '../../settings/runtimeUsers.js';
 
 function productNumberFromKey(key) {
     const number = key.match(/_(\d+)$/)?.[1];
@@ -53,10 +54,11 @@ export async function handleAddressConfirmation(userId, text, response) {
 
     if(text === '2') {
         delete addressConfirmationSession[userId];
+        welcomedUsers.delete(userId);
         await response.send(userId, 'Pesanan dibatalkan.');
         return true;
     }
 
-    await response.send(userId, 'Mohon pilih [1] untuk ubah alamat atau [2] untuk batalkan pesanan.');
+    await response.send(userId, 'Mohon pilih salah satu\n[1] untuk ubah alamat\n[2] untuk batalkan pesanan.');
     return true;
 }
