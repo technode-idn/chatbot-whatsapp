@@ -26,23 +26,26 @@ export async function generalSalesReport(client) {
 
     for(const [tenantName, tenantData] of Object.entries(databaseProduct || {})) {
         let totalRevenue = 0;
+        let hasSales = false;
 
         text.push("", `\n*🏪 ${tenantName}*\n`);
 
         for(const product of Object.values(tenantData?.["products"] || {})) {
-            if(Number(product["qty_sold" == 0])) {
+            const qtySold = Number(product["qty_sold"]) || 0;
+
+            if(qtySold <= 0) {
                 continue;
             }
 
-            const qtySold = Number(product["qty_sold"]);
+            hasSales = true;
             const price = Number(product["price"]);
 
-            text.push(`- ${product["product_name"]} * ${qtySold}\n`);
+            text.push(`- ${product["product_name"]} (${qtySold})\n`);
 
             totalRevenue += qtySold * price;
         }
 
-        if(totalRevenue == 0) {
+        if(!hasSales) {
             text.push("~ _Tidak memiliki data penjualan_");
         } else {
             text.push(`*_Total -> ${formatRupiah(totalRevenue)}_*\n`);

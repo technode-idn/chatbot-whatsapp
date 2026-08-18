@@ -12,11 +12,14 @@ const STORM_CHARGE = 10000;
 export function getWeatherChargeByCode(weatherCode) {
     const code = Number(weatherCode);
 
-    if([65, 67, 82, 95, 96, 99].includes(code)) {
+    // Badai petir: thunderstorm dengan/ tanpa hujan es.
+    if([95, 96, 99].includes(code)) {
         return { condition: 'hujan badai', charge: STORM_CHARGE };
     }
 
-    if([51, 53, 55, 56, 57, 61, 63, 66, 80, 81].includes(code)) {
+    // Hanya hujan lebat yang dikenakan biaya. Gerimis, hujan ringan,
+    // dan hujan sedang (kode 51-63, 80-81) tidak dikenakan biaya.
+    if([65, 67, 82].includes(code)) {
         return { condition: 'hujan', charge: RAIN_CHARGE };
     }
 

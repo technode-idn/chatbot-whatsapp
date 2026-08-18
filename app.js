@@ -14,6 +14,7 @@ import { handleCustomerSession } from './chatbot-structure/sessions/customer/han
 import { welcomedUsers } from './chatbot-structure/settings/runtimeUsers.js';
 import { isWeekend } from './chatbot-structure/settings/weekend.js';
 import { isOutsideOperationalHours } from './chatbot-structure/settings/operationalHours.js';
+import { isPublicHoliday } from './chatbot-structure/settings/publicHolidays.js';
 
 const { Client, LocalAuth } = pkg;
 
@@ -86,7 +87,7 @@ client.on('message', async message => {
       const closedMessage =
         "Maaf, KlikbiGo sedang tutup. Waktu Operasinal kami hanya sampai Senin-Jumat di jam 10.00 - 16.00. Terima kasih atas pengertiannya.";
 
-      if (isCustomer && (isWeekend() || isOutsideOperationalHours())) {
+      if (isCustomer && (isWeekend() || isOutsideOperationalHours() || isPublicHoliday())) {
         await response.send(userId, closedMessage);
         return;
       }
