@@ -10,6 +10,7 @@ import { broadcastMenu } from './chatbot-structure/sessions/tenant/handler.js';
 import { handleGroupSession } from './chatbot-structure/sessions/group/handler.js';
 import { handleTenantSession, isTenant } from './chatbot-structure/sessions/tenant/handler.js';
 import { handleDriverAdminSession, isDriverAdmin } from './chatbot-structure/sessions/driver-admin/handler.js';
+import { ADMIN_MONITOR_ID, handleAdminMonitorSession } from './chatbot-structure/sessions/admin-monitor/handler.js';
 import { handleCustomerSession } from './chatbot-structure/sessions/customer/handler.js';
 import { welcomedUsers } from './chatbot-structure/settings/runtimeUsers.js';
 import { isWeekend } from './chatbot-structure/settings/weekend.js';
@@ -69,7 +70,9 @@ nodeCron.schedule('0 16 * * 1-5', async () => {
 client.on('message', async message => {
     try {
       const userId = message.from;
-      const text = message.body.trim();
+      const rawText = message.body.trim();
+      // Pilihan 1 memakai proses export yang sudah ada di customer handler.
+      const text = userId === ADMIN_MONITOR_ID && rawText === "1" ? "export" : rawText;
       const isGroup = userId.endsWith("@g.us");
       const isKnownTenant = isTenant(userId);
       const isKnownDriverAdmin = isDriverAdmin(userId);
@@ -77,13 +80,9 @@ client.on('message', async message => {
       logger.info(`FROM: ${userId}`);
       logger.info(`MESSAGE: ${message.body}`);
 
-      if (
-        message.fromMe ||
-        (userId === "64282960068848@lid" && text !== "export")
-      )
-        return;
+      if (message.fromMe) return;
 
-      const isCustomer = !isGroup && !isKnownTenant && !isKnownDriverAdmin;
+      const isCustomer = !isGroup && !isKnownTenant && !isKnownDriverAdmin && userId !== ADMIN_MONITOR_ID;
       const closedMessage =
         "Maaf, KlikbiGo sedang tutup. Waktu Operasinal kami hanya sampai Senin-Jumat di jam 10.00 - 16.00. Terima kasih atas pengertiannya.";
 
@@ -110,6 +109,7 @@ client.on('message', async message => {
       if (await handleGroupSession({ userId, text, message, client })) return;
       if (await handleTenantSession({ userId, text, response })) return;
       if (await handleDriverAdminSession({ userId, text, response })) return;
+      if (await handleAdminMonitorSession({ userId, text: rawText, response })) return;
 
       await handleCustomerSession({
         message,
