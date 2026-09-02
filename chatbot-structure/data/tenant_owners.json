@@ -5,7 +5,7 @@
         "owner_phone": "155981031973047@lid",
         "qris": "./chatbot-structure/img/qris_tenant_2.jpg",
         "status_stock": "pending",
-        "stock_broadcast_sent": false
+        "stock_broadcast_sent": true
     },
     {
         "tenant_id": "TEN002",
@@ -13,7 +13,7 @@
         "owner_phone": "162608233615561@lid",
         "qris": "./chatbot-structure/img/qris_tenant_3.jpg",
         "status_stock": "pending",
-        "stock_broadcast_sent": false
+        "stock_broadcast_sent": true
     },
     {
         "tenant_id": "TEN003",
@@ -21,7 +21,7 @@
         "owner_phone": "158501556994144@lid",
         "qris": "./chatbot-structure/img/qris_tenant_4.jpg",
         "status_stock": "pending",
-        "stock_broadcast_sent": false
+        "stock_broadcast_sent": true
     },
     {
         "tenant_id": "TEN004",
@@ -29,7 +29,7 @@
         "owner_phone": "58236082323536@lid",
         "qris": "./chatbot-structure/img/qris_tenant_5.jpg",
         "status_stock": "pending",
-        "stock_broadcast_sent": false
+        "stock_broadcast_sent": true
     },
     {
         "tenant_id": "TEN005",
@@ -37,7 +37,7 @@
         "owner_phone": "119963033596086@lid",
         "qris": "./chatbot-structure/img/qris_tenant_6.jpg",
         "status_stock": "pending",
-        "stock_broadcast_sent": false
+        "stock_broadcast_sent": true
     },
     {
         "tenant_id": "TEN006",
@@ -45,13 +45,13 @@
         "owner_phone": "177670532915314@lid",
         "qris": "./chatbot-structure/img/qris_tenant_7.jpg",
         "status_stock": "pending",
-        "stock_broadcast_sent": false
+        "stock_broadcast_sent": true
     },
     {
         "tenant_id": "TEN007",
         "store": "klikbi",
         "qris": "./chatbot-structure/img/qris_tenant_8.jpg",
         "status_stock": "pending",
-        "stock_broadcast_sent": false
+        "stock_broadcast_sent": true
     }
 ]
