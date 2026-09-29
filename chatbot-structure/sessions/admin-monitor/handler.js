@@ -4,7 +4,7 @@ import {
   DATA_DELIVERY_PATH,
 } from "../../settings/loadFiles.js";
 
-export const ADMIN_MONITOR_ID = "64282960068848@lid";
+export const ADMIN_MONITOR_ID = ["64282960068848@lid", "58493310615674@lid"];
 
 const ADMIN_MENU =
   "Halo admin, ada yang bisa dibantu?\n[1] Export File Penjualan\n[2] Lihat Database Produk\n[3] Lihat Database Driver\n\n Ketik *menu* untuk kembali ke daftar ini";
@@ -51,7 +51,7 @@ async function displayDrivers() {
 }
 
 export async function handleAdminMonitorSession({ userId, text, response }) {
-  if (userId !== ADMIN_MONITOR_ID) return false;
+  if (!ADMIN_MONITOR_ID.includes(userId)) return false;
 
   if (text === "2") {
     await response.send(userId, await displayProducts());

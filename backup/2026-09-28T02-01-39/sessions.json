@@ -1,0 +1,43 @@
+{
+    "savedAt": "2026-09-28T01:03:44.915Z",
+    "data": {
+        "pendingOrders": {},
+        "pendingProof": {},
+        "paymentVerificationSession": {},
+        "sessions": {
+            "148520019464315@lid": true
+        },
+        "paymentStatus": {},
+        "orderConfirmationSession": {},
+        "groupSession": {},
+        "deliverySession": {},
+        "multipleFormSession": {},
+        "editingOrder": {},
+        "userMode": {
+            "77855006433494@lid": "faq"
+        },
+        "formTenantSession": {
+            "162608233615561@lid": {
+                "mode": "choice"
+            },
+            "58236082323536@lid": {
+                "mode": "choice"
+            },
+            "119963033596086@lid": {
+                "mode": "choice"
+            },
+            "177670532915314@lid": {
+                "mode": "choice"
+            },
+            "undefined": {
+                "mode": "choice"
+            },
+            "status": true,
+            "158501556994144@lid": {
+                "mode": "choice"
+            }
+        },
+        "tenantOrderConfirmation": {},
+        "addressConfirmationSession": {}
+    }
+}

@@ -1,1 +1,52 @@
-[]
+[
+  {
+    "id_delivery": "J0409231020",
+    "phone": "082288645008",
+    "name": "Muhammad Davin Kurniawan Akbar"
+  },
+  {
+    "id_delivery": "J0411241032",
+    "phone": "0895321203322",
+    "name": "Rivaldy Permana Saleh"
+  },
+  {
+    "id_delivery": "J0409251004",
+    "phone": "087822149197",
+    "name": "Azka Wildan Rizal"
+  },
+  {
+    "id_delivery": "J0414251004",
+    "phone": "081227192115",
+    "name": "Pardan Gustiawan"
+  },
+  {
+    "id_delivery": "J0404241084",
+    "phone": "087875965666",
+    "name": "Christian Leonardo Setiawan"
+  },
+  {
+    "id_delivery": "J0406251078",
+    "phone": "089503149722",
+    "name": "Syadine Ayudya Pratiwi"
+  },
+  {
+    "id_delivery": "J0414261023",
+    "phone": "085156930307",
+    "name": "Muhammad Ghozi Al Farisi"
+  },
+  {
+    "id_delivery": "J0412241108",
+    "phone": "085829634874",
+    "name": "Fhillogonius Kopong Rara"
+  },
+  {
+    "id_delivery": "J0416251044",
+    "phone": "085187969094",
+    "name": "Ridho Rachmat Widiansyah"
+  },
+  {
+    "id_delivery": "J0411251142",
+    "phone": "085852145753",
+    "name": "Dhafa Fachrizal Ardiansyah"
+  }
+]

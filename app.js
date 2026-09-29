@@ -72,7 +72,7 @@ client.on('message', async message => {
       const userId = message.from;
       const rawText = message.body.trim();
       // Pilihan 1 memakai proses export yang sudah ada di customer handler.
-      const text = userId === ADMIN_MONITOR_ID && rawText === "1" ? "export" : rawText;
+      const text = ADMIN_MONITOR_ID.includes(userId) && rawText === "1" ? "export" : rawText;
       const isGroup = userId.endsWith("@g.us");
       const isKnownTenant = isTenant(userId);
       const isKnownDriverAdmin = isDriverAdmin(userId);
@@ -82,7 +82,7 @@ client.on('message', async message => {
 
       if (message.fromMe) return;
 
-      const isCustomer = !isGroup && !isKnownTenant && !isKnownDriverAdmin && userId !== ADMIN_MONITOR_ID;
+      const isCustomer = !isGroup && !isKnownTenant && !isKnownDriverAdmin && !ADMIN_MONITOR_ID.includes(userId);
       const closedMessage =
         "Maaf, KlikbiGo sedang tutup. Waktu Operasinal kami hanya sampai Senin-Jumat di jam 10.00 - 16.00. Terima kasih atas pengertiannya.";
 
