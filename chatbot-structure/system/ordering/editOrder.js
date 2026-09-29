@@ -2,7 +2,7 @@ import { editingOrder, orderConfirmationSession, pendingOrders } from "../../set
 import { getResponse } from "../security/response.js";
 import { welcomedUsers } from '../../settings/runtimeUsers.js';
 import { cancelOrder } from "./validationOrder.js";
-import { sendQrisPayment } from './qrisPayment.js';
+import { startCourierAvailability } from '../broadcasting/courierAvailability.js';
 import { payment } from '../payment.js';
 import { ongkir } from '../ongkir.js';
 import { getOrderWeatherCharge } from '../weather.js';
@@ -67,7 +67,7 @@ async function buildOrderConfirmationMessage(userId, orderId) {
         'Apakah kakak sudah yakin dengan pesanannya?',
         '',
         '[1] Belum (Mau Edit)',
-        '[2] Lanjut Ke Pembayaran',
+        '[2] Lanjutkan Pesanan',
         '[3] Batalkan Pesanan'
     ].join('\n');
 }
@@ -147,9 +147,11 @@ export async function handleOrderConfirmation(text, userId) {
         await response.send(userId, buildEditOrderForm(orderId, pendingOrder.data));
         return true;
     } else if(text === "2") {
-        delete orderConfirmationSession[userId];
+        const started = await startCourierAvailability(userId, orderId);
 
-        await sendQrisPayment(userId, orderId);
+        if(started) {
+            delete orderConfirmationSession[userId];
+        }
         return true;
     } else if(text === "3") {
         await cancelOrder(orderId);

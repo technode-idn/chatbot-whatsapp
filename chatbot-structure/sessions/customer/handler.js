@@ -4,7 +4,6 @@ import { exportData } from "../../system/exportData.js";
 import { faq } from "../../system/FAQ.js";
 import { extractionOrder } from "../../system/ordering/extractionOrder.js";
 import { sendProofToGroup } from "../../system/broadcasting/sendProof.js";
-import { handleDeliveryResponse } from "../../system/broadcasting/sendDelivery.js";
 import { generateFormMultipleOrder } from "../../system/ordering/generateFormMultipleOrder.js";
 import { deleteOrder } from "../../system/ordering/deleteOrder.js";
 import {
@@ -19,15 +18,18 @@ import {
   sessions,
   paymentStatus,
   orderConfirmationSession,
-  deliverySession,
   multipleFormSession,
   editingOrder as editingOrderSession,
   pendingOrders,
   userMode,
   addressConfirmationSession,
+  courierDecisionSession,
+  courierAvailabilitySession,
+  groupSession,
 } from "../../settings/globalVariables.js";
 import { sendQrisPayment } from "../../system/ordering/qrisPayment.js";
 import { handleAddressConfirmation } from '../../system/ordering/addressConfirmation.js';
+import { handleCourierDecision } from '../../system/broadcasting/courierAvailability.js';
 
 const { MessageMedia } = pkg;
 
@@ -66,6 +68,14 @@ function resetCustomerSession(userId) {
   delete addressConfirmationSession[userId];
   delete paymentStatus[userId];
   delete pendingProof[userId];
+  delete courierDecisionSession[userId];
+
+  for (const [groupId, availability] of Object.entries(courierAvailabilitySession)) {
+    if (availability?.customerId === userId) {
+      delete courierAvailabilitySession[groupId];
+      delete groupSession[groupId];
+    }
+  }
 }
 
 export async function handleCustomerSession({
@@ -241,6 +251,10 @@ export async function handleCustomerSession({
     await handleOrderConfirmation(text, userId);
     return true;
   }
+  if (courierDecisionSession[userId]?.status) {
+    await handleCourierDecision(text, userId);
+    return true;
+  }
   if (editingOrderSession[userId]?.status) {
     const editSession = editingOrderSession[userId];
     const mode = editSession.mode || "awaiting-choice";
@@ -303,11 +317,6 @@ export async function handleCustomerSession({
   }
   if (paymentStatus[userId]?.status) {
     await sendQrisPayment(userId, paymentStatus[userId].order_id);
-    return true;
-  }
-  if (deliverySession[userId]) {
-    const result = await handleDeliveryResponse(text, client);
-    if (result?.message) await response.send(userId, result.message);
     return true;
   }
   switch (text) {

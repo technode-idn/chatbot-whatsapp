@@ -6,6 +6,9 @@ export const paymentStatus = {};
 export const orderConfirmationSession = {};
 export const groupSession = {};
 export const deliverySession = {};
+// Verifikasi ketersediaan kurir sebelum customer melanjutkan ke pembayaran.
+export const courierAvailabilitySession = {};
+export const courierDecisionSession = {};
 export const multipleFormSession = {};
 export const editingOrder = {};
 export const userMode = {};

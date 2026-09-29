@@ -1,5 +1,7 @@
 import {
     deliverySession,
+    courierAvailabilitySession,
+    courierDecisionSession,
     editingOrder,
     formTenantSession,
     groupSession,
@@ -26,6 +28,8 @@ const SESSION_BUCKETS = {
     orderConfirmationSession,
     groupSession,
     deliverySession,
+    courierAvailabilitySession,
+    courierDecisionSession,
     multipleFormSession,
     editingOrder,
     userMode,
