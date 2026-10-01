@@ -167,8 +167,11 @@ export async function handleTenantOrderConfirmation(userId, text, response, { al
     clearOrderConfirmation(orderId);
     order.status = 'PENDING_PAYMENT';
     const { askOrderConfirmation } = await import('./editOrder.js');
+    const { TENANT_MENU_MESSAGE, activateTenantSession } = await import('../../sessions/tenant/handler.js');
 
     await askOrderConfirmation(customerId, orderId);
+    activateTenantSession(userId);
+    await response.send(userId, TENANT_MENU_MESSAGE);
     return true;
 }
 

@@ -138,6 +138,7 @@ export async function handleCustomerSession({
 
   if (text.toLocaleLowerCase() === "menu") {
     await resetCustomerSession(userId, { cancelOrders: true });
+    welcomedUsers.add(userId);
     await response.send(userId, MAIN_MENU);
     return true;
   }

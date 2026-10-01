@@ -18,6 +18,10 @@ function getTenantOwnerId(userId) {
     return tenantIdentityAliases[userId] || userId;
 }
 
+export function activateTenantSession(userId) {
+    welcomedTenant.add(userId);
+}
+
 function parseUniformStock(text) {
     const value = String(text || '')
         .replace(/^jumlah\s*stok\s*:\s*/i, '')
@@ -112,7 +116,7 @@ export async function handleTenantSession({ userId, text, response }) {
     }
 
     if(!welcomedTenant.has(userId)) {
-        welcomedTenant.add(userId);
+        activateTenantSession(userId);
         await response.send(userId, TENANT_MENU_MESSAGE);
         return true;
     }

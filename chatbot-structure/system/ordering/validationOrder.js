@@ -20,6 +20,7 @@ import { getResponse } from '../security/response.js';
 import { MAX_DELIVERY_DISTANCE_KM } from './deliveryDistance.js';
 import { calculateShipping } from '../shippingCalculator.js';
 import { startAddressConfirmation } from './addressConfirmation.js';
+import { welcomedUsers } from '../../settings/runtimeUsers.js';
 
 let database_product = rawDatabaseProduct ? JSON.parse(rawDatabaseProduct) : [];
 let users = rawDataUsers ? JSON.parse(rawDataUsers) : [];
@@ -628,6 +629,7 @@ export async function cancelOrder(orderId) {
     delete editingOrder[pendingOrder.customer];
     delete orderConfirmationSession[pendingOrder.customer];
     delete courierDecisionSession[pendingOrder.customer];
+    welcomedUsers.delete(pendingOrder.customer);
 
     for(const [groupId, availability] of Object.entries(courierAvailabilitySession)) {
         if(String(availability?.orderId) === String(orderId)) {
