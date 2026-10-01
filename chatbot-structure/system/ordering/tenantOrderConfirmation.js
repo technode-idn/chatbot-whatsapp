@@ -1,6 +1,6 @@
 import fs from 'fs/promises';
 import { DATA_TENANT_PATH } from '../../settings/loadFiles.js';
-import { pendingOrders, tenantOrderConfirmation } from '../../settings/globalVariables.js';
+import { pendingOrders, tenantIdentityAliases, tenantOrderConfirmation } from '../../settings/globalVariables.js';
 import { getResponse } from '../security/response.js';
 
 function normalizeTenantName(value) {
@@ -84,19 +84,43 @@ export async function requestTenantOrderConfirmation(orderId) {
     }
 
     order.status = waitingForTenants ? 'PENDING_TENANT_CONFIRMATION' : 'PENDING_PAYMENT';
+    order.updated_at = new Date().toISOString();
 
     return { waitingForTenants };
 }
 
-export async function handleTenantOrderConfirmation(userId, text, response) {
+export async function handleTenantOrderConfirmation(userId, text, response, { allowIdentityAlias = false, tenantOwnerId = null } = {}) {
     const rawText = String(text || '').trim();
     const match = rawText.match(/^(OK|X)(?:\s+(ORD-[A-Z0-9-]+))?$/i);
 
     if(!match) return false;
 
     const [, decision, requestedOrderId] = match;
-    const pendingConfirmations = Object.entries(tenantOrderConfirmation[userId] || {})
+    let ownerId = tenantOwnerId || tenantIdentityAliases[userId] || userId;
+    let pendingConfirmations = Object.entries(tenantOrderConfirmation[ownerId] || {})
         .filter(([, confirmation]) => confirmation.status === 'pending');
+
+    if(!pendingConfirmations.length && allowIdentityAlias && !tenantOrderConfirmation[ownerId]) {
+        const candidates = Object.entries(tenantOrderConfirmation)
+            .flatMap(([savedOwnerId, confirmations]) => Object.entries(confirmations)
+                .filter(([savedOrderId, confirmation]) => (
+                    confirmation.status === 'pending'
+                    && (!requestedOrderId || savedOrderId === requestedOrderId)
+                ))
+                .map(([savedOrderId]) => ({ ownerId: savedOwnerId, orderId: savedOrderId }))
+            );
+
+        if(candidates.length === 1) {
+            ownerId = candidates[0].ownerId;
+            tenantIdentityAliases[userId] = ownerId;
+            pendingConfirmations = Object.entries(tenantOrderConfirmation[ownerId] || {})
+                .filter(([, confirmation]) => confirmation.status === 'pending');
+        } else if(candidates.length > 1) {
+            await response.send(userId, 'Ada lebih dari satu pesanan yang menunggu konfirmasi. Balas dengan format OK <Order ID> atau X <Order ID>.');
+            return true;
+        }
+    }
+
     const orderId = requestedOrderId || pendingConfirmations[0]?.[0];
 
     if(!requestedOrderId && pendingConfirmations.length > 1) {
@@ -104,9 +128,14 @@ export async function handleTenantOrderConfirmation(userId, text, response) {
         return true;
     }
 
-    const confirmation = tenantOrderConfirmation[userId]?.[orderId];
+    const confirmation = tenantOrderConfirmation[ownerId]?.[orderId];
 
     if(!confirmation || confirmation.status !== 'pending') return false;
+
+    // Simpan ID chat yang dipakai WhatsApp untuk menerima pesan tenant.
+    if(userId !== ownerId) {
+        tenantIdentityAliases[userId] = ownerId;
+    }
 
     const order = pendingOrders[orderId];
 
@@ -143,8 +172,11 @@ export async function handleTenantOrderConfirmation(userId, text, response) {
     clearOrderConfirmation(orderId);
     order.status = 'PENDING_PAYMENT';
     const { askOrderConfirmation } = await import('./editOrder.js');
+    const { TENANT_MENU_MESSAGE, activateTenantSession } = await import('../../sessions/tenant/handler.js');
 
     await askOrderConfirmation(customerId, orderId);
+    activateTenantSession(userId);
+    await response.send(userId, TENANT_MENU_MESSAGE);
     return true;
 }
 

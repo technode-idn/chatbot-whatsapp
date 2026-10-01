@@ -1,4 +1,4 @@
-import { allNumberOwnerTenant, formTenantSession } from "../../settings/globalVariables.js";
+import { formTenantSession } from "../../settings/globalVariables.js";
 import fs from 'fs/promises';
 import { DATABASE_PRODUCT_PATH, DATA_TENANT_PATH, rawDatabaseProduct, rawDataTenant } from "../../settings/loadFiles.js";
 import { getResponse } from '../security/response.js';
@@ -75,6 +75,11 @@ export async function broadcastMenu() {
     const response = getResponse();
 
     for(const tenant of tenants) {
+        // Tenant internal seperti Klikbi dapat sengaja tidak memiliki owner.
+        if(!tenant?.["owner_phone"]) {
+            continue;
+        }
+
         if(!tenant?.status_stock) {
             continue;
         }
@@ -93,11 +98,11 @@ export async function broadcastMenu() {
     return;
 }
 
-export async function generateFormStock(userId) {
+export async function generateFormStock(userId, ownerId = userId) {
     await refreshBroadcastData();
 
     const response = getResponse();
-    const tenant = tenants.find(t => t["owner_phone"] === userId);
+    const tenant = tenants.find(t => t["owner_phone"] === ownerId);
     const form = formStock(tenant);
 
     await response.send(userId, form, "normal");
@@ -106,12 +111,12 @@ export async function generateFormStock(userId) {
     return;
 }
 
-export async function validationFormStock(form, userId = null) {
+export async function validationFormStock(form, userId = null, ownerId = userId) {
     if(!/tenant\s*:/i.test(form)) {
         return "Format stok tidak sesuai. Mohon kirim form stok yang berisi Tenant dan daftar produk.";
     }
 
-    const responseStock = await extraction(form, "add");
+    const responseStock = await extraction(form, "add", ownerId);
 
     if(userId) {
         delete formTenantSession[userId];

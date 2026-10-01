@@ -1,6 +1,7 @@
-import { paymentVerificationSession, groupSession, deliverySession } from '../../settings/globalVariables.js';
+import { paymentVerificationSession, groupSession, deliverySession, courierAvailabilitySession } from '../../settings/globalVariables.js';
 import { verificationPayment } from '../../system/verification.js';
 import { handleDeliveryResponse } from '../../system/broadcasting/sendDelivery.js';
+import { handleCourierAvailabilityResponse } from '../../system/broadcasting/courierAvailability.js';
 import { getResponse } from '../../system/security/response.js';
 
 function isPaymentResponse(text) {
@@ -26,9 +27,22 @@ function isPaymentDecision(text) {
     );
 }
 
+function isCourierAvailabilityDecision(text) {
+    return /^\s*[12]\s*$/.test(String(text || ''));
+}
+
 export async function handleGroupSession({ userId, text, message, client }) {
     if(!userId.endsWith('@g.us')) return false;
     if(!groupSession[userId]) return true;
+
+    if(courierAvailabilitySession[userId] && isCourierAvailabilityDecision(text)) {
+        const result = await handleCourierAvailabilityResponse(text, userId);
+
+        if(result?.message) {
+            await getResponse().send(userId, result.message);
+        }
+        return true;
+    }
 
     if(paymentVerificationSession[userId] && isPaymentDecision(text)) {
         await verificationPayment(text, client, paymentVerificationSession[userId]);

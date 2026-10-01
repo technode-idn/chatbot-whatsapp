@@ -59,7 +59,9 @@ async function buildProofCaption(orderId, orderData) {
     const order = pendingOrders[orderId];
     const orderItems = order?.items || [];
     const paymentData = await payment(orderId);
-    const shippingCost = Number(await ongkir(order?.customer, orderId)) || 0;
+    const shippingCost = order?.fulfillment === 'PICKUP'
+        ? 0
+        : Number(await ongkir(order?.customer, orderId)) || 0;
     const totalPrice = (Number(paymentData?.total_price) || 0) + shippingCost;
     const tenantLines = [...new Set(
         orderItems.map(item => item.tenantName).filter(Boolean)

@@ -6,9 +6,12 @@ import { getResponse, initializeResponse } from './chatbot-structure/system/secu
 import { getActiveCustomerIds, restoreRuntimeSessions, saveRuntimeSessions } from './chatbot-structure/system/security/runtimeSession.js';
 import { generalSalesReport } from './chatbot-structure/system/broadcasting/generalSalesReport.js';
 import { resetStock } from './chatbot-structure/system/owner-tenant/stock.js';
+import { expireStaleOrders } from './chatbot-structure/system/ordering/validationOrder.js';
 import { broadcastMenu } from './chatbot-structure/sessions/tenant/handler.js';
 import { handleGroupSession } from './chatbot-structure/sessions/group/handler.js';
-import { handleTenantSession, isTenant } from './chatbot-structure/sessions/tenant/handler.js';
+import { handleTenantSession } from './chatbot-structure/sessions/tenant/handler.js';
+import { handleTenantOrderConfirmation } from './chatbot-structure/system/ordering/tenantOrderConfirmation.js';
+import { resolveTenantOwnerId } from './chatbot-structure/system/owner-tenant/tenantIdentity.js';
 import { handleDriverAdminSession, isDriverAdmin } from './chatbot-structure/sessions/driver-admin/handler.js';
 import { ADMIN_MONITOR_ID, handleAdminMonitorSession } from './chatbot-structure/sessions/admin-monitor/handler.js';
 import { handleCustomerSession } from './chatbot-structure/sessions/customer/handler.js';
@@ -50,6 +53,44 @@ process.once('SIGTERM', async () => { await saveSessionBeforeExit(); process.exi
 
 let recoveryFollowUpSent = false;
 
+async function isReplyToTenantConfirmation(message) {
+    if(!message?.hasQuotedMsg) return false;
+
+    try {
+        const quotedMessage = await message.getQuotedMessage();
+
+        const sentByBot = Boolean(
+            quotedMessage?.fromMe
+            || quotedMessage?.id?.fromMe
+            || quotedMessage?._data?.id?.fromMe
+        );
+        const quotedText = String(quotedMessage?.body || quotedMessage?._data?.body || '');
+
+        return sentByBot && /konfirmasi\s+ketersediaan\s+pesanan/i.test(quotedText);
+    } catch {
+        return false;
+    }
+}
+
+async function getTenantOwnerIdFromMessage(message) {
+    const candidates = [
+        message?.from,
+        message?.author,
+        message?.id?.participant,
+        message?._data?.author,
+        message?._data?.participant
+    ];
+
+    try {
+        const contact = await message.getContact();
+        candidates.push(contact?.id?._serialized, contact?._data?.id?._serialized);
+    } catch {
+        // Identitas dasar di atas tetap cukup untuk sebagian besar pesan.
+    }
+
+    return resolveTenantOwnerId(candidates);
+}
+
 client.on('ready', async () => {
      if(recoveryFollowUpSent) return;
      recoveryFollowUpSent = true;
@@ -63,24 +104,48 @@ client.on('ready', async () => {
 });
 
 nodeCron.schedule('0 16 * * 1-5', async () => {
-    await generalSalesReport(client);
-    await resetStock(false);
-});
+    try {
+        await generalSalesReport(client);
+        await resetStock(false);
+        await broadcastMenu();
+    } catch(error) {
+        logger.error(error);
+    }
+}, { timezone: 'Asia/Jakarta' });
+
+nodeCron.schedule('*/5 * * * *', async () => {
+    try {
+        await expireStaleOrders();
+    } catch(error) {
+        logger.error(error);
+    }
+}, { timezone: 'Asia/Jakarta' });
 
 client.on('message', async message => {
     try {
       const userId = message.from;
       const rawText = message.body.trim();
-      // Pilihan 1 memakai proses export yang sudah ada di customer handler.
-      const text = ADMIN_MONITOR_ID.includes(userId) && rawText === "1" ? "export" : rawText;
+      const text = rawText;
       const isGroup = userId.endsWith("@g.us");
-      const isKnownTenant = isTenant(userId);
+      const tenantOwnerId = await getTenantOwnerIdFromMessage(message);
+      const isKnownTenant = Boolean(tenantOwnerId);
       const isKnownDriverAdmin = isDriverAdmin(userId);
 
       logger.info(`FROM: ${userId}`);
       logger.info(`MESSAGE: ${message.body}`);
 
-      if (message.fromMe) return;
+      // Beberapa versi WhatsApp Web menyimpan penanda pesan keluar di ID,
+      // bukan di message.fromMe. Pesan bot sendiri tidak boleh dirutekan lagi.
+      if (message.fromMe || message.id?.fromMe || message._data?.id?.fromMe) return;
+
+      // Abaikan event sinkronisasi/status yang tidak berisi pesan customer.
+      if (!rawText && !message.hasMedia) return;
+
+      if (await handleGroupSession({ userId, text, message, client })) return;
+      if (await handleTenantOrderConfirmation(userId, text, response, {
+        allowIdentityAlias: await isReplyToTenantConfirmation(message),
+        tenantOwnerId
+      })) return;
 
       const isCustomer = !isGroup && !isKnownTenant && !isKnownDriverAdmin && !ADMIN_MONITOR_ID.includes(userId);
       const closedMessage =
@@ -106,10 +171,9 @@ client.on('message', async message => {
         return;
       }
 
-      if (await handleGroupSession({ userId, text, message, client })) return;
-      if (await handleTenantSession({ userId, text, response })) return;
+      if (await handleTenantSession({ userId, text, response, tenantOwnerId })) return;
       if (await handleDriverAdminSession({ userId, text, response })) return;
-      if (await handleAdminMonitorSession({ userId, text: rawText, response })) return;
+      if (await handleAdminMonitorSession({ userId, text, response, monitor })) return;
 
       await handleCustomerSession({
         message,

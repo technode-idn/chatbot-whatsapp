@@ -1,8 +1,7 @@
 import { editingOrder, orderConfirmationSession, pendingOrders } from "../../settings/globalVariables.js";
 import { getResponse } from "../security/response.js";
-import { welcomedUsers } from '../../settings/runtimeUsers.js';
 import { cancelOrder } from "./validationOrder.js";
-import { sendQrisPayment } from './qrisPayment.js';
+import { startCourierAvailability } from '../broadcasting/courierAvailability.js';
 import { payment } from '../payment.js';
 import { ongkir } from '../ongkir.js';
 import { getOrderWeatherCharge } from '../weather.js';
@@ -67,7 +66,7 @@ async function buildOrderConfirmationMessage(userId, orderId) {
         'Apakah kakak sudah yakin dengan pesanannya?',
         '',
         '[1] Belum (Mau Edit)',
-        '[2] Lanjut Ke Pembayaran',
+        '[2] Lanjutkan Pesanan',
         '[3] Batalkan Pesanan'
     ].join('\n');
 }
@@ -112,6 +111,10 @@ export async function askOrderConfirmation(userId, orderId) {
         order_id: orderId
     };
 
+    if(pendingOrders[orderId]) {
+        pendingOrders[orderId].updated_at = new Date().toISOString();
+    }
+
     await response.send(userId, await buildOrderConfirmationMessage(userId, orderId));
 }
 
@@ -147,15 +150,16 @@ export async function handleOrderConfirmation(text, userId) {
         await response.send(userId, buildEditOrderForm(orderId, pendingOrder.data));
         return true;
     } else if(text === "2") {
-        delete orderConfirmationSession[userId];
+        const started = await startCourierAvailability(userId, orderId);
 
-        await sendQrisPayment(userId, orderId);
+        if(started) {
+            delete orderConfirmationSession[userId];
+        }
         return true;
     } else if(text === "3") {
         await cancelOrder(orderId);
-        welcomedUsers.delete(userId);
-        
-        await response.send(userId, "Mohon ketik *keluar* untuk menyelesaikan ya kak.");
+
+        await response.send(userId, "Pesanan dibatalkan. Silakan kirim pesan kembali kapan saja jika ingin memesan lagi.");
     } else {
         await response.send(userId, "Mohon pilih salah satu yang ada di menu ya kak");
     }

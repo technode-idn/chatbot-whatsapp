@@ -1,5 +1,7 @@
 import {
     deliverySession,
+    courierAvailabilitySession,
+    courierDecisionSession,
     editingOrder,
     formTenantSession,
     groupSession,
@@ -12,6 +14,7 @@ import {
     sessions,
     userMode,
     tenantOrderConfirmation,
+    tenantIdentityAliases,
     addressConfirmationSession,
     allNumberOwnerTenant,
     allNumberDriverAdmin
@@ -26,11 +29,14 @@ const SESSION_BUCKETS = {
     orderConfirmationSession,
     groupSession,
     deliverySession,
+    courierAvailabilitySession,
+    courierDecisionSession,
     multipleFormSession,
     editingOrder,
     userMode,
     formTenantSession,
     tenantOrderConfirmation,
+    tenantIdentityAliases,
     addressConfirmationSession
 };
 

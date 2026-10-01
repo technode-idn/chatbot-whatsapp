@@ -18,7 +18,7 @@ function cleanValue(value) {
         .trim();
 }
 
-export async function extraction(text, mode = null) {
+export async function extraction(text, mode = null, userId = null) {
     try {
         const data = {};
         const lines = text.split('\n').map(item => item.trim());
@@ -41,8 +41,8 @@ export async function extraction(text, mode = null) {
         }
     
         const responseStock = mode === "add" || text.toLowerCase().includes("pengisian")
-            ? await addStock(data)
-            : await editStock(data);
+            ? await addStock(data, userId)
+            : await editStock(data, userId);
     
         return responseStock;
     } catch(error) {

@@ -1,16 +1,36 @@
 import fs from 'fs/promises';
 import crypto from 'crypto';
 import { DATABASE_PRODUCT_PATH, DATA_USERS_PATH, rawDataUsers, rawDatabaseProduct } from "../../settings/loadFiles.js";
-import { campusZone, editingOrder, orderConfirmationSession, paymentStatus, pendingOrders } from "../../settings/globalVariables.js";
+import {
+    campusZone,
+    courierAvailabilitySession,
+    courierDecisionSession,
+    deliverySession,
+    editingOrder,
+    groupSession,
+    orderConfirmationSession,
+    paymentStatus,
+    paymentVerificationSession,
+    pendingOrders,
+    pendingProof
+} from "../../settings/globalVariables.js";
 import { askOrderConfirmation } from "./editOrder.js";
 import { clearTenantOrderConfirmation, requestTenantOrderConfirmation } from './tenantOrderConfirmation.js';
 import { getResponse } from '../security/response.js';
 import { MAX_DELIVERY_DISTANCE_KM } from './deliveryDistance.js';
 import { calculateShipping } from '../shippingCalculator.js';
 import { startAddressConfirmation } from './addressConfirmation.js';
+import { welcomedUsers } from '../../settings/runtimeUsers.js';
 
 let database_product = rawDatabaseProduct ? JSON.parse(rawDatabaseProduct) : [];
 let users = rawDataUsers ? JSON.parse(rawDataUsers) : [];
+const DEFAULT_ORDER_TIMEOUT_MINUTES = 45;
+
+function touchOrder(order) {
+    if(order) {
+        order.updated_at = new Date().toISOString();
+    }
+}
 
 async function loadJsonFile(path) {
     const rawData = await fs.readFile(path, 'utf8');
@@ -224,6 +244,7 @@ async function reserveStock({orderId, userId, orderData, orderItems, editingStat
             status: "PENDING_PAYMENT",
 
             created_at: new Date().toISOString(),
+            updated_at: new Date().toISOString(),
 
             customerInfo: {
 
@@ -262,6 +283,8 @@ async function reserveStock({orderId, userId, orderData, orderItems, editingStat
             address: orderData["alamat_lengkap_pengantaran"]
 
         };
+
+        touchOrder(pendingOrder);
 
     }
 
@@ -474,15 +497,6 @@ export async function validationOrder(orderData, userId, editingStatus) {
 
     delete editingOrder[userId];
 
-    if(editingStatus) {
-        await askOrderConfirmation(userId, orderId);
-
-        return {
-            success: true,
-            order_id: orderId
-        };
-    }
-
     const tenantConfirmation = await requestTenantOrderConfirmation(orderId);
 
     if(tenantConfirmation.waitingForTenants) {
@@ -611,8 +625,33 @@ export async function cancelOrder(orderId) {
     await persistData();
 
     delete paymentStatus[pendingOrder.customer];
+    delete pendingProof[pendingOrder.customer];
     delete editingOrder[pendingOrder.customer];
     delete orderConfirmationSession[pendingOrder.customer];
+    delete courierDecisionSession[pendingOrder.customer];
+    welcomedUsers.delete(pendingOrder.customer);
+
+    for(const [groupId, availability] of Object.entries(courierAvailabilitySession)) {
+        if(String(availability?.orderId) === String(orderId)) {
+            delete courierAvailabilitySession[groupId];
+            delete groupSession[groupId];
+        }
+    }
+
+    for(const [groupId, sessionOrderId] of Object.entries(paymentVerificationSession)) {
+        if(String(sessionOrderId) === String(orderId)) {
+            delete paymentVerificationSession[groupId];
+            delete groupSession[groupId];
+        }
+    }
+
+    for(const [groupId, sessionOrderId] of Object.entries(deliverySession)) {
+        if(String(sessionOrderId) === String(orderId)) {
+            delete deliverySession[groupId];
+            delete groupSession[groupId];
+        }
+    }
+
     delete pendingOrders[orderId];
 
     return {
@@ -620,4 +659,38 @@ export async function cancelOrder(orderId) {
         order_id: orderId
     };
 
+}
+
+export async function cancelCustomerOrders(userId) {
+    const orderIds = Object.entries(pendingOrders)
+        .filter(([, order]) => order?.customer === userId)
+        .map(([orderId]) => orderId);
+
+    for(const orderId of orderIds) {
+        await cancelOrder(orderId);
+    }
+
+    return orderIds.length;
+}
+
+export async function expireStaleOrders() {
+    const timeoutMinutes = Number(process.env.ORDER_TIMEOUT_MINUTES) || DEFAULT_ORDER_TIMEOUT_MINUTES;
+    const cutoff = Date.now() - (timeoutMinutes * 60 * 1000);
+    const staleOrders = Object.entries(pendingOrders)
+        .filter(([, order]) => {
+            const updatedAt = new Date(order?.updated_at || order?.created_at || 0).getTime();
+            return Number.isFinite(updatedAt) && updatedAt > 0 && updatedAt < cutoff;
+        })
+        .map(([orderId, order]) => ({ orderId, customerId: order.customer }));
+    const response = getResponse();
+
+    for(const { orderId, customerId } of staleOrders) {
+        await cancelOrder(orderId);
+        await response.send(
+            customerId,
+            `Pesanan ${orderId} dibatalkan otomatis karena tidak ada aktivitas selama ${timeoutMinutes} menit. Stok telah dikembalikan.`
+        );
+    }
+
+    return staleOrders.length;
 }

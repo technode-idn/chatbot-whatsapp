@@ -1,10 +1,13 @@
 import fs from "fs/promises";
+import pkg from "whatsapp-web.js";
+import { exportData } from "../../system/exportData.js";
 import {
   DATABASE_PRODUCT_PATH,
   DATA_DELIVERY_PATH,
 } from "../../settings/loadFiles.js";
 
 export const ADMIN_MONITOR_ID = ["64282960068848@lid", "58493310615674@lid"];
+const { MessageMedia } = pkg;
 
 const ADMIN_MENU =
   "Halo admin, ada yang bisa dibantu?\n[1] Export File Penjualan\n[2] Lihat Database Produk\n[3] Lihat Database Driver\n\n Ketik *menu* untuk kembali ke daftar ini";
@@ -50,8 +53,31 @@ async function displayDrivers() {
   return drivers.map((driver) => `- ${driver.name || "-"}`).join("\n");
 }
 
-export async function handleAdminMonitorSession({ userId, text, response }) {
-  if (!ADMIN_MONITOR_ID.includes(userId)) return false;
+export async function handleAdminMonitorSession({ userId, text, response, monitor }) {
+    if (!ADMIN_MONITOR_ID.includes(userId)) return false;
+
+  if (text === "1") {
+    if (!(await monitor.guardians.export.begin())) {
+      await response.send(userId, "Sedang ada proses export yang berjalan.");
+      return true;
+    }
+
+    try {
+      await exportData();
+      await response.sendMedia(
+        userId,
+        MessageMedia.fromFilePath("./chatbot-structure/file/customer_recap.xlsx"),
+        "",
+        "low",
+      );
+      await monitor.guardians.export.finish(true);
+    } catch (error) {
+      await monitor.guardians.export.finish(false);
+      throw error;
+    }
+
+    return true;
+  }
 
   if (text === "2") {
     await response.send(userId, await displayProducts());
@@ -63,10 +89,6 @@ export async function handleAdminMonitorSession({ userId, text, response }) {
     return true;
   }
 
-  if (text !== "1") {
-    await response.send(userId, ADMIN_MENU);
-    return true;
-  }
-
-  return false;
+  await response.send(userId, ADMIN_MENU);
+  return true;
 }

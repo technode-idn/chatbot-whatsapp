@@ -1,9 +1,8 @@
 export function isWeekend() {
-    const today = new Date().getDay();
+    const weekday = new Intl.DateTimeFormat('en-US', {
+        timeZone: 'Asia/Jakarta',
+        weekday: 'short'
+    }).format(new Date());
 
-    if(today === 0 || today === 6) {
-	    return true;
-    }
-
-    return false;
+    return weekday === 'Sat' || weekday === 'Sun';
 }
