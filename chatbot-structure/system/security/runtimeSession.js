@@ -14,6 +14,7 @@ import {
     sessions,
     userMode,
     tenantOrderConfirmation,
+    tenantIdentityAliases,
     addressConfirmationSession,
     allNumberOwnerTenant,
     allNumberDriverAdmin
@@ -35,6 +36,7 @@ const SESSION_BUCKETS = {
     userMode,
     formTenantSession,
     tenantOrderConfirmation,
+    tenantIdentityAliases,
     addressConfirmationSession
 };
 

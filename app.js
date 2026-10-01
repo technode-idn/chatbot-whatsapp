@@ -9,6 +9,7 @@ import { resetStock } from './chatbot-structure/system/owner-tenant/stock.js';
 import { broadcastMenu } from './chatbot-structure/sessions/tenant/handler.js';
 import { handleGroupSession } from './chatbot-structure/sessions/group/handler.js';
 import { handleTenantSession, isTenant } from './chatbot-structure/sessions/tenant/handler.js';
+import { handleTenantOrderConfirmation } from './chatbot-structure/system/ordering/tenantOrderConfirmation.js';
 import { handleDriverAdminSession, isDriverAdmin } from './chatbot-structure/sessions/driver-admin/handler.js';
 import { ADMIN_MONITOR_ID, handleAdminMonitorSession } from './chatbot-structure/sessions/admin-monitor/handler.js';
 import { handleCustomerSession } from './chatbot-structure/sessions/customer/handler.js';
@@ -80,7 +81,17 @@ client.on('message', async message => {
       logger.info(`FROM: ${userId}`);
       logger.info(`MESSAGE: ${message.body}`);
 
-      if (message.fromMe) return;
+      // Beberapa versi WhatsApp Web menyimpan penanda pesan keluar di ID,
+      // bukan di message.fromMe. Pesan bot sendiri tidak boleh dirutekan lagi.
+      if (message.fromMe || message.id?.fromMe || message._data?.id?.fromMe) return;
+
+      // Abaikan event sinkronisasi/status yang tidak berisi pesan customer.
+      if (!rawText && !message.hasMedia) return;
+
+      // Konfirmasi tenant harus diproses sebelum pembatasan jam customer.
+      // Ini juga menangani ID tenant alternatif yang baru dipetakan saat OK/X.
+      if (await handleGroupSession({ userId, text, message, client })) return;
+      if (await handleTenantOrderConfirmation(userId, text, response)) return;
 
       const isCustomer = !isGroup && !isKnownTenant && !isKnownDriverAdmin && !ADMIN_MONITOR_ID.includes(userId);
       const closedMessage =
@@ -106,7 +117,6 @@ client.on('message', async message => {
         return;
       }
 
-      if (await handleGroupSession({ userId, text, message, client })) return;
       if (await handleTenantSession({ userId, text, response })) return;
       if (await handleDriverAdminSession({ userId, text, response })) return;
       if (await handleAdminMonitorSession({ userId, text: rawText, response })) return;

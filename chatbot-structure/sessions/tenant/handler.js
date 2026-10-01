@@ -1,4 +1,4 @@
-import { allNumberOwnerTenant, formTenantSession, userMode } from '../../settings/globalVariables.js';
+import { allNumberOwnerTenant, formTenantSession, tenantIdentityAliases, userMode } from '../../settings/globalVariables.js';
 import { broadcastMenu, generateFormStock, sendStockInputMenu, validationFormStock } from '../../system/owner-tenant/broadcastForm.js';
 import { addUniformStock, displayStock, resetStock } from '../../system/owner-tenant/stock.js';
 import { extraction } from '../../system/owner-tenant/extraction.js';
@@ -11,7 +11,7 @@ const ADD_PRODUCT_FORM = '📝 *TAMBAH PRODUK*\n=============================\nI
 const DELETE_PRODUCT_FORM = '🗑️ *HAPUS PRODUK*\n=============================\nID Produk: ';
 
 export function isTenant(userId) {
-    return allNumberOwnerTenant.includes(userId);
+    return allNumberOwnerTenant.includes(userId) || Boolean(tenantIdentityAliases[userId]);
 }
 
 function parseUniformStock(text) {
