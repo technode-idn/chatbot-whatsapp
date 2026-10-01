@@ -12,7 +12,9 @@ export const courierDecisionSession = {};
 export const multipleFormSession = {};
 export const editingOrder = {};
 export const userMode = {};
-export const allNumberOwnerTenant = ["155981031973047@lid", "162608233615561@lid", "158501556994144@lid", "58236082323536@lid", "119963033596086@lid", "177670532915314@lid"];
+export const allNumberOwnerTenant = (rawDataTenant.trim() ? JSON.parse(rawDataTenant) : [])
+    .map(tenant => String(tenant?.owner_phone || '').trim())
+    .filter(Boolean);
 export const allNumberDriverAdmin = ["232731510366286@lid"];
 export const formTenantSession = {};
 export const tenantOrderConfirmation = {};
@@ -76,3 +78,4 @@ export let campusZone = {
         'studio ekw'
     ]
 };
+import { rawDataTenant } from './loadFiles.js';

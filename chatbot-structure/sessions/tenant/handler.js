@@ -1,4 +1,4 @@
-import { allNumberOwnerTenant, formTenantSession, tenantIdentityAliases, userMode } from '../../settings/globalVariables.js';
+import { formTenantSession, userMode } from '../../settings/globalVariables.js';
 import { broadcastMenu, generateFormStock, sendStockInputMenu, validationFormStock } from '../../system/owner-tenant/broadcastForm.js';
 import { addUniformStock, displayStock, resetTenantStock } from '../../system/owner-tenant/stock.js';
 import { extraction } from '../../system/owner-tenant/extraction.js';
@@ -9,19 +9,6 @@ const welcomedTenant = new Set();
 const TENANT_MENU_MESSAGE = "🏪 Halo Pemilik Tenant!\n\nAda yang bisa kami bantu?\n[1] Isi Ulang Stok\n[2] Lihat Stok\n[3] Update/Restok Produk\n[4] Tambah Produk\n[5] Hapus Produk\n\n_Gunakan fitur dibawah jika hanya tidak ingin isi ulang stok harian_\n[6] Gunakan Stok Sisa Kemarin";
 const ADD_PRODUCT_FORM = '📝 *TAMBAH PRODUK*\n=============================\nID Produk: \nNama Produk: \nHarga Produk: \nStok Awal: ';
 const DELETE_PRODUCT_FORM = '🗑️ *HAPUS PRODUK*\n=============================\nID Produk: ';
-
-export function isTenant(userId) {
-    return allNumberOwnerTenant.includes(userId) || Boolean(tenantIdentityAliases[userId]);
-}
-
-export function resolveTenantOwnerId(...identityIds) {
-    for(const identityId of identityIds.flat().filter(Boolean)) {
-        if(allNumberOwnerTenant.includes(identityId)) return identityId;
-        if(tenantIdentityAliases[identityId]) return tenantIdentityAliases[identityId];
-    }
-
-    return null;
-}
 
 export function activateTenantSession(userId) {
     welcomedTenant.add(userId);
@@ -36,8 +23,8 @@ function parseUniformStock(text) {
 }
 
 export async function handleTenantSession({ userId, text, response, tenantOwnerId = null }) {
-    const resolvedOwnerId = tenantOwnerId || resolveTenantOwnerId(userId);
-    if(!resolvedOwnerId) return false;
+    if(!tenantOwnerId) return false;
+    const resolvedOwnerId = tenantOwnerId;
 
     if(await handleTenantOrderConfirmation(userId, text, response)) return true;
 

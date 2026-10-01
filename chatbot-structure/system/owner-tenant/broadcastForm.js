@@ -1,4 +1,4 @@
-import { allNumberOwnerTenant, formTenantSession } from "../../settings/globalVariables.js";
+import { formTenantSession } from "../../settings/globalVariables.js";
 import fs from 'fs/promises';
 import { DATABASE_PRODUCT_PATH, DATA_TENANT_PATH, rawDatabaseProduct, rawDataTenant } from "../../settings/loadFiles.js";
 import { getResponse } from '../security/response.js';
