@@ -35,6 +35,7 @@ export async function startCourierAvailability(userId, orderId) {
     courierAvailabilitySession[GROUP_ID] = { orderId, customerId: userId };
     courierDecisionSession[userId] = { status: 'checking', order_id: orderId };
     groupSession[GROUP_ID] = true;
+    pendingOrders[orderId].updated_at = new Date().toISOString();
 
     await response.send(userId, 'Mohon ditunggu sebentar ya ka. kami sedang memeriksa ketersediaan kurir');
     await response.send(
@@ -98,6 +99,13 @@ export async function handleCourierDecision(text, userId) {
     delete courierDecisionSession[userId];
 
     if(shouldPay) {
+        const order = pendingOrders[session.order_id];
+
+        if(order) {
+            order.fulfillment = session.status === 'pickup-offer' ? 'PICKUP' : 'DELIVERY';
+            order.updated_at = new Date().toISOString();
+        }
+
         await sendQrisPayment(userId, session.order_id);
         return true;
     }

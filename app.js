@@ -6,10 +6,10 @@ import { getResponse, initializeResponse } from './chatbot-structure/system/secu
 import { getActiveCustomerIds, restoreRuntimeSessions, saveRuntimeSessions } from './chatbot-structure/system/security/runtimeSession.js';
 import { generalSalesReport } from './chatbot-structure/system/broadcasting/generalSalesReport.js';
 import { resetStock } from './chatbot-structure/system/owner-tenant/stock.js';
+import { expireStaleOrders } from './chatbot-structure/system/ordering/validationOrder.js';
 import { broadcastMenu } from './chatbot-structure/sessions/tenant/handler.js';
 import { handleGroupSession } from './chatbot-structure/sessions/group/handler.js';
 import { handleTenantSession, isTenant } from './chatbot-structure/sessions/tenant/handler.js';
-import { handleTenantOrderConfirmation } from './chatbot-structure/system/ordering/tenantOrderConfirmation.js';
 import { handleDriverAdminSession, isDriverAdmin } from './chatbot-structure/sessions/driver-admin/handler.js';
 import { ADMIN_MONITOR_ID, handleAdminMonitorSession } from './chatbot-structure/sessions/admin-monitor/handler.js';
 import { handleCustomerSession } from './chatbot-structure/sessions/customer/handler.js';
@@ -64,16 +64,28 @@ client.on('ready', async () => {
 });
 
 nodeCron.schedule('0 16 * * 1-5', async () => {
-    await generalSalesReport(client);
-    await resetStock(false);
-});
+    try {
+        await generalSalesReport(client);
+        await resetStock(false);
+        await broadcastMenu();
+    } catch(error) {
+        logger.error(error);
+    }
+}, { timezone: 'Asia/Jakarta' });
+
+nodeCron.schedule('*/5 * * * *', async () => {
+    try {
+        await expireStaleOrders();
+    } catch(error) {
+        logger.error(error);
+    }
+}, { timezone: 'Asia/Jakarta' });
 
 client.on('message', async message => {
     try {
       const userId = message.from;
       const rawText = message.body.trim();
-      // Pilihan 1 memakai proses export yang sudah ada di customer handler.
-      const text = ADMIN_MONITOR_ID.includes(userId) && rawText === "1" ? "export" : rawText;
+      const text = rawText;
       const isGroup = userId.endsWith("@g.us");
       const isKnownTenant = isTenant(userId);
       const isKnownDriverAdmin = isDriverAdmin(userId);
@@ -88,10 +100,7 @@ client.on('message', async message => {
       // Abaikan event sinkronisasi/status yang tidak berisi pesan customer.
       if (!rawText && !message.hasMedia) return;
 
-      // Konfirmasi tenant harus diproses sebelum pembatasan jam customer.
-      // Ini juga menangani ID tenant alternatif yang baru dipetakan saat OK/X.
       if (await handleGroupSession({ userId, text, message, client })) return;
-      if (await handleTenantOrderConfirmation(userId, text, response)) return;
 
       const isCustomer = !isGroup && !isKnownTenant && !isKnownDriverAdmin && !ADMIN_MONITOR_ID.includes(userId);
       const closedMessage =
@@ -119,7 +128,7 @@ client.on('message', async message => {
 
       if (await handleTenantSession({ userId, text, response })) return;
       if (await handleDriverAdminSession({ userId, text, response })) return;
-      if (await handleAdminMonitorSession({ userId, text: rawText, response })) return;
+      if (await handleAdminMonitorSession({ userId, text, response, monitor })) return;
 
       await handleCustomerSession({
         message,

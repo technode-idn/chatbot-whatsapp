@@ -1,6 +1,7 @@
 import fs from 'fs/promises';
 import { paymentVerificationSession, pendingOrders, pendingProof } from "../settings/globalVariables.js";
 import { inputDelivery } from "./broadcasting/sendDelivery.js";
+import { completeOrder } from './ordering/validationOrder.js';
 import { DATA_USERS_PATH } from '../settings/loadFiles.js';
 import { getResponse } from './security/response.js';
 
@@ -135,17 +136,30 @@ export async function verificationPayment(text, client, fallbackOrderId = null) 
     }
 
     if(paymentVerificationStatus === 'valid') {
-        await inputDelivery(orderId, client);
+        const isPickup = pendingOrders[orderId]?.fulfillment === 'PICKUP';
+
+        if(isPickup) {
+            await completeOrder(orderId);
+        } else {
+            await inputDelivery(orderId, client);
+        }
 
         delete pendingProof[customerId];
         delete pendingOrders[orderId];
         clearPaymentVerificationSession(orderId);
 
-        await response.send(customerId, 'Pembayaran berhasil diverifikasi. Pesanan akan segera kami proses.');
+        await response.send(
+            customerId,
+            isPickup
+                ? 'Pembayaran berhasil diverifikasi. Pesanan kakak sedang diproses dan dapat diambil di tenant terkait.'
+                : 'Pembayaran berhasil diverifikasi. Pesanan akan segera kami proses.'
+        );
 
         return {
             success: true,
-            message: 'Pembayaran valid. Permintaan pengiriman sudah dikirim.'
+            message: isPickup
+                ? 'Pembayaran valid. Pesanan ditandai untuk diambil sendiri.'
+                : 'Pembayaran valid. Permintaan pengiriman sudah dikirim.'
         };
     }
 

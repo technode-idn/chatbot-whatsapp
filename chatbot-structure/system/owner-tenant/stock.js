@@ -46,10 +46,11 @@ async function persistStockData() {
     return;
 }
 
-export async function addStock(dataStock) {
+export async function addStock(dataStock, userId) {
     await refreshStockData();
 
-    const tenantKey = Object.keys(database_product).find(key => key === dataStock["tenant"]);
+    const tenant = tenants.find(item => item["owner_phone"] === userId);
+    const tenantKey = tenant?.["store"];
 
     if(!tenantKey) {
         return "Gagal Menambah Stok!";
@@ -65,7 +66,13 @@ export async function addStock(dataStock) {
                 continue;
             }
 
-            product["stock"] += parseStock(dataStock[productKey]);
+            const stockToAdd = parseStock(dataStock[productKey]);
+
+            if(stockToAdd < 0) {
+                return "Stok tidak boleh bernilai negatif.";
+            }
+
+            product["stock"] += stockToAdd;
             updatedProducts++;
         }
     }
@@ -73,8 +80,6 @@ export async function addStock(dataStock) {
     if(updatedProducts === 0) {
         return "Tidak ada stok produk yang berhasil dibaca. Mohon isi angka stok pada form.";
     }
-
-    const tenant = tenants.find(tenant => tenant["store"] === tenantKey);
 
     if(tenant) {
         tenant["status_stock"] = "complete";
@@ -106,37 +111,62 @@ export async function addUniformStock(userId, quantity) {
     return 'Stok seluruh produk berhasil ditambahkan.';
 }
 
-export async function editStock(dataEditStock) {
+export async function editStock(dataEditStock, userId) {
     await refreshStockData();
 
-    const productKey = Object.keys(database_product);
+    const tenant = tenants.find(item => item["owner_phone"] === userId);
+    const tenantKey = tenant?.["store"];
     const stockChange = parseStock(dataEditStock["jumlah_stok"]);
     const editedProductId = String(dataEditStock["id_produk"] || '').trim().toUpperCase();
     const status = String(dataEditStock["status"] || '').trim().toLowerCase();
 
-    for(const key of productKey) {
-        const productTenant = Object.keys(database_product[key]["products"]);
-
-        for(const productKey of productTenant) {
-            if(productKey === editedProductId) {
-                if(status === "tambah") {
-                    database_product[key]["products"][productKey]["stock"] += stockChange;
-                } else if(status === "kurang") {
-                    database_product[key]["products"][productKey]["stock"] -= stockChange;
-                } else if(status === "reset") {
-                    database_product[key]["products"][productKey]["stock"] = stockChange;
-                } else {
-                    return "Status tidak valid. Gunakan tambah, kurang, atau reset.";
-                }
-
-                await persistStockData();
-
-                return "Stok Berhasil Diperbarui";
-            }
-        }
+    if(!tenantKey || !database_product[tenantKey]?.products) {
+        return "Data tenant atau produk tidak ditemukan.";
     }
 
-    return "ID Produk tidak ditemukan.";
+    if(stockChange < 0) {
+        return "Jumlah stok tidak boleh bernilai negatif.";
+    }
+
+    const product = database_product[tenantKey].products[editedProductId];
+
+    if(!product) {
+        return "ID Produk tidak ditemukan pada katalog tenant Anda.";
+    }
+
+    if(status === "tambah") {
+        product.stock += stockChange;
+    } else if(status === "kurang") {
+        if(product.stock < stockChange) {
+            return "Stok tidak cukup untuk dikurangi.";
+        }
+        product.stock -= stockChange;
+    } else if(status === "reset") {
+        product.stock = stockChange;
+    } else {
+        return "Status tidak valid. Gunakan tambah, kurang, atau reset.";
+    }
+
+    await persistStockData();
+    return "Stok Berhasil Diperbarui";
+}
+
+export async function resetTenantStock(userId) {
+    await refreshStockData();
+
+    const tenant = tenants.find(item => item["owner_phone"] === userId);
+    const products = database_product[tenant?.["store"]]?.products;
+
+    if(!products) {
+        return 'Data tenant atau produk tidak ditemukan.';
+    }
+
+    for(const product of Object.values(products)) {
+        product.stock = 0;
+    }
+
+    await persistStockData();
+    return 'Stok tenant berhasil dikosongkan.';
 }
 
 export async function resetStock(fill) {

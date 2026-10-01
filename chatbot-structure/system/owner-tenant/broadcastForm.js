@@ -75,6 +75,11 @@ export async function broadcastMenu() {
     const response = getResponse();
 
     for(const tenant of tenants) {
+        // Tenant internal seperti Klikbi dapat sengaja tidak memiliki owner.
+        if(!tenant?.["owner_phone"]) {
+            continue;
+        }
+
         if(!tenant?.status_stock) {
             continue;
         }
@@ -111,7 +116,7 @@ export async function validationFormStock(form, userId = null) {
         return "Format stok tidak sesuai. Mohon kirim form stok yang berisi Tenant dan daftar produk.";
     }
 
-    const responseStock = await extraction(form, "add");
+    const responseStock = await extraction(form, "add", userId);
 
     if(userId) {
         delete formTenantSession[userId];

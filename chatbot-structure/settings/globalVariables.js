@@ -16,9 +16,6 @@ export const allNumberOwnerTenant = ["155981031973047@lid", "162608233615561@lid
 export const allNumberDriverAdmin = ["232731510366286@lid"];
 export const formTenantSession = {};
 export const tenantOrderConfirmation = {};
-// Alias ID masuk WhatsApp untuk owner tenant. Beberapa sesi WhatsApp dapat
-// mengirim ID pengirim berbeda dari ID tujuan yang tersimpan di data tenant.
-export const tenantIdentityAliases = {};
 export const addressConfirmationSession = {};
 export let lastOrderId = null;
 export let campusZone = {

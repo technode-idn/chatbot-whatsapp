@@ -112,6 +112,10 @@ export async function askOrderConfirmation(userId, orderId) {
         order_id: orderId
     };
 
+    if(pendingOrders[orderId]) {
+        pendingOrders[orderId].updated_at = new Date().toISOString();
+    }
+
     await response.send(userId, await buildOrderConfirmationMessage(userId, orderId));
 }
 
