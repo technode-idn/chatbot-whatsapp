@@ -10,6 +10,7 @@ import { expireStaleOrders } from './chatbot-structure/system/ordering/validatio
 import { broadcastMenu } from './chatbot-structure/sessions/tenant/handler.js';
 import { handleGroupSession } from './chatbot-structure/sessions/group/handler.js';
 import { handleTenantSession, isTenant } from './chatbot-structure/sessions/tenant/handler.js';
+import { handleTenantOrderConfirmation } from './chatbot-structure/system/ordering/tenantOrderConfirmation.js';
 import { handleDriverAdminSession, isDriverAdmin } from './chatbot-structure/sessions/driver-admin/handler.js';
 import { ADMIN_MONITOR_ID, handleAdminMonitorSession } from './chatbot-structure/sessions/admin-monitor/handler.js';
 import { handleCustomerSession } from './chatbot-structure/sessions/customer/handler.js';
@@ -50,6 +51,25 @@ process.once('SIGINT', async () => { await saveSessionBeforeExit(); process.exit
 process.once('SIGTERM', async () => { await saveSessionBeforeExit(); process.exit(0); });
 
 let recoveryFollowUpSent = false;
+
+async function isReplyToTenantConfirmation(message) {
+    if(!message?.hasQuotedMsg) return false;
+
+    try {
+        const quotedMessage = await message.getQuotedMessage();
+
+        const sentByBot = Boolean(
+            quotedMessage?.fromMe
+            || quotedMessage?.id?.fromMe
+            || quotedMessage?._data?.id?.fromMe
+        );
+        const quotedText = String(quotedMessage?.body || quotedMessage?._data?.body || '');
+
+        return sentByBot && /konfirmasi\s+ketersediaan\s+pesanan/i.test(quotedText);
+    } catch {
+        return false;
+    }
+}
 
 client.on('ready', async () => {
      if(recoveryFollowUpSent) return;
@@ -101,6 +121,9 @@ client.on('message', async message => {
       if (!rawText && !message.hasMedia) return;
 
       if (await handleGroupSession({ userId, text, message, client })) return;
+      if (await handleTenantOrderConfirmation(userId, text, response, {
+        allowIdentityAlias: await isReplyToTenantConfirmation(message)
+      })) return;
 
       const isCustomer = !isGroup && !isKnownTenant && !isKnownDriverAdmin && !ADMIN_MONITOR_ID.includes(userId);
       const closedMessage =

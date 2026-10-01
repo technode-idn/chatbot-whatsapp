@@ -1,4 +1,4 @@
-import { allNumberOwnerTenant, formTenantSession, userMode } from '../../settings/globalVariables.js';
+import { allNumberOwnerTenant, formTenantSession, tenantIdentityAliases, userMode } from '../../settings/globalVariables.js';
 import { broadcastMenu, generateFormStock, sendStockInputMenu, validationFormStock } from '../../system/owner-tenant/broadcastForm.js';
 import { addUniformStock, displayStock, resetTenantStock } from '../../system/owner-tenant/stock.js';
 import { extraction } from '../../system/owner-tenant/extraction.js';
@@ -11,7 +11,11 @@ const ADD_PRODUCT_FORM = '📝 *TAMBAH PRODUK*\n=============================\nI
 const DELETE_PRODUCT_FORM = '🗑️ *HAPUS PRODUK*\n=============================\nID Produk: ';
 
 export function isTenant(userId) {
-    return allNumberOwnerTenant.includes(userId);
+    return allNumberOwnerTenant.includes(userId) || Boolean(tenantIdentityAliases[userId]);
+}
+
+function getTenantOwnerId(userId) {
+    return tenantIdentityAliases[userId] || userId;
 }
 
 function parseUniformStock(text) {
@@ -24,6 +28,7 @@ function parseUniformStock(text) {
 
 export async function handleTenantSession({ userId, text, response }) {
     if(!isTenant(userId)) return false;
+    const tenantOwnerId = getTenantOwnerId(userId);
 
     if(await handleTenantOrderConfirmation(userId, text, response)) return true;
 
@@ -43,7 +48,7 @@ export async function handleTenantSession({ userId, text, response }) {
         }
 
         if(text === '2') {
-            await generateFormStock(userId);
+            await generateFormStock(userId, tenantOwnerId);
             return true;
         }
 
@@ -59,7 +64,7 @@ export async function handleTenantSession({ userId, text, response }) {
             return true;
         }
 
-        const responseStock = await addUniformStock(userId, quantity);
+        const responseStock = await addUniformStock(tenantOwnerId, quantity);
 
         if(responseStock === 'Stok seluruh produk berhasil ditambahkan.') {
             delete formTenantSession[userId];
@@ -77,19 +82,19 @@ export async function handleTenantSession({ userId, text, response }) {
     }
 
     if(formTenantSession[userId]) {
-        await response.send(userId, await validationFormStock(text, userId));
+        await response.send(userId, await validationFormStock(text, userId, tenantOwnerId));
         return true;
     }
 
     if(userMode[userId] === 'tenant-update-stock') {
-        const responseStock = await extraction(text, 'edit', userId);
+        const responseStock = await extraction(text, 'edit', tenantOwnerId);
         if(responseStock === 'Stok Berhasil Diperbarui') delete userMode[userId];
         await response.send(userId, responseStock);
         return true;
     }
 
     if(userMode[userId] === 'tenant-add-product') {
-        const result = await addTenantProduct(userId, text);
+        const result = await addTenantProduct(tenantOwnerId, text);
 
         if(result.success) delete userMode[userId];
 
@@ -98,7 +103,7 @@ export async function handleTenantSession({ userId, text, response }) {
     }
 
     if(userMode[userId] === 'tenant-delete-product') {
-        const result = await deleteTenantProduct(userId, text);
+        const result = await deleteTenantProduct(tenantOwnerId, text);
 
         if(result.success) delete userMode[userId];
 
@@ -114,10 +119,10 @@ export async function handleTenantSession({ userId, text, response }) {
 
     switch(text) {
         case '1':
-            await resetTenantStock(userId);
+            await resetTenantStock(tenantOwnerId);
             await sendStockInputMenu(userId);
             return true;
-        case '2': await response.send(userId, await displayStock(userId)); return true;
+        case '2': await response.send(userId, await displayStock(tenantOwnerId)); return true;
         case '3':
             await response.send(userId, "📝 *SILAKAN PERBARUI STOK*\n=============================\nID Produk: \nJumlah Stok: \nStatus: \n\n_*Status diisi dengan tambah/kurang/reset secara text*_");
             userMode[userId] = 'tenant-update-stock';
@@ -130,7 +135,7 @@ export async function handleTenantSession({ userId, text, response }) {
             await response.send(userId, DELETE_PRODUCT_FORM);
             userMode[userId] = 'tenant-delete-product';
             return true;
-        case 'PERBARUI': await response.send(userId, await extraction(text, 'edit', userId)); return true;
+        case 'PERBARUI': await response.send(userId, await extraction(text, 'edit', tenantOwnerId)); return true;
         case '6': await response.send(userId, 'Baik, stok sisa kemarin digunakan.'); return true;
         default: await response.send(userId, 'Anda memilih pilihan diluar menu.'); return true;
     }
