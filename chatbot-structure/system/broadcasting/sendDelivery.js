@@ -5,6 +5,7 @@ import { getResponse } from '../security/response.js';
 import { completeOrder } from '../ordering/validationOrder.js';
 import { payment } from '../payment.js';
 import { ongkir } from '../ongkir.js';
+import { welcomedUsers } from '../../settings/runtimeUsers.js';
 
 const GROUP_ID = "120363431265939870@g.us";
 
@@ -160,6 +161,7 @@ export async function handleDeliveryResponse(text, client, fallbackOrderId = nul
 
     delete deliverySession[GROUP_ID];
     delete groupSession[GROUP_ID];
+    welcomedUsers.delete(customerId);
 
     return {
         success: true,

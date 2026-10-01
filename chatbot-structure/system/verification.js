@@ -4,6 +4,7 @@ import { inputDelivery } from "./broadcasting/sendDelivery.js";
 import { completeOrder } from './ordering/validationOrder.js';
 import { DATA_USERS_PATH } from '../settings/loadFiles.js';
 import { getResponse } from './security/response.js';
+import { welcomedUsers } from '../settings/runtimeUsers.js';
 
 async function loadDataUsers() {
     const dataUsers = await fs.readFile(DATA_USERS_PATH, 'utf8');
@@ -147,6 +148,10 @@ export async function verificationPayment(text, client, fallbackOrderId = null) 
         delete pendingProof[customerId];
         delete pendingOrders[orderId];
         clearPaymentVerificationSession(orderId);
+
+        if(isPickup) {
+            welcomedUsers.delete(customerId);
+        }
 
         await response.send(
             customerId,

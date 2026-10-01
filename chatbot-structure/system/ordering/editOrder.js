@@ -1,6 +1,5 @@
 import { editingOrder, orderConfirmationSession, pendingOrders } from "../../settings/globalVariables.js";
 import { getResponse } from "../security/response.js";
-import { welcomedUsers } from '../../settings/runtimeUsers.js';
 import { cancelOrder } from "./validationOrder.js";
 import { startCourierAvailability } from '../broadcasting/courierAvailability.js';
 import { payment } from '../payment.js';
@@ -159,9 +158,8 @@ export async function handleOrderConfirmation(text, userId) {
         return true;
     } else if(text === "3") {
         await cancelOrder(orderId);
-        welcomedUsers.delete(userId);
-        
-        await response.send(userId, "Mohon ketik *keluar* untuk menyelesaikan ya kak.");
+
+        await response.send(userId, "Pesanan dibatalkan. Silakan kirim pesan kembali kapan saja jika ingin memesan lagi.");
     } else {
         await response.send(userId, "Mohon pilih salah satu yang ada di menu ya kak");
     }
