@@ -1,5 +1,5 @@
 {
-    "savedAt": "2026-10-01T07:46:05.372Z",
+    "savedAt": "2026-10-01T01:01:41.551Z",
     "data": {
         "pendingOrders": {},
         "pendingProof": {},
@@ -35,6 +35,9 @@
             },
             "status": true,
             "155981031973047@lid": {
+                "mode": "choice"
+            },
+            "158501556994144@lid": {
                 "mode": "choice"
             }
         },

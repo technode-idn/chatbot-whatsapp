@@ -1,5 +1,5 @@
 {
-    "savedAt": "2026-10-01T07:46:05.372Z",
+    "savedAt": "2026-09-29T04:36:03.958Z",
     "data": {
         "pendingOrders": {},
         "pendingProof": {},
@@ -33,10 +33,7 @@
             "undefined": {
                 "mode": "choice"
             },
-            "status": true,
-            "155981031973047@lid": {
-                "mode": "choice"
-            }
+            "status": true
         },
         "tenantOrderConfirmation": {},
         "addressConfirmationSession": {}
