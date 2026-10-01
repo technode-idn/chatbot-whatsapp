@@ -9,7 +9,7 @@ import { resetStock } from './chatbot-structure/system/owner-tenant/stock.js';
 import { expireStaleOrders } from './chatbot-structure/system/ordering/validationOrder.js';
 import { broadcastMenu } from './chatbot-structure/sessions/tenant/handler.js';
 import { handleGroupSession } from './chatbot-structure/sessions/group/handler.js';
-import { handleTenantSession, isTenant } from './chatbot-structure/sessions/tenant/handler.js';
+import { handleTenantSession, resolveTenantOwnerId } from './chatbot-structure/sessions/tenant/handler.js';
 import { handleTenantOrderConfirmation } from './chatbot-structure/system/ordering/tenantOrderConfirmation.js';
 import { handleDriverAdminSession, isDriverAdmin } from './chatbot-structure/sessions/driver-admin/handler.js';
 import { ADMIN_MONITOR_ID, handleAdminMonitorSession } from './chatbot-structure/sessions/admin-monitor/handler.js';
@@ -71,6 +71,25 @@ async function isReplyToTenantConfirmation(message) {
     }
 }
 
+async function getTenantOwnerIdFromMessage(message) {
+    const candidates = [
+        message?.from,
+        message?.author,
+        message?.id?.participant,
+        message?._data?.author,
+        message?._data?.participant
+    ];
+
+    try {
+        const contact = await message.getContact();
+        candidates.push(contact?.id?._serialized, contact?._data?.id?._serialized);
+    } catch {
+        // Identitas dasar di atas tetap cukup untuk sebagian besar pesan.
+    }
+
+    return resolveTenantOwnerId(candidates);
+}
+
 client.on('ready', async () => {
      if(recoveryFollowUpSent) return;
      recoveryFollowUpSent = true;
@@ -107,7 +126,8 @@ client.on('message', async message => {
       const rawText = message.body.trim();
       const text = rawText;
       const isGroup = userId.endsWith("@g.us");
-      const isKnownTenant = isTenant(userId);
+      const tenantOwnerId = await getTenantOwnerIdFromMessage(message);
+      const isKnownTenant = Boolean(tenantOwnerId);
       const isKnownDriverAdmin = isDriverAdmin(userId);
 
       logger.info(`FROM: ${userId}`);
@@ -122,7 +142,8 @@ client.on('message', async message => {
 
       if (await handleGroupSession({ userId, text, message, client })) return;
       if (await handleTenantOrderConfirmation(userId, text, response, {
-        allowIdentityAlias: await isReplyToTenantConfirmation(message)
+        allowIdentityAlias: await isReplyToTenantConfirmation(message),
+        tenantOwnerId
       })) return;
 
       const isCustomer = !isGroup && !isKnownTenant && !isKnownDriverAdmin && !ADMIN_MONITOR_ID.includes(userId);
@@ -149,7 +170,7 @@ client.on('message', async message => {
         return;
       }
 
-      if (await handleTenantSession({ userId, text, response })) return;
+      if (await handleTenantSession({ userId, text, response, tenantOwnerId })) return;
       if (await handleDriverAdminSession({ userId, text, response })) return;
       if (await handleAdminMonitorSession({ userId, text, response, monitor })) return;
 

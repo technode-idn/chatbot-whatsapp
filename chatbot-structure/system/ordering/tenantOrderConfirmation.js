@@ -89,14 +89,14 @@ export async function requestTenantOrderConfirmation(orderId) {
     return { waitingForTenants };
 }
 
-export async function handleTenantOrderConfirmation(userId, text, response, { allowIdentityAlias = false } = {}) {
+export async function handleTenantOrderConfirmation(userId, text, response, { allowIdentityAlias = false, tenantOwnerId = null } = {}) {
     const rawText = String(text || '').trim();
     const match = rawText.match(/^(OK|X)(?:\s+(ORD-[A-Z0-9-]+))?$/i);
 
     if(!match) return false;
 
     const [, decision, requestedOrderId] = match;
-    let ownerId = tenantIdentityAliases[userId] || userId;
+    let ownerId = tenantOwnerId || tenantIdentityAliases[userId] || userId;
     let pendingConfirmations = Object.entries(tenantOrderConfirmation[ownerId] || {})
         .filter(([, confirmation]) => confirmation.status === 'pending');
 
@@ -131,6 +131,11 @@ export async function handleTenantOrderConfirmation(userId, text, response, { al
     const confirmation = tenantOrderConfirmation[ownerId]?.[orderId];
 
     if(!confirmation || confirmation.status !== 'pending') return false;
+
+    // Simpan ID chat yang dipakai WhatsApp untuk menerima pesan tenant.
+    if(userId !== ownerId) {
+        tenantIdentityAliases[userId] = ownerId;
+    }
 
     const order = pendingOrders[orderId];
 
