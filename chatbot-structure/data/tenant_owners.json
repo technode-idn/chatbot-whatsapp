@@ -20,7 +20,7 @@
         "store": "miwiti_kusaji",
         "owner_phone": "158501556994144@lid",
         "qris": "./chatbot-structure/img/qris_tenant_4.jpg",
-        "status_stock": "complete",
+        "status_stock": "pending",
         "stock_broadcast_sent": true
     },
     {
@@ -52,6 +52,6 @@
         "store": "klikbi",
         "qris": "./chatbot-structure/img/qris_tenant_8.jpg",
         "status_stock": "pending",
-        "stock_broadcast_sent": true
+        "stock_broadcast_sent": false
     }
 ]

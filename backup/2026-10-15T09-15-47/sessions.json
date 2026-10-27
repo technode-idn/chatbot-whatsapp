@@ -1,0 +1,24 @@
+{
+    "savedAt": "2026-10-15T00:42:24.753Z",
+    "data": {
+        "pendingOrders": {},
+        "pendingProof": {},
+        "paymentVerificationSession": {},
+        "sessions": {},
+        "paymentStatus": {},
+        "orderConfirmationSession": {},
+        "groupSession": {},
+        "deliverySession": {},
+        "courierAvailabilitySession": {},
+        "courierDecisionSession": {},
+        "multipleFormSession": {},
+        "editingOrder": {},
+        "userMode": {},
+        "formTenantSession": {
+            "status": true
+        },
+        "tenantOrderConfirmation": {},
+        "tenantIdentityAliases": {},
+        "addressConfirmationSession": {}
+    }
+}
