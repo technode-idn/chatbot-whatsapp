@@ -16,6 +16,8 @@ class SystemMonitor {
 
         this.client = client;
         this.logger = logger;
+        this.intervals = [];
+        this.started = false;
 
         this.guardians = {
 
@@ -43,6 +45,9 @@ class SystemMonitor {
 
     start() {
 
+        if (this.started) return;
+        this.started = true;
+
         this.logger.success("========== SYSTEM MONITOR START ==========");
 
         // Guardian yang memiliki event listener
@@ -69,64 +74,74 @@ class SystemMonitor {
 
     startInternetMonitor() {
 
-        setInterval(async () => {
+        const interval = setInterval(async () => {
+            if (!this.started) return;
 
-            await this.guardians.internet.check();
-
-            if (
-                this.guardians.internet.getStatus() &&
-                !this.guardians.whatsapp.getStatus()
-            ) {
-
-                this.logger.warning(
-                    "Internet Online, WhatsApp Offline. Reconnecting..."
-                );
-
-                await this.guardians.whatsapp.reconnect();
-
+            try {
+                await this.guardians.internet.check();
+                const healthy = await this.guardians.whatsapp.check();
+                if (this.guardians.internet.getStatus() && !healthy) {
+                    await this.guardians.whatsapp.reconnect();
+                }
+            } catch (error) {
+                this.logger.error(error);
             }
-
         }, config.internet.interval);
+        this.intervals.push(interval);
 
     }
 
     startMemoryMonitor() {
 
-        setInterval(async () => {
+        const interval = setInterval(async () => {
 
             await this.guardians.memory.check();
 
         }, config.memory.interval);
+        this.intervals.push(interval);
 
     }
 
     startStorageMonitor() {
 
-        setInterval(async () => {
+        const interval = setInterval(async () => {
 
             await this.guardians.storage.check();
 
         }, config.storage.interval);
+        this.intervals.push(interval);
 
     }
 
     startBackupMonitor() {
 
-        setInterval(async () => {
+        const interval = setInterval(async () => {
 
             await this.guardians.backup.check();
 
         }, config.backup.interval);
+        this.intervals.push(interval);
 
     }
 
     startSessionMonitor() {
 
-        setInterval(async () => {
+        const interval = setInterval(async () => {
 
             await this.guardians.session.check();
 
         }, config.session.interval);
+        this.intervals.push(interval);
+
+    }
+
+    stop() {
+        if (!this.started) return;
+        this.started = false;
+        for (const interval of this.intervals) clearInterval(interval);
+        this.intervals = [];
+        this.guardians.whatsapp.stop();
+        this.logger.info("[MONITOR] Health monitoring stopped");
 
     }
 

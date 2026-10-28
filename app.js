@@ -45,6 +45,7 @@ for(const customerId of recoveredCustomerIds) {
 }
 
 async function saveSessionBeforeExit() {
+    monitor.stop();
     await saveRuntimeSessions(monitor.guardians.session);
 }
 
@@ -196,4 +197,11 @@ client.on('message', async message => {
 });
 
 monitor.start();
-client.initialize();
+monitor.guardians.whatsapp.setInitializationInProgress(true);
+client.initialize()
+    .then(() => {
+        monitor.guardians.whatsapp.setInitializationInProgress(false);
+    })
+    .catch(error => {
+        monitor.guardians.whatsapp.handleInitializationFailure(error);
+    });

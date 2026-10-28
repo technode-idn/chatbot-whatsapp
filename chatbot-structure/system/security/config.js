@@ -18,11 +18,12 @@ const config = {
     // ==========================
     whatsapp: {
 
-        // Maksimal percobaan reconnect
-        maxReconnect: 5,
-
-        // Delay sebelum reconnect (10 detik)
-        reconnectDelay: 10 * 1000
+        gracePeriod: 60 * 1000,
+        maxRecoveryAttempts: 3,
+        recoveryBaseDelay: 10 * 1000,
+        recoveryMaxDelay: 5 * 60 * 1000,
+        recoveryCooldown: 10 * 60 * 1000,
+        stableReadyWindow: 5 * 60 * 1000
 
     },
 
